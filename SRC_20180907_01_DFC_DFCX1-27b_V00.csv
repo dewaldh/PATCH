@@ -1,0 +1,4 @@
+Date;Object type;Object;Comments;Patch;Code;Modifier;Activity code;Update type;Delivered on
+20180807;ACV;YICBB;Inter company business batch;[PATCH]/SRC_20180807;DFCX1-27b;DW;;C;20180907
+20180807;ATY;YBBN;Business batch number;[PATCH]/SRC_20180807;;DW;;M;20180907
+20180807;ATB;YBBHEADER;Business batch header;[PATCH]/SRC_20180807;;DW;;C;20180907

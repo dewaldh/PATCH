@@ -1,0 +1,4 @@
+Date;Object type;Object;Comments;Patch;Code;Modifier;Activity code;Update type;Delivered on
+20180807;TRT;SPEBIS;Supplier BP invoice;[PATCH]/SRC_20180816;;RGRAN;YACP;M;20180820
+20180816;ATB;YAPNINVOICE;Navision invoices;[PATCH]/SRC_20180816;;RGRAN;YACP;M;20180820
+20180820;AMK;BIS1;;;;;YACP;M;20180820

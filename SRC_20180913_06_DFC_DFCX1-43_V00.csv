@@ -1,0 +1,8 @@
+Date;Object type;Object;Comments;Patch;Code;Modifier;Activity code;Update type;Delivered on
+20180913;ACV;YINT;Integrations;;DFCX1-43;;;M;20180913
+20180913;ADX;SPEWS;;;;;YINT;M;20180913
+20180913;TRT;SPEWS;;;;;;M;20180913
+20180913;AWE;YBIS_V001;Supplier;;;;;M;20180913
+20180913;AWE;YBPC_V001;Customer ;;;;;M;20180913
+20180913;AWE;YBPS_V001;Cash Receipts;;;;;M;20180913
+20180913;AWE;YRCN_V001;Supplier Invoice;;;;;M;20180913

@@ -1,0 +1,81 @@
+1,"Patch DFC :DFCX1-141 on August    09,18 17: 37","ENG","1","","X3","3",
+2,"ACV","YAPIN","Accounts Payable"
+3,"ACV",YAPIN
+4,"ACTDEP",0,""
+4,"ACTFOR",0,""
+4,"CODACT",0,"YAPIN"
+4,"CREDAT",0,20180502
+4,"CREDATTIM",0,"2018-05-02T03:52:33Z"
+4,"CREUSR",0,"RRL"
+4,"DEP",0,1
+4,"DIME",0,0
+4,"DIMFIL",0,0
+4,"DIMMAX",0,0
+4,"FLACT",0,2
+4,"INTIT",0,""
+5,"LIBACT",0,"Accounts Payable","ENG",100003,""
+5,"LIBACT",0,"","***"
+4,"MODULE",0,3
+4,"ORDRE",0,3000
+4,"RANG",0,0
+4,"TYP",0,1
+4,"UPDDAT",0,20180502
+4,"UPDDATTIM",0,"2018-05-02T03:52:33Z"
+4,"UPDFLG",0,0
+4,"UPDUSR",0,"RRL"
+6,"ACV"
+7,"ACV","YAPIN","Accounts Payable"
+2,"TRT","SPEPAY","Payments"
+#<AdxTL>@(#)0.0.0.0 $Revision$
+#######################################################################################################
+# FILE NAME   : SPEPAY
+# DESCRIPTION : This process uses for AR/AP Payment customization
+# COMPANY     : Leverage Technologies
+#-------------------------------------------------------------------------------------------------------
+# Detail
+#
+# DFCX1-141     Majid   Check Open item bank and Payment bank are same
+#######################################################################################################
+# Mask management WMP1BSIAUS (Specific)
+
+######################################################################################
+##
+$ACTION
+
+Case ACTION
+ When "FIN_PICK"      :   Gosub FIN_PICK
+ When Default
+Endcase
+
+Return
+
+######################################################################################
+$FIN_PICK
+
+# DFCX1-141
+If func AFNC.ACTIV("YAPIN")
+
+  If !clalev([F:YPIH2])         :   Local File PINVOICE [YPIH2]     :   Endif
+  Read  [F:YPIH2]PIH0 = [F:DUD]NUM
+
+  If !fstat
+    If [M]BAN <> [F:YPIH2]YPAYBANK
+      GERR = 1  : GMESSAGE = "Payment bank and Open itme bank are different. Selected open item should pay from:" - [F:YPIH2]YPAYBANK
+      If [M]VCRNUM([M]NBLIG-1) = [F:DUD]NUM  : [M]NBLIG -= 1 : Endif
+      Affzo [PAY0]
+      Affzo [PAY1]
+      If clalev([M:PAY2]) : Affzo [PAY2]1-99 : Endif
+      If clalev([M:PAY1]) : Affzo [PAY1]1-99 : Endif
+      Gosub RAF_ECHE   From SUBPAY4
+    Endif
+  Endif
+
+Endif
+# DFCX1-141
+
+
+Return
+
+**********
+7,"TRT","SPEPAY","Payments"
+8,"Patch DFC :DFCX1-141 on August    09,18 17: 37"

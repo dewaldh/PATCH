@@ -1,0 +1,6 @@
+Date;Object type;Object;Comments;Patch;Code;Modifier;Activity code;Update type;Delivered on
+20180808;ATB;PINVOICE;Supplier BP invoice;;DFCX1-58;MB;;M;20180808
+20180808;AMK;BIS0;Purchase invoices;;;MB;;M;20180808
+20180808;AMK;BIS0;Supplier BP invoice;;;MB;;M;20180808
+20180808;AMK;BIS1;Supplier BP invoice;;;MB;;M;20180808
+20180807;AWI;OBIS;Supplier BP invoice;[PATCH]/SRC_20180807;;DW;;M;20180808
