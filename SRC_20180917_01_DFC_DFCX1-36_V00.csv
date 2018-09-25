@@ -1,0 +1,6 @@
+Date;Object type;Object;Comments;Patch;Code;Modifier;Activity code;Update type;Delivered on
+20180810;ACV;YSQST;Business partner;;DFCX1-36;DH;;M;20180917
+20180810;ACT;YSUPQST;Identity;;;DH;;M;20180917
+20180810;ATB;BPARTNER;Supplier questionnaire;;;DH;;C;20180917
+20180807;ATB;BPARTNER;Supplier Questionnaire;[PATCH]/SRC_20180807;;DW;;M;20180917
+20180807;AMK;BPRBPS;Business partner;[PATCH]/SRC_20180807;;DW;;M;20180917
