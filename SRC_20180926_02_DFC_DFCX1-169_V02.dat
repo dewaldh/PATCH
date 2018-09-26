@@ -1,0 +1,2520 @@
+1,"Patch DFC :DFCX1-169 on September 26,18 10: 57","ENG","1","YLAND","X3","3",
+2,"AML","6255"," Land development message "
+3,"AML",6255
+4,"AUZMOD",0,1
+4,"CODACT",0,"YLAND"
+4,"CREDAT",0,20180924
+4,"CREDATTIM",0,"2018-09-24T06:12:01Z"
+4,"CREUSR",0,"MAJID"
+4,"LONG",0,0
+4,"MAXI",0,0
+4,"MENLOC",0,6255
+4,"MENLOCAL",0,2
+4,"MINI",0,0
+4,"MODULE",0,9
+4,"NONTRA",0,1
+4,"SPECIF",0,0
+4,"UPDDAT",0,20180925
+4,"UPDDATTIM",0,"2018-09-25T04:48:35Z"
+4,"UPDUSR",0,"MAJID"
+6,"AML"
+3,"AST",6255
+4,"CREDAT",0,20180924
+4,"CREDATTIM",0,"2018-09-24T06:12:01Z"
+4,"CREUSR",0,"MAJID"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,200
+4,"LANMES",0,"Land development message"
+4,"LANNUM",0,6055
+4,"LANORI",0,""
+4,"UPDDAT",0,20180924
+4,"UPDDATTIM",0,"2018-09-24T06:12:01Z"
+4,"UPDUSR",0,"MAJID"
+6,"AST"
+3,"AST",6255
+4,"CREDAT",0,20180924
+4,"CREDATTIM",0,"2018-09-24T06:12:01Z"
+4,"CREUSR",0,"MAJID"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6255
+4,"LANMES",0,"111111111111111"
+4,"LANNUM",0,0
+4,"LANORI",0,""
+4,"UPDDAT",0,20180925
+4,"UPDDATTIM",0,"2018-09-25T04:48:26Z"
+4,"UPDUSR",0,"MAJID"
+6,"AST"
+3,"AST",6255
+4,"CREDAT",0,20180924
+4,"CREDATTIM",0,"2018-09-24T06:12:01Z"
+4,"CREUSR",0,"MAJID"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6255
+4,"LANMES",0,"Company group did not create proparly"
+4,"LANNUM",0,1
+4,"LANORI",0,""
+4,"UPDDAT",0,20180924
+4,"UPDDATTIM",0,"2018-09-24T06:12:01Z"
+4,"UPDUSR",0,"MAJID"
+6,"AST"
+3,"AST",6255
+4,"CREDAT",0,20180924
+4,"CREDATTIM",0,"2018-09-24T06:14:08Z"
+4,"CREUSR",0,"MAJID"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6255
+4,"LANMES",0,"Dimension type has not configured on General parameter. (Parameter: YDEVDTY)"
+4,"LANNUM",0,2
+4,"LANORI",0,""
+4,"UPDDAT",0,20180924
+4,"UPDDATTIM",0,"2018-09-24T06:14:08Z"
+4,"UPDUSR",0,"MAJID"
+6,"AST"
+3,"AST",6255
+4,"CREDAT",0,20180924
+4,"CREDATTIM",0,"2018-09-24T06:17:38Z"
+4,"CREUSR",0,"MAJID"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6255
+4,"LANMES",0,"Please untick Copmany group checkbox on Site grouping"
+4,"LANNUM",0,3
+4,"LANORI",0,""
+4,"UPDDAT",0,20180924
+4,"UPDDATTIM",0,"2018-09-24T06:17:38Z"
+4,"UPDUSR",0,"MAJID"
+6,"AST"
+3,"AST",6255
+4,"CREDAT",0,20180924
+4,"CREDATTIM",0,"2018-09-24T06:21:15Z"
+4,"CREUSR",0,"MAJID"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6255
+4,"LANMES",0,"System could not link Developer to group company. Please link that manually"
+4,"LANNUM",0,4
+4,"LANORI",0,""
+4,"UPDDAT",0,20180924
+4,"UPDDATTIM",0,"2018-09-24T06:21:15Z"
+4,"UPDUSR",0,"MAJID"
+6,"AST"
+3,"AST",6255
+4,"CREDAT",0,20180924
+4,"CREDATTIM",0,"2018-09-24T06:22:06Z"
+4,"CREUSR",0,"MAJID"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6255
+4,"LANMES",0,"System could not link Proj. manager to group company. Please link that manually"
+4,"LANNUM",0,5
+4,"LANORI",0,""
+4,"UPDDAT",0,20180924
+4,"UPDDATTIM",0,"2018-09-24T06:22:06Z"
+4,"UPDUSR",0,"MAJID"
+6,"AST"
+3,"AST",6255
+4,"CREDAT",0,20180924
+4,"CREDATTIM",0,"2018-09-24T06:25:14Z"
+4,"CREUSR",0,"MAJID"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6255
+4,"LANMES",0,"Activate flag of Job code Dimesnion was different and system updated dimension. "
+4,"LANNUM",0,6
+4,"LANORI",0,""
+4,"UPDDAT",0,20180925
+4,"UPDDATTIM",0,"2018-09-25T04:32:30Z"
+4,"UPDUSR",0,"MAJID"
+6,"AST"
+3,"AST",6255
+4,"CREDAT",0,20180924
+4,"CREDATTIM",0,"2018-09-24T06:26:17Z"
+4,"CREUSR",0,"MAJID"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6255
+4,"LANMES",0,"Activate flag of Job code Dimesnion is different but system could not update that"
+4,"LANNUM",0,7
+4,"LANORI",0,""
+4,"UPDDAT",0,20180925
+4,"UPDDATTIM",0,"2018-09-25T04:32:30Z"
+4,"UPDUSR",0,"MAJID"
+6,"AST"
+3,"AST",6255
+4,"CREDAT",0,20180924
+4,"CREDATTIM",0,"2018-09-24T06:28:43Z"
+4,"CREUSR",0,"MAJID"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6255
+4,"LANMES",0,"Description of Job code Dimesnion was different and system updated dimension."
+4,"LANNUM",0,8
+4,"LANORI",0,""
+4,"UPDDAT",0,20180925
+4,"UPDDATTIM",0,"2018-09-25T04:32:30Z"
+4,"UPDUSR",0,"MAJID"
+6,"AST"
+3,"AST",6255
+4,"CREDAT",0,20180924
+4,"CREDATTIM",0,"2018-09-24T06:28:43Z"
+4,"CREUSR",0,"MAJID"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6255
+4,"LANMES",0,"Description of Job code Dimesnion is different but system could not update that"
+4,"LANNUM",0,9
+4,"LANORI",0,""
+4,"UPDDAT",0,20180925
+4,"UPDDATTIM",0,"2018-09-25T04:32:30Z"
+4,"UPDUSR",0,"MAJID"
+6,"AST"
+3,"AST",6255
+4,"CREDAT",0,20180924
+4,"CREDATTIM",0,"2018-09-24T07:05:25Z"
+4,"CREUSR",0,"MAJID"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6255
+4,"LANMES",0,"Job code does not exists on Dimenstion list"
+4,"LANNUM",0,10
+4,"LANORI",0,""
+4,"UPDDAT",0,20180924
+4,"UPDDATTIM",0,"2018-09-24T07:05:25Z"
+4,"UPDUSR",0,"MAJID"
+6,"AST"
+3,"AST",6255
+4,"CREDAT",0,20180924
+4,"CREDATTIM",0,"2018-09-24T07:08:54Z"
+4,"CREUSR",0,"MAJID"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6255
+4,"LANMES",0,"Job code has not created successfully. Please create that manually and assign that to Job code"
+4,"LANNUM",0,11
+4,"LANORI",0,""
+4,"UPDDAT",0,20180925
+4,"UPDDATTIM",0,"2018-09-25T04:32:30Z"
+4,"UPDUSR",0,"MAJID"
+6,"AST"
+3,"AST",6255
+4,"CREDAT",0,20180925
+4,"CREDATTIM",0,"2018-09-25T00:18:35Z"
+4,"CREUSR",0,"MAJID"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6255
+4,"LANMES",0,"Company group has not linked to proper Developer site and system updated that"
+4,"LANNUM",0,12
+4,"LANORI",0,""
+4,"UPDDAT",0,20180925
+4,"UPDDATTIM",0,"2018-09-25T00:18:35Z"
+4,"UPDUSR",0,"MAJID"
+6,"AST"
+3,"AST",6255
+4,"CREDAT",0,20180925
+4,"CREDATTIM",0,"2018-09-25T00:18:35Z"
+4,"CREUSR",0,"MAJID"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6255
+4,"LANMES",0,"Company group has not linked to proper Proj. manager and system updated that"
+4,"LANNUM",0,13
+4,"LANORI",0,""
+4,"UPDDAT",0,20180925
+4,"UPDDATTIM",0,"2018-09-25T00:18:35Z"
+4,"UPDUSR",0,"MAJID"
+6,"AST"
+3,"AST",6255
+4,"CREDAT",0,20180925
+4,"CREDATTIM",0,"2018-09-25T04:48:26Z"
+4,"CREUSR",0,"MAJID"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6255
+4,"LANMES",0,"Company group of Job code Dimesnion was different and system updated dimension. "
+4,"LANNUM",0,14
+4,"LANORI",0,""
+4,"UPDDAT",0,20180925
+4,"UPDDATTIM",0,"2018-09-25T04:48:26Z"
+4,"UPDUSR",0,"MAJID"
+6,"AST"
+3,"AST",6255
+4,"CREDAT",0,20180925
+4,"CREDATTIM",0,"2018-09-25T04:48:26Z"
+4,"CREUSR",0,"MAJID"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6255
+4,"LANMES",0,"Company group of Job code Dimesnion is different but system could not update that"
+4,"LANNUM",0,15
+4,"LANORI",0,""
+4,"UPDDAT",0,20180925
+4,"UPDDATTIM",0,"2018-09-25T04:48:26Z"
+4,"UPDUSR",0,"MAJID"
+6,"AST"
+7,"AML","6255"," Land development message "
+2,"TRT","SPEYFACGROUP",""
+#<AdxTL>@(#)0.0.0.0 $Revision$
+######################################################################################################################
+# Script            : SPEYFACGROUP                                                                                   #
+# Creation date     : 21/09/2018                                                                                     #
+# Version           : 1.0.0                                                                                          #
+# Authors (Company) : MZ (Leverage)                                                                                  #
+# Module            : Land Development                                                                               #
+# -------------------------------------------------------------------------------------------------------------------#
+# Epic              : https://jira.leveragetech.com.au/browse/DFCX1-169                                              #
+# Description       : DFCX1-79 Land Development -  Estate Rules                                                      #
+#--------------------------------------------------------------------------------------------------------------------#
+# Evolutions        :                                                                                                #
+######################################################################################################################
+
+$ACTION
+Case ACTION
+ When "IMP_OUVRE"   :   Gosub IMP_OUVRE
+ When "AP_IMPORT"   :   Gosub AP_IMPORT
+Endcase
+Return
+
+$IMP_OUVRE
+  # Open trace file
+  Call OUVRE_TRACE("Company group import through Land development creation") From LECFIC
+Return
+
+$AP_IMPORT
+
+  Case IMPFIC
+    When "FGR"
+      Write [F:FGR]
+  Endcase
+
+Return
+
+**********
+7,"TRT","SPEYFACGROUP",""
+2,"TRT","SUBYEST","Land Developments - Estate"
+#<AdxTL>@(#)0.0.0.0 $Revision$ 
+######################################################################################################################
+# Script            : SUBYEST                                                                                        #
+# Creation date     : 27/08/2018                                                                                     #
+# Version           : 1.0.0                                                                                          #
+# Authors (Company) : MB (Leverage)                                                                                  #
+# Module            : Land Development                                                                               #
+# -------------------------------------------------------------------------------------------------------------------#
+# Epic              : https://jira.leveragetech.com.au/browse/DFCX1-79                                               #
+# Description       : DFCX1-79 Land Development -  Estate                                                            #
+#--------------------------------------------------------------------------------------------------------------------#
+# Evolutions        :                                                                                                #
+# DFCX1-169   Majid   Creation object rules                                                                          #
+######################################################################################################################
+
+$ACTION
+Case ACTION
+  When "OUVRE"        : Gosub OUVRE
+  When "FERME"        : Gosub FERME
+  When "RAZCRE"       : Gosub RAZCRE
+  When "LIENS"        : Gosub LIENS
+  When "VERIF_CRE"    : Gosub VERIF_CRE
+  When "CREATION"     : Gosub CREATION
+  When "APRES_CRE"    : Gosub APRES_CRE
+  When "MODIF"        : Gosub MODIF
+  When "APRES_MOD"    : Gosub APRES_MOD
+  When "RAZDUP"       : Gosub RAZDUP
+  When "AV_ANNULE"    : Gosub AV_ANNULE
+  When "ANNULE"       : Gosub ANNULE
+  When Default
+Endcase
+Return
+
+#------------------------------------------------------------------------------------#
+#Open screen
+#------------------------------------------------------------------------------------#
+$OUVRE
+#disable the regular Classic CUD operations
+ANOWRITE = 1
+
+#nstance for your class
+Global Instance YEST_INSTANCE Using C_YEST
+
+Return
+
+#------------------------------------------------------------------------------------#
+#Before Create
+#------------------------------------------------------------------------------------#
+$RAZCRE
+Local Integer MY_STATUS
+
+If (YEST_INSTANCE <> null) : FreeGroup YEST_INSTANCE : Endif
+YEST_INSTANCE = NewInstance C_YEST AllocGroup null
+
+#Then you have to initialize the class properties by calling the AINIT method and/or setting properties manually
+[L]MY_STATUS = fmet YEST_INSTANCE.AINIT()
+If ([L]MY_STATUS >= [V]CST_AERROR)
+  GMESSAGE = func SYRSTACKTOOLS.MSGSTACK_GET_FIRST_MAX_MESSAGE(YEST_INSTANCE)
+  GOK = 0 : GERR = 1
+  Return
+Endif
+
+#To finish you have to refresh the UI to display the values of initialized properties.
+#Because it is not possible to directly transfer class property values into screen field values, you may use the file [F] as interface.
+#Complete the process for properties and fields with non matching name
+
+SetInstance [F:YEST] With YEST_INSTANCE
+[M:YEST] = [F:YEST]
+[M:YEST1] = [F:YEST]
+
+#[M:YEST] = YEST_INSTANCE.PROPERTY
+
+Affzo [M:YEST]1-99
+Affzo [M:YEST1]1-99
+
+Return
+
+#------------------------------------------------------------------------------------#
+#Create record
+#------------------------------------------------------------------------------------#
+$CREATION
+Local Integer MY_STATUS
+
+#YOU CAN USE THE INSTRUCTION SetInstance WHICH WILL SET PROPERTIE's values from field'S VALUES
+#For PROPERTIE's names that are identical to a field'S NAME OF THE [F] File.
+SetInstance YEST_INSTANCE With [F:YEST]
+
+#SET NEW GUID VALUE FOR NEW RECORD THAT IS CREATED
+YEST_INSTANCE.YGUID   = num$(getUuid)
+#SETS THE TWO FIELD VALUES, AS THESES TWO FIELDS WOULD NOT SAVE WITH THE AINSERT FUNCTION
+YEST_INSTANCE.YKNO    = [M:YEST1]YKNO
+YEST_INSTANCE.YFUT    = [M:YEST1]YFUT
+
+[L]MY_STATUS = fmet YEST_INSTANCE.AINSERT()
+If ([L]MY_STATUS >= [V]CST_AERROR)
+  # Error management
+  GMESSAGE = func SYRSTACKTOOLS.MSGSTACK_GET_FIRST_MAX_MESSAGE(YEST_INSTANCE)
+  GOK = 0 : GERR = 1
+  Return
+Endif
+
+SetInstance [F:YEST] With YEST_INSTANCE
+Affzo [M:YEST]1-99
+Affzo [M:YEST1]1-99
+
+Return
+
+#------------------------------------------------------------------------------------#
+#Read record
+#------------------------------------------------------------------------------------#
+$LIENS
+
+If (YEST_INSTANCE <> null) : FreeGroup YEST_INSTANCE : Endif
+YEST_INSTANCE = NewInstance C_YEST AllocGroup null
+Local Integer MY_STATUS
+[L]MY_STATUS = fmet YEST_INSTANCE.AREAD([M:YEST]YESTID)
+If ([L]MY_STATUS >= [V]CST_AERROR)
+  # Error management
+  GMESSAGE = func SYRSTACKTOOLS.MSGSTACK_GET_FIRST_MAX_MESSAGE(YEST_INSTANCE)
+  GOK = 0 : GERR = 1
+  Return
+Endif
+Read [F:YEST]YEST0=[M:YEST]YESTID
+[M:YEST1] = [F:YEST]
+
+nolign = 1
+  For [F:YPRC] Where [F:YPRC]YESTID = [M:YEST]YESTID
+    [M:YEST2] = [F:YPRC]
+    nolign += 1
+  Next
+  [M:YEST2]NBLIG = nolign-1
+
+Return
+
+#------------------------------------------------------------------------------------#
+#Modify record
+#------------------------------------------------------------------------------------#
+$MODIF
+Local Integer MY_STATUS
+
+SetInstance YEST_INSTANCE With [F:YEST]
+
+[L]MY_STATUS = fmet YEST_INSTANCE.AUPDATE()
+If ([L]MY_STATUS >= [V]CST_AERROR)
+  # Error management
+  GMESSAGE = func SYRSTACKTOOLS.MSGSTACK_GET_FIRST_MAX_MESSAGE(YEST_INSTANCE)
+  GOK = 0 : GERR = 1
+  Return
+Endif
+
+Return
+
+#------------------------------------------------------------------------------------#
+#AFTER UPDATE
+#------------------------------------------------------------------------------------#
+$APRES_MOD
+
+Gosub RELIT From GOBJSUB
+
+Return
+
+#------------------------------------------------------------------------------------#
+#This action is called when a field of the primary key is changed
+#------------------------------------------------------------------------------------#
+$RAZDUP
+Local Integer MY_STATUS
+
+If (YEST_INSTANCE <> null) : FreeGroup YEST_INSTANCE : Endif
+YEST_INSTANCE = NewInstance C_YEST AllocGroup null
+
+[L]MY_STATUS = fmet YEST_INSTANCE.AINIT()
+If ([L]MY_STATUS >= [V]CST_AERROR)
+  GMESSAGE = func SYRSTACKTOOLS.MSGSTACK_GET_FIRST_MAX_MESSAGE(YEST_INSTANCE)
+  GOK = 0 : GERR = 1
+  Return
+Endif
+
+Return
+
+#------------------------------------------------------------------------------------#
+#Begin delete record
+#------------------------------------------------------------------------------------#
+$AV_ANNULE
+  Local Integer ANOWRITE
+  ANOWRITE = 1
+Return
+
+#------------------------------------------------------------------------------------#
+#Close screen
+#------------------------------------------------------------------------------------#
+$FERME
+#When you are leaving the transaction, you have to free the instance.
+If (YEST_INSTANCE <> null) : FreeGroup YEST_INSTANCE : Endif
+Kill YEST_INSTANCE
+
+Return
+
+#------------------------------------------------------------------------------------#
+#Handle Classic Errors from Class
+#------------------------------------------------------------------------------------#
+Subprog RECOVERS_ERROR_IN_CLASSIC(YEST_INSTANCE)
+
+  Variable Instance YEST_INSTANCE Using C_YEST
+
+  Local Integer NI
+  Local Char SMESSAGE(type(GMESSAGE)-10)
+  Local Integer MY_STATUS
+  Local Integer IMESSAGE
+
+  IMESSAGE = func SYRSTACKTOOLS.MSGSTACK_GET_FIRST_UPPER_MESSAGE(YEST_INSTANCE, SMESSAGE)
+  If IMESSAGE = [V]CST_AWARNING Then
+    GMESSAGE = SMESSAGE
+    GERR = 2
+  Elsif IMESSAGE = [V]CST_AERROR or IMESSAGE = [V]CST_AFATAL Then
+    GMESSAGE = SMESSAGE
+    GOK = 0
+    GERR = 1
+  Endif
+
+  [L]MY_STATUS = [V]CST_AOK
+End
+
+#------------------------------------------------------------------------------------#
+#After create record
+#------------------------------------------------------------------------------------#
+$APRES_CRE
+
+Gosub RELIT From GOBJSUB
+
+Return
+
+#------------------------------------------------------------------------------------#
+#Delete record
+#------------------------------------------------------------------------------------#
+$ANNULE
+
+Local Integer MY_STATUS
+[L]MY_STATUS = fmet YEST_INSTANCE.ADELETE()
+If ([L]MY_STATUS >= [V]CST_AERROR)
+  # Error management
+  GMESSAGE = func SYRSTACKTOOLS.MSGSTACK_GET_FIRST_MAX_MESSAGE(YEST_INSTANCE)
+  GOK = 0 : GERR = 1
+  Return
+Endif
+
+# DFCX1-169 MZ: Delete records in the Company group as well
+If func AFNC.ACTIV("YLAND")
+
+  If !clalev([F:YAGF])        :   Local File AGRPFCY [YAGF]   : Endif
+  If !clalev([F:YCPY])        :   Local File COMPANY [YCPY]   : Endif
+  If !clalev([F:YFGR])        :   Local File FACGROUP [YFGR]  : Endif
+
+  Local Char YGRPCOD
+  YGRPCOD = "D"+num$([M:YEST]YESTNBR)
+
+  Delete [F:YAGF] Where GRP=YGRPCOD
+  Delete [F:YCPY] Where CPY=YGRPCOD
+  Delete [F:YFGR] Where CPY=YGRPCOD
+  If fstat=1
+    GOK = -1 : GLOCK = "$ANAVFIL"-YGRPCOD : Return
+  Endif
+
+Endif
+# DFCX1-169 MZ: Delete records in the Company group as well
+
+
+Return
+
+
+#------------------------------------------------------------------------------------#
+#Verificatio of create record
+#------------------------------------------------------------------------------------#
+$VERIF_CRE
+
+# DFCX1-169 MZ: Creation rules
+If func AFNC.ACTIV("YLAND")
+
+  If !clalev([F:YAGF])        :   Local File AGRPFCY [YAGF]   : Endif
+  If !clalev([F:YCPY])        :   Local File COMPANY [YCPY]   : Endif
+  If !clalev([F:YFGR])        :   Local File FACGROUP [YFGR]  : Endif
+  Local Tinyint YOK
+
+  # If the Estate Company Group Code is empty, create new one with linked companies as members
+  If [M:YEST]YESTCPYGRP = ""
+
+    Local Char YNAMEFILE(255), YGRPCOD
+    YNAMEFILE = "YLAND_YFACGROUP_" + num$([M:YEST]YESTID)
+    YGRPCOD = "D"+num$([M:YEST]YESTNBR)
+
+    Openo filpath('TMP',YNAMEFILE,"CSV") Using [F_YAGF]
+    adxifs=','
+    adxirs= chr$(13)+chr$(10)
+
+    Wrseq "A" , YGRPCOD , [M:YEST]YESTDES , [M:YEST]YESTDES , "1,1,DEVOP,DEVOP" , format$("D:DDMMYYYY",date$) Using [F_YAGF]
+    Wrseq "C" , YGRPCOD , [M:YEST]YESTDES , [M:YEST]YESTDES , "1,AUD" Using [F_YAGF]
+    If [M:YEST1]YDEVFCY<>""
+      Wrseq "F" , YGRPCOD , [M:YEST1]YDEVFCY Using [F_YAGF]
+    Endif
+    If [M:YEST1]YPJTFCY<>""
+      Wrseq "F" , YGRPCOD , [M:YEST1]YPJTFCY Using [F_YAGF]
+    Endif
+
+    Openo Using [F_YAGF]
+
+    Call IMPORTSIL("YFACGROUP", filpath('TMP',YNAMEFILE,"CSV")) From GIMPOBJ
+
+    Raz YOK
+    Read [F:YAGF]AGF0 = YGRPCOD                   :
+    If !fstat
+      Trbegin [YAGF]
+        [F:YAGF]FLGCPY = 1                # Template does not update this flag to 1
+        Rewrite [F:YAGF]
+        If !fstat
+          Commit
+        Else
+          Rollback
+          Call RECOVERS_ERROR_IN_CLASSIC(YEST_INSTANCE)
+          If GMESSAGE = AVOID.ACHAR Then
+            GMESSAGE = mess(3,6255,1)       # Please untick Copmany group checkbox on Site grouping
+            GERR = 2
+          Endif
+        Endif
+    Else
+      YOK = 1         #   Record did not insert properly
+    Endif
+
+    # Check other records inserted properly
+    Look [F:YCPY]CPY0 = YGRPCOD                     :   If fstat  : YOK = 1 : Endif
+    If [M:YEST1]YDEVFCY<>""
+      Look [F:YFGR]FGR0 = YGRPCOD;[M:YEST1]YDEVFCY  :   If fstat  : YOK = 1 : Endif
+    Endif
+    If [M:YEST1]YPJTFCY<>""
+      Look [F:YFGR]FGR0 = YGRPCOD;[M:YEST1]YPJTFCY  :   If fstat  : YOK = 1 : Endif
+    Endif
+
+    If YOK
+      Call RECOVERS_ERROR_IN_CLASSIC(YEST_INSTANCE)
+      If GMESSAGE = AVOID.ACHAR Then
+        GMESSAGE = mess(1,6255,1)       # Company group did not create proparly
+        GERR = 1
+        OK = 1
+      Endif
+    Else
+      [M:YEST]YESTCPYGRP = YGRPCOD
+    Endif
+
+  # If the Estate Company Group Code is populated,
+  # ensure the members of the group match the linked companies defined in the Entities Block and the Land Owners on all linked Land Purchases
+  Else        #   [M:YEST]YESTCPYGRP <> ""
+    Look [F:YAGF]AGF0 = [M:YEST]YESTCPYGRP
+    If !fstat
+
+      # Check link site to company
+      If [M:YEST1]YDEVFCY<>""
+        Look [F:YFGR]FGR0 = [M:YEST]YESTCPYGRP;[M:YEST1]YDEVFCY
+        If fstat  # Record does not exists
+          Trbegin [F:YFGR]
+          Delete [F:YFGR] Where CPY = [M:YEST]YESTCPYGRP and FCY <> [M:YEST1]YPJTFCY
+          [F:YFGR]CPY = [M:YEST]YESTCPYGRP
+          [F:YFGR]FCY = [M:YEST1]YDEVFCY
+          Write [F:YFGR]
+          If !fstat
+            Commit
+            Call RECOVERS_ERROR_IN_CLASSIC(YEST_INSTANCE)
+            If GMESSAGE = AVOID.ACHAR Then
+              GMESSAGE = mess(12,6255,1)       # System link Developer to group company
+              GERR = 2
+            Endif
+          Else
+            Rollback
+            Call RECOVERS_ERROR_IN_CLASSIC(YEST_INSTANCE)
+            If GMESSAGE = AVOID.ACHAR Then
+              GMESSAGE = mess(4,6255,1)       # System could not link Developer to group company
+              GERR = 2
+            Endif
+          Endif
+        Endif
+      Endif
+
+      If [M:YEST1]YPJTFCY<>""
+        Look [F:YFGR]FGR0 = [M:YEST]YESTCPYGRP;[M:YEST1]YPJTFCY
+        If fstat  # Record does not exists
+          Trbegin [F:YFGR]
+          Delete [F:YFGR] Where CPY = [M:YEST]YESTCPYGRP and FCY <> [M:YEST1]YDEVFCY
+          [F:YFGR]CPY = [M:YEST]YESTCPYGRP
+          [F:YFGR]FCY = [M:YEST1]YPJTFCY
+          Write [F:YFGR]
+          If !fstat
+            Commit
+            Call RECOVERS_ERROR_IN_CLASSIC(YEST_INSTANCE)
+            If GMESSAGE = AVOID.ACHAR Then
+              GMESSAGE = mess(13,6255,1)       # System link Project manager to group company
+              GERR = 2
+            Endif
+          Else
+            Rollback
+            Call RECOVERS_ERROR_IN_CLASSIC(YEST_INSTANCE)
+            If GMESSAGE = AVOID.ACHAR Then
+              GMESSAGE = mess(5,6255,1)       # System could not link Proj. manager to group company
+              GERR = 2
+            Endif
+          Endif
+        Endif
+      Endif
+
+    Endif
+  Endif       #   [M:YEST]YESTCPYGRP = ""
+
+
+  # If Job Code is empty and the Job Active flag is set to true, create a dimension value in the Dimension Type
+
+  Local Char YDIE
+  YDIE = func AFNC.PARAM ("YDEVDTY","")   # Read dimension type from general parameter
+  If !clalev([F:YCCE])      :   Local File CACCE [YCCE]     :   Endif
+  If !clalev([F:YATX])      :   Local File ATEXTRA [YATX]   :  Endif
+
+  Filter [F:YCCE] Where DIE = YDIE
+  Filter [F:YATX] Where CODFIC = 'CACCE'
+
+  If YDIE <> ""
+    If [M:YEST]YJOBCOD = ""
+
+      If [M:YEST]YJOBACTFLG = 2
+        Local Char YNAMEFILE(255)
+        YNAMEFILE = "YLAND_YCCELAND_" + num$([M:YEST]YESTID)
+        Openo filpath('TMP',YNAMEFILE,"CSV") Using [F_YCCE]
+        adxifs=','
+        adxirs= chr$(13)+chr$(10)
+
+        Wrseq YDIE , num$([M:YEST]YESTNBR) , [M:YEST]YESTDES , [M:YEST]YESTDES , [M:YEST]YESTCPYGRP, [M:YEST]YJOBACTFLG , "0,2,0" Using [F_YCCE]
+        Openo Using [F_YCCE]
+        Call IMPORTSIL("YCCELAND", filpath('TMP',YNAMEFILE,"CSV")) From GIMPOBJ
+
+        Look [F:YCCE]CCE0 = YDIE;num$([M:YEST]YESTNBR)
+        If !fstat
+          [M:YEST]YJOBCOD = num$([M:YEST]YESTNBR)
+        Else
+          Call RECOVERS_ERROR_IN_CLASSIC(YEST_INSTANCE)
+          If GMESSAGE = AVOID.ACHAR Then
+            GMESSAGE = mess(11,6255,1)       # Job code has not created successfully. Please create that manually and assign
+            GERR = 2
+          Endif
+        Endif
+      Endif   # [M:YEST]YJOBACTFLG = 2
+
+    # If the Job Code is populated,
+    # ensure the active flage of dimension value is same as job active flag and the Description is the same as the Estate Description.
+    Else  # [M:YEST]YJOBCOD <> ""
+      Read [F:YCCE]CCE0 = YDIE;[M:YEST]YJOBCOD
+      Read [F:YATX]AXX0 = 'CACCE';'DESTRA';'ENG';YDIE;[M:YEST]YJOBCOD
+
+      If !fstat
+        # Check activate is same
+        If [F:YCCE]ENAFLG <> [M:YEST]YJOBACTFLG
+          Trbegin [F:YCCE]
+          [F:YCCE]ENAFLG = [M:YEST]YJOBACTFLG
+          Rewrite [F:YCCE]
+          If !fstat
+            Commit
+            Call RECOVERS_ERROR_IN_CLASSIC(YEST_INSTANCE)
+            If GMESSAGE = AVOID.ACHAR Then
+              GMESSAGE = mess(6,6255,1)       # Activate flag of Dimesnion and Estate are different. System updated dimension
+              GERR = 2
+            Endif
+          Else
+            Rollback
+            Call RECOVERS_ERROR_IN_CLASSIC(YEST_INSTANCE)
+            If GMESSAGE = AVOID.ACHAR Then
+              GMESSAGE = mess(7,6255,1)       # Activate flag of Dimesnion and Estate are different. System could not update that
+              GERR = 2
+            Endif
+          Endif
+        Endif # [F:YCCE]ENAFLG <> [M:YEST]YJOBACTFLG
+
+        # Check description is same
+        If [F:YCCE]DES <> [M:YEST]YESTDES
+          Trbegin [F:YCCE]
+          [F:YCCE]DES = [M:YEST]YESTDES
+          [F:YATX]TEXTE = [M:YEST]YESTDES
+          Rewrite [F:YCCE]
+          Rewrite [F:YATX]
+          If !fstat
+            Commit
+            Call RECOVERS_ERROR_IN_CLASSIC(YEST_INSTANCE)
+            If GMESSAGE = AVOID.ACHAR Then
+              GMESSAGE = mess(8,6255,1)       # Description of Dimesnion and Estate was different and system updated dimension.
+              GERR = 2
+            Endif
+          Else
+            Rollback
+            Call RECOVERS_ERROR_IN_CLASSIC(YEST_INSTANCE)
+            If GMESSAGE = AVOID.ACHAR Then
+              GMESSAGE = mess(9,6255,1)       # Description of Dimesnion and Estate was different and system updated dimension.
+              GERR = 2
+            Endif
+          Endif
+        Endif   # [F:YCCE]DES <> [M:YEST]YESTCPYGRP
+
+        # Check Company/site is same
+        If [F:YCCE]FCY <> [M:YEST]YESTCPYGRP
+          Trbegin [F:YCCE]
+          [F:YCCE]FCY = [M:YEST]YESTCPYGRP
+          Rewrite [F:YCCE]
+          If !fstat
+            Commit
+            Call RECOVERS_ERROR_IN_CLASSIC(YEST_INSTANCE)
+            If GMESSAGE = AVOID.ACHAR Then
+              GMESSAGE = mess(14,6255,1)       # Company group of Dimesnion and Estate are different. System updated dimension
+              GERR = 2
+            Endif
+          Else
+            Rollback
+            Call RECOVERS_ERROR_IN_CLASSIC(YEST_INSTANCE)
+            If GMESSAGE = AVOID.ACHAR Then
+              GMESSAGE = mess(15,6255,1)       # Company group of Dimesnion and Estate are different. System could not update that
+              GERR = 2
+            Endif
+          Endif
+        Endif # [F:YCCE]ENAFLG <> [M:YEST]YJOBACTFLG
+
+      Else
+        Call RECOVERS_ERROR_IN_CLASSIC(YEST_INSTANCE)
+        If GMESSAGE = AVOID.ACHAR Then
+          GMESSAGE = mess(10,6255,1)       # Job code does not exists on Dimenstion list.
+          GERR = 1
+        Endif
+      Endif #   Read [F:YCCE]CCE0 = YDIE;[M:YEST]YJOBCOD
+
+    Endif # [M:YEST]YJOBCOD = ""
+
+  Else  # YDIE = ""
+    Call RECOVERS_ERROR_IN_CLASSIC(YEST_INSTANCE)
+    If GMESSAGE = AVOID.ACHAR Then
+      GMESSAGE = mess(2,6255,1)       # Dimension type has not configured on General parameter.
+      GERR = 1
+    Endif
+  Endif # YDIE <> ""
+
+Endif
+# DFCX1-169 MZ: Creation rules
+
+Return
+
+**********
+7,"TRT","SUBYEST","Land Developments - Estate"
+2,"AMK","YEST","Estate"
+3,"AMK",YEST
+4,"ABRMSK",0,"YEST"
+4,"ACTBLOC",0,""
+4,"ACTBLOC",1,""
+4,"ACTBLOC",2,""
+4,"ACTBLOC",3,""
+4,"ACTBLOC",4,""
+4,"ACTBLOC",5,""
+4,"ACTBLOC",6,""
+4,"ACTBLOC",7,""
+4,"ACTBLOC",8,""
+4,"ACTBLOC",9,""
+4,"ACTBLOC",10,""
+4,"ACTBLOC",11,""
+4,"ACTBLOC",12,""
+4,"ACTBLOC",13,""
+4,"ACTBLOC",14,""
+4,"BASPAG",0,""
+4,"BASPAG",1,""
+4,"BASPAG",2,""
+4,"BASPAG",3,""
+4,"BASPAG",4,""
+4,"BASPAG",5,""
+4,"BASPAG",6,""
+4,"BASPAG",7,""
+4,"BASPAG",8,""
+4,"BASPAG",9,""
+4,"BASPAG",10,""
+4,"BASPAG",11,""
+4,"BASPAG",12,""
+4,"BASPAG",13,""
+4,"BASPAG",14,""
+4,"BLOCACT1",0,""
+4,"BLOCACT1",1,""
+4,"BLOCACT1",2,""
+4,"BLOCACT1",3,""
+4,"BLOCACT1",4,""
+4,"BLOCACT1",5,""
+4,"BLOCACT1",6,""
+4,"BLOCACT1",7,""
+4,"BLOCACT1",8,""
+4,"BLOCACT1",9,""
+4,"BLOCACT1",10,""
+4,"BLOCACT1",11,""
+4,"BLOCACT1",12,""
+4,"BLOCACT1",13,""
+4,"BLOCACT1",14,""
+4,"BLOCAFFD",0,1
+4,"BLOCAFFD",1,0
+4,"BLOCAFFD",2,0
+4,"BLOCAFFD",3,0
+4,"BLOCAFFD",4,0
+4,"BLOCAFFD",5,0
+4,"BLOCAFFD",6,0
+4,"BLOCAFFD",7,0
+4,"BLOCAFFD",8,0
+4,"BLOCAFFD",9,0
+4,"BLOCAFFD",10,0
+4,"BLOCAFFD",11,0
+4,"BLOCAFFD",12,0
+4,"BLOCAFFD",13,0
+4,"BLOCAFFD",14,0
+4,"BLOCGDEF",0,1
+4,"BLOCGDEF",1,0
+4,"BLOCGDEF",2,0
+4,"BLOCGDEF",3,0
+4,"BLOCGDEF",4,0
+4,"BLOCGDEF",5,0
+4,"BLOCGDEF",6,0
+4,"BLOCGDEF",7,0
+4,"BLOCGDEF",8,0
+4,"BLOCGDEF",9,0
+4,"BLOCGDEF",10,0
+4,"BLOCGDEF",11,0
+4,"BLOCGDEF",12,0
+4,"BLOCGDEF",13,0
+4,"BLOCGDEF",14,0
+4,"BLOCLIEN1",0,""
+4,"BLOCLIEN1",1,""
+4,"BLOCLIEN1",2,""
+4,"BLOCLIEN1",3,""
+4,"BLOCLIEN1",4,""
+4,"BLOCLIEN1",5,""
+4,"BLOCLIEN1",6,""
+4,"BLOCLIEN1",7,""
+4,"BLOCLIEN1",8,""
+4,"BLOCLIEN1",9,""
+4,"BLOCLIEN1",10,""
+4,"BLOCLIEN1",11,""
+4,"BLOCLIEN1",12,""
+4,"BLOCLIEN1",13,""
+4,"BLOCLIEN1",14,""
+4,"BLOCLIEN2",0,""
+4,"BLOCLIEN2",1,""
+4,"BLOCLIEN2",2,""
+4,"BLOCLIEN2",3,""
+4,"BLOCLIEN2",4,""
+4,"BLOCLIEN2",5,""
+4,"BLOCLIEN2",6,""
+4,"BLOCLIEN2",7,""
+4,"BLOCLIEN2",8,""
+4,"BLOCLIEN2",9,""
+4,"BLOCLIEN2",10,""
+4,"BLOCLIEN2",11,""
+4,"BLOCLIEN2",12,""
+4,"BLOCLIEN2",13,""
+4,"BLOCLIEN2",14,""
+4,"BLOCLIEN3",0,""
+4,"BLOCLIEN3",1,""
+4,"BLOCLIEN3",2,""
+4,"BLOCLIEN3",3,""
+4,"BLOCLIEN3",4,""
+4,"BLOCLIEN3",5,""
+4,"BLOCLIEN3",6,""
+4,"BLOCLIEN3",7,""
+4,"BLOCLIEN3",8,""
+4,"BLOCLIEN3",9,""
+4,"BLOCLIEN3",10,""
+4,"BLOCLIEN3",11,""
+4,"BLOCLIEN3",12,""
+4,"BLOCLIEN3",13,""
+4,"BLOCLIEN3",14,""
+4,"BLOCPAR1",0,""
+4,"BLOCPAR1",1,""
+4,"BLOCPAR1",2,""
+4,"BLOCPAR1",3,""
+4,"BLOCPAR1",4,""
+4,"BLOCPAR1",5,""
+4,"BLOCPAR1",6,""
+4,"BLOCPAR1",7,""
+4,"BLOCPAR1",8,""
+4,"BLOCPAR1",9,""
+4,"BLOCPAR1",10,""
+4,"BLOCPAR1",11,""
+4,"BLOCPAR1",12,""
+4,"BLOCPAR1",13,""
+4,"BLOCPAR1",14,""
+4,"BLOCPAR2",0,""
+4,"BLOCPAR2",1,""
+4,"BLOCPAR2",2,""
+4,"BLOCPAR2",3,""
+4,"BLOCPAR2",4,""
+4,"BLOCPAR2",5,""
+4,"BLOCPAR2",6,""
+4,"BLOCPAR2",7,""
+4,"BLOCPAR2",8,""
+4,"BLOCPAR2",9,""
+4,"BLOCPAR2",10,""
+4,"BLOCPAR2",11,""
+4,"BLOCPAR2",12,""
+4,"BLOCPAR2",13,""
+4,"BLOCPAR2",14,""
+4,"BLOCPOSG",0,1
+4,"BLOCPOSG",1,0
+4,"BLOCPOSG",2,0
+4,"BLOCPOSG",3,0
+4,"BLOCPOSG",4,0
+4,"BLOCPOSG",5,0
+4,"BLOCPOSG",6,0
+4,"BLOCPOSG",7,0
+4,"BLOCPOSG",8,0
+4,"BLOCPOSG",9,0
+4,"BLOCPOSG",10,0
+4,"BLOCPOSG",11,0
+4,"BLOCPOSG",12,0
+4,"BLOCPOSG",13,0
+4,"BLOCPOSG",14,0
+4,"BLOCREPD",0,1
+4,"BLOCREPD",1,0
+4,"BLOCREPD",2,0
+4,"BLOCREPD",3,0
+4,"BLOCREPD",4,0
+4,"BLOCREPD",5,0
+4,"BLOCREPD",6,0
+4,"BLOCREPD",7,0
+4,"BLOCREPD",8,0
+4,"BLOCREPD",9,0
+4,"BLOCREPD",10,0
+4,"BLOCREPD",11,0
+4,"BLOCREPD",12,0
+4,"BLOCREPD",13,0
+4,"BLOCREPD",14,0
+4,"BLOCTYPG",0,1
+4,"BLOCTYPG",1,0
+4,"BLOCTYPG",2,0
+4,"BLOCTYPG",3,0
+4,"BLOCTYPG",4,0
+4,"BLOCTYPG",5,0
+4,"BLOCTYPG",6,0
+4,"BLOCTYPG",7,0
+4,"BLOCTYPG",8,0
+4,"BLOCTYPG",9,0
+4,"BLOCTYPG",10,0
+4,"BLOCTYPG",11,0
+4,"BLOCTYPG",12,0
+4,"BLOCTYPG",13,0
+4,"BLOCTYPG",14,0
+4,"BLOCTYPT",0,0
+4,"BLOCTYPT",1,0
+4,"BLOCTYPT",2,0
+4,"BLOCTYPT",3,0
+4,"BLOCTYPT",4,0
+4,"BLOCTYPT",5,0
+4,"BLOCTYPT",6,0
+4,"BLOCTYPT",7,0
+4,"BLOCTYPT",8,0
+4,"BLOCTYPT",9,0
+4,"BLOCTYPT",10,0
+4,"BLOCTYPT",11,0
+4,"BLOCTYPT",12,0
+4,"BLOCTYPT",13,0
+4,"BLOCTYPT",14,0
+4,"BLOCVIEW",0,""
+4,"BLOCVIEW",1,""
+4,"BLOCVIEW",2,""
+4,"BLOCVIEW",3,""
+4,"BLOCVIEW",4,""
+4,"BLOCVIEW",5,""
+4,"BLOCVIEW",6,""
+4,"BLOCVIEW",7,""
+4,"BLOCVIEW",8,""
+4,"BLOCVIEW",9,""
+4,"BLOCVIEW",10,""
+4,"BLOCVIEW",11,""
+4,"BLOCVIEW",12,""
+4,"BLOCVIEW",13,""
+4,"BLOCVIEW",14,""
+4,"CODACT",0,"YLAND"
+4,"CODMSK",0,"YEST"
+4,"COLBLOC",0,1
+4,"COLBLOC",1,0
+4,"COLBLOC",2,0
+4,"COLBLOC",3,0
+4,"COLBLOC",4,0
+4,"COLBLOC",5,0
+4,"COLBLOC",6,0
+4,"COLBLOC",7,0
+4,"COLBLOC",8,0
+4,"COLBLOC",9,0
+4,"COLBLOC",10,0
+4,"COLBLOC",11,0
+4,"COLBLOC",12,0
+4,"COLBLOC",13,0
+4,"COLBLOC",14,0
+4,"CREDAT",0,20180823
+4,"CREDATTIM",0,"2018-08-23T06:09:42Z"
+4,"CREUSR",0,"MB"
+4,"DETBLC",0,0
+4,"DETBLC",1,0
+4,"DETBLC",2,0
+4,"DETBLC",3,0
+4,"DETBLC",4,0
+4,"DETBLC",5,0
+4,"DETBLC",6,0
+4,"DETBLC",7,0
+4,"DETBLC",8,0
+4,"DETBLC",9,0
+4,"DETBLC",10,0
+4,"DETBLC",11,0
+4,"DETBLC",12,0
+4,"DETBLC",13,0
+4,"DETBLC",14,0
+4,"FICREF",0,"YESTA"
+4,"FICREF",1,""
+4,"FICREF",2,""
+4,"FICREF",3,""
+4,"FICREF",4,""
+4,"HTBLOC",0,0
+4,"HTBLOC",1,0
+4,"HTBLOC",2,0
+4,"HTBLOC",3,0
+4,"HTBLOC",4,0
+4,"HTBLOC",5,0
+4,"HTBLOC",6,0
+4,"HTBLOC",7,0
+4,"HTBLOC",8,0
+4,"HTBLOC",9,0
+4,"HTBLOC",10,0
+4,"HTBLOC",11,0
+4,"HTBLOC",12,0
+4,"HTBLOC",13,0
+4,"HTBLOC",14,0
+4,"INTBLOC",0,""
+4,"INTBLOC",1,""
+4,"INTBLOC",2,""
+4,"INTBLOC",3,""
+4,"INTBLOC",4,""
+4,"INTBLOC",5,""
+4,"INTBLOC",6,""
+4,"INTBLOC",7,""
+4,"INTBLOC",8,""
+4,"INTBLOC",9,""
+4,"INTBLOC",10,""
+4,"INTBLOC",11,""
+4,"INTBLOC",12,""
+4,"INTBLOC",13,""
+4,"INTBLOC",14,""
+5,"INTMSK",0,"Estate","ENG",100372,""
+5,"INTMSK",0,"","***"
+4,"LGBLOC",0,0
+4,"LGBLOC",1,0
+4,"LGBLOC",2,0
+4,"LGBLOC",3,0
+4,"LGBLOC",4,0
+4,"LGBLOC",5,0
+4,"LGBLOC",6,0
+4,"LGBLOC",7,0
+4,"LGBLOC",8,0
+4,"LGBLOC",9,0
+4,"LGBLOC",10,0
+4,"LGBLOC",11,0
+4,"LGBLOC",12,0
+4,"LGBLOC",13,0
+4,"LGBLOC",14,0
+4,"LINBLOC",0,1
+4,"LINBLOC",1,0
+4,"LINBLOC",2,0
+4,"LINBLOC",3,0
+4,"LINBLOC",4,0
+4,"LINBLOC",5,0
+4,"LINBLOC",6,0
+4,"LINBLOC",7,0
+4,"LINBLOC",8,0
+4,"LINBLOC",9,0
+4,"LINBLOC",10,0
+4,"LINBLOC",11,0
+4,"LINBLOC",12,0
+4,"LINBLOC",13,0
+4,"LINBLOC",14,0
+4,"LNGLIB",0,20
+4,"LNGLIB",1,0
+4,"LNGLIB",2,0
+4,"LNGLIB",3,0
+4,"LNGLIB",4,0
+4,"LNGLIB",5,0
+4,"LNGLIB",6,0
+4,"LNGLIB",7,0
+4,"LNGLIB",8,0
+4,"LNGLIB",9,0
+4,"LNGLIB",10,0
+4,"LNGLIB",11,0
+4,"LNGLIB",12,0
+4,"LNGLIB",13,0
+4,"LNGLIB",14,0
+4,"MDL",0,1
+4,"MODULE",0,1
+4,"NBBLOC",0,1
+4,"NBFIC",0,1
+4,"NBLIGT",0,0
+4,"NBLIGT",1,0
+4,"NBLIGT",2,0
+4,"NBLIGT",3,0
+4,"NBLIGT",4,0
+4,"NBLIGT",5,0
+4,"NBLIGT",6,0
+4,"NBLIGT",7,0
+4,"NBLIGT",8,0
+4,"NBLIGT",9,0
+4,"NBLIGT",10,0
+4,"NBLIGT",11,0
+4,"NBLIGT",12,0
+4,"NBLIGT",13,0
+4,"NBLIGT",14,0
+4,"NBRCOL",0,74
+4,"NBRLIG",0,25
+4,"OPTION",0,""
+4,"OPTION",1,""
+4,"OPTION",2,""
+4,"OPTION",3,""
+4,"OPTION",4,""
+4,"OPTION",5,""
+4,"OPTION",6,""
+4,"OPTION",7,""
+4,"OPTION",8,""
+4,"OPTION",9,""
+4,"OPTION",10,""
+4,"OPTION",11,""
+4,"OPTION",12,""
+4,"OPTION",13,""
+4,"OPTION",14,""
+4,"POSBLOC",0,1.1
+4,"POSBLOC",1,0
+4,"POSBLOC",2,0
+4,"POSBLOC",3,0
+4,"POSBLOC",4,0
+4,"POSBLOC",5,0
+4,"POSBLOC",6,0
+4,"POSBLOC",7,0
+4,"POSBLOC",8,0
+4,"POSBLOC",9,0
+4,"POSBLOC",10,0
+4,"POSBLOC",11,0
+4,"POSBLOC",12,0
+4,"POSBLOC",13,0
+4,"POSBLOC",14,0
+4,"RANG",0,5
+4,"RANG",1,0
+4,"RANG",2,0
+4,"RANG",3,0
+4,"RANG",4,0
+4,"RANG",5,0
+4,"RANG",6,0
+4,"RANG",7,0
+4,"RANG",8,0
+4,"RANG",9,0
+4,"RANG",10,0
+4,"RANG",11,0
+4,"RANG",12,0
+4,"RANG",13,0
+4,"RANG",14,0
+4,"STYBLOC",0,""
+4,"STYBLOC",1,""
+4,"STYBLOC",2,""
+4,"STYBLOC",3,""
+4,"STYBLOC",4,""
+4,"STYBLOC",5,""
+4,"STYBLOC",6,""
+4,"STYBLOC",7,""
+4,"STYBLOC",8,""
+4,"STYBLOC",9,""
+4,"STYBLOC",10,""
+4,"STYBLOC",11,""
+4,"STYBLOC",12,""
+4,"STYBLOC",13,""
+4,"STYBLOC",14,""
+5,"TITBLOC",0,"","ENG",0,""
+5,"TITBLOC",0,"","***"
+5,"TITBLOC",1,"","ENG",0,""
+5,"TITBLOC",1,"","***"
+5,"TITBLOC",2,"","ENG",0,""
+5,"TITBLOC",2,"","***"
+5,"TITBLOC",3,"","ENG",0,""
+5,"TITBLOC",3,"","***"
+5,"TITBLOC",4,"","ENG",0,""
+5,"TITBLOC",4,"","***"
+5,"TITBLOC",5,"","ENG",0,""
+5,"TITBLOC",5,"","***"
+5,"TITBLOC",6,"","ENG",0,""
+5,"TITBLOC",6,"","***"
+5,"TITBLOC",7,"","ENG",0,""
+5,"TITBLOC",7,"","***"
+5,"TITBLOC",8,"","ENG",0,""
+5,"TITBLOC",8,"","***"
+5,"TITBLOC",9,"","ENG",0,""
+5,"TITBLOC",9,"","***"
+5,"TITBLOC",10,"","ENG",0,""
+5,"TITBLOC",10,"","***"
+5,"TITBLOC",11,"","ENG",0,""
+5,"TITBLOC",11,"","***"
+5,"TITBLOC",12,"","ENG",0,""
+5,"TITBLOC",12,"","***"
+5,"TITBLOC",13,"","ENG",0,""
+5,"TITBLOC",13,"","***"
+5,"TITBLOC",14,"","ENG",0,""
+5,"TITBLOC",14,"","***"
+4,"TRTSPE",0,"SPEYEST"
+4,"TRTSPV",0,""
+4,"TRTSTD",0,"SUBYEST"
+4,"TYPBLOC",0,2
+4,"TYPBLOC",1,0
+4,"TYPBLOC",2,0
+4,"TYPBLOC",3,0
+4,"TYPBLOC",4,0
+4,"TYPBLOC",5,0
+4,"TYPBLOC",6,0
+4,"TYPBLOC",7,0
+4,"TYPBLOC",8,0
+4,"TYPBLOC",9,0
+4,"TYPBLOC",10,0
+4,"TYPBLOC",11,0
+4,"TYPBLOC",12,0
+4,"TYPBLOC",13,0
+4,"TYPBLOC",14,0
+4,"TYPMSK",0,5
+4,"UPDDAT",0,20180925
+4,"UPDDATTIM",0,"2018-09-24T23:11:37Z"
+4,"UPDFLG",0,0
+4,"UPDUSR",0,"MAJID"
+6,"AMK"
+3,"AMZ","YESTNBR"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YEST"
+4,"CODTYP",0,"C"
+4,"CODZON",0,"YESTNBR"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2018-09-24T23:11:37Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Estate number","ENG",100377,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,3
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,1
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,1
+4,"OBLIG",0,2
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2018-09-24T23:11:37Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YESTID"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YEST"
+4,"CODTYP",0,"YEST"
+4,"CODZON",0,"YESTID"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2018-09-24T23:11:37Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Estate ID","ENG",100395,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,1.2
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,2
+4,"OBLIG",0,2
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2018-09-24T23:11:37Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YESTDES"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YEST"
+4,"CODTYP",0,"A"
+4,"CODZON",0,"YESTDES"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2018-09-24T23:11:37Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Estate Description","ENG",100378,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,30
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,1.3
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,3
+4,"OBLIG",0,2
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2018-09-24T23:11:37Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YESTSTA"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YEST"
+4,"CODTYP",0,"M"
+4,"CODZON",0,"YESTSTA"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2018-09-24T23:11:37Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Estate Status","ENG",100379,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,15
+4,"MODE",0,0
+4,"NOLIB",0,6214
+4,"NOZONE",0,1.4
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,4
+4,"OBLIG",0,2
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2018-09-24T23:11:37Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YJOBACTFLG"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YEST"
+4,"CODTYP",0,"M"
+4,"CODZON",0,"YJOBACTFLG"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2018-09-24T23:11:37Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Job Active Flag","ENG",100380,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,4
+4,"MODE",0,0
+4,"NOLIB",0,1
+4,"NOZONE",0,2.1
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,5
+4,"OBLIG",0,1
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,2
+4,"UPDDATTIM",0,"2018-09-24T23:11:37Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YJOBCOD"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YEST"
+4,"CODTYP",0,"A"
+4,"CODZON",0,"YJOBCOD"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2018-09-24T23:11:37Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Job code","ENG",21780,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,15
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,2.2
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,6
+4,"OBLIG",0,1
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2018-09-24T23:11:37Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YESTCPYGRP"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YEST"
+4,"CODTYP",0,"AGC"
+4,"CODZON",0,"YESTCPYGRP"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2018-09-24T23:11:37Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Estate Company Group","ENG",100382,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,1
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,2.3
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,7
+4,"OBLIG",0,1
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,2
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2018-09-24T23:11:37Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YRPTHRP"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YEST"
+4,"CODTYP",0,"M"
+4,"CODZON",0,"YRPTHRP"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2018-09-24T23:11:37Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Reporting Group","ENG",100384,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,15
+4,"MODE",0,0
+4,"NOLIB",0,6242
+4,"NOZONE",0,2.4
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,8
+4,"OBLIG",0,1
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2018-09-24T23:11:37Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+7,"AMK","YEST","Estate"
+2,"AOE","YCCELAND",""
+3,"AOE",YCCELAND
+4,"ACS",0,""
+4,"AOWSTA",0,1
+4,"CHRNUM",0,0
+4,"CODACT",0,"YLAND"
+4,"CODDBA",0,1
+4,"CREDAT",0,20180924
+4,"CREDATTIM",0,"2018-09-24T01:37:22Z"
+4,"CREUSR",0,"MAJID"
+4,"ENAFLG",0,2
+4,"ENAWRK",0,1
+4,"EXPORT",0,2
+4,"EXT",0,"YCCELAND"
+4,"FIL",0,"CACCE"
+4,"FIL",1,""
+4,"FIL",2,""
+4,"FIL",3,""
+4,"FIL",4,""
+4,"FIL",5,""
+4,"FIL",6,""
+4,"FIL",7,""
+4,"FIL",8,""
+4,"FIL",9,""
+4,"FIL",10,""
+4,"FIL",11,""
+4,"FIL",12,""
+4,"FIL",13,""
+4,"FIL",14,""
+4,"FIL",15,""
+4,"FIL",16,""
+4,"FIL",17,""
+4,"FIL",18,""
+4,"FIL",19,""
+4,"FILEXT",0,""
+4,"FLDLIM",0,""
+4,"FLGEXP",0,""
+4,"FLGEXP",1,""
+4,"FLGEXP",2,""
+4,"FLGEXP",3,""
+4,"FLGEXP",4,""
+4,"FLGEXP",5,""
+4,"FLGEXP",6,""
+4,"FLGEXP",7,""
+4,"FLGEXP",8,""
+4,"FLGEXP",9,""
+4,"FLGEXP",10,""
+4,"FLGEXP",11,""
+4,"FLGEXP",12,""
+4,"FLGEXP",13,""
+4,"FLGEXP",14,""
+4,"FLGEXP",15,""
+4,"FLGEXP",16,""
+4,"FLGEXP",17,""
+4,"FLGEXP",18,""
+4,"FLGEXP",19,""
+4,"FLGFIL",0,"CACCE"
+4,"FLGFIL",1,""
+4,"FLGFIL",2,""
+4,"FLGFIL",3,""
+4,"FLGFIL",4,""
+4,"FLGFIL",5,""
+4,"FLGFIL",6,""
+4,"FLGFIL",7,""
+4,"FLGKEY",0,"CCE0"
+4,"FLGKEY",1,""
+4,"FLGKEY",2,""
+4,"FLGKEY",3,""
+4,"FLGKEY",4,""
+4,"FLGKEY",5,""
+4,"FLGKEY",6,""
+4,"FLGKEY",7,""
+4,"FLGLEV",0,1
+4,"FLGLEV",1,0
+4,"FLGLEV",2,0
+4,"FLGLEV",3,0
+4,"FLGLEV",4,0
+4,"FLGLEV",5,0
+4,"FLGLEV",6,0
+4,"FLGLEV",7,0
+4,"FLGLNK",0,""
+4,"FLGLNK",1,""
+4,"FLGLNK",2,""
+4,"FLGLNK",3,""
+4,"FLGLNK",4,""
+4,"FLGLNK",5,""
+4,"FLGLNK",6,""
+4,"FLGLNK",7,""
+4,"FLGREC",0,""
+4,"FLGREC",1,""
+4,"FLGREC",2,""
+4,"FLGREC",3,""
+4,"FLGREC",4,""
+4,"FLGREC",5,""
+4,"FLGREC",6,""
+4,"FLGREC",7,""
+4,"FONCTION",0,"GESCCE"
+4,"IMPORT",0,2
+4,"MODULE",0,9
+4,"NBRFLG",0,1
+4,"NBRLIG",0,9
+4,"OBJ",0,"CCE"
+4,"OPTCHA",0,1
+4,"OPTDAT",0,4
+4,"OPTMNL",0,0
+4,"OPTSPE",0,1
+4,"OPTUPD",0,2
+4,"RECLEN",0,0
+4,"RECLEN",1,0
+4,"RECLEN",2,0
+4,"RECLEN",3,0
+4,"RECLEN",4,0
+4,"RECLEN",5,0
+4,"RECLEN",6,0
+4,"RECLEN",7,0
+4,"REPFIN",0,"[TRA]"
+4,"SEPDEC",0,"."
+4,"SEPFLD",0,"ÿ"
+4,"SEPREC",0,"\013\010"
+4,"SPEIMP",0,""
+4,"TRTIMP",0,""
+4,"TYPEXP",0,2
+4,"TYPFIL",0,2
+4,"UPDDAT",0,20180924
+4,"UPDDATTIM",0,"2018-09-24T03:50:00Z"
+4,"UPDUSR",0,"MAJID"
+9,"INTIT",0,"Dimension - Land development","ENG","YCCELAND",""
+9,"INTIT",0,"","***"
+6,"AOE"
+3,"AOD",1
+4,"BAL",0,""
+4,"COM",0,"Dimension type code"
+4,"CREDATTIM",0,"2018-09-24T03:50:00Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YCCELAND"
+4,"FIL",0,"CACCE"
+4,"FLD",0,"DIE"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,1
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,2
+4,"STRVAL",0,""
+4,"TYP",0,""
+4,"UPDDATTIM",0,"2018-09-24T03:50:00Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",2
+4,"BAL",0,""
+4,"COM",0,"Dimension"
+4,"CREDATTIM",0,"2018-09-24T03:50:00Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YCCELAND"
+4,"FIL",0,"CACCE"
+4,"FLD",0,"CCE"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,2
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,2
+4,"STRVAL",0,""
+4,"TYP",0,""
+4,"UPDDATTIM",0,"2018-09-24T03:50:00Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",3
+4,"BAL",0,""
+4,"COM",0,"Description"
+4,"CREDATTIM",0,"2018-09-24T03:50:00Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YCCELAND"
+4,"FIL",0,"CACCE"
+4,"FLD",0,"DESTRA"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,3
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,""
+4,"UPDDATTIM",0,"2018-09-24T03:50:00Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",4
+4,"BAL",0,""
+4,"COM",0,"Short description"
+4,"CREDATTIM",0,"2018-09-24T03:50:00Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YCCELAND"
+4,"FIL",0,"CACCE"
+4,"FLD",0,"SHOTRA"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,4
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,""
+4,"UPDDATTIM",0,"2018-09-24T03:50:00Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",5
+4,"BAL",0,""
+4,"COM",0,"Company/Site"
+4,"CREDATTIM",0,"2018-09-24T03:50:00Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YCCELAND"
+4,"FIL",0,"CACCE"
+4,"FLD",0,"FCY"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,5
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,""
+4,"UPDDATTIM",0,"2018-09-24T03:50:00Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",6
+4,"BAL",0,""
+4,"COM",0,"Active"
+4,"CREDATTIM",0,"2018-09-24T03:50:00Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YCCELAND"
+4,"FIL",0,"CACCE"
+4,"FLD",0,"ENAFLG"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,6
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,""
+4,"UPDDATTIM",0,"2018-09-24T03:50:00Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",7
+4,"BAL",0,""
+4,"COM",0,"Carry forward"
+4,"CREDATTIM",0,"2018-09-24T03:50:00Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YCCELAND"
+4,"FIL",0,"CACCE"
+4,"FLD",0,"FRW"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,7
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,""
+4,"UPDDATTIM",0,"2018-09-24T03:50:00Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",8
+4,"BAL",0,""
+4,"COM",0,"Chargeable"
+4,"CREDATTIM",0,"2018-09-24T03:50:00Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YCCELAND"
+4,"FIL",0,"CACCE"
+4,"FLD",0,"IPT"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,8
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,""
+4,"UPDDATTIM",0,"2018-09-24T03:50:00Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",9
+4,"BAL",0,""
+4,"COM",0,"Budget tracking"
+4,"CREDATTIM",0,"2018-09-24T03:50:00Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YCCELAND"
+4,"FIL",0,"CACCE"
+4,"FLD",0,"BUDTRK"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,9
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,""
+4,"UPDDATTIM",0,"2018-09-24T03:50:00Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+7,"AOE","YCCELAND",""
+2,"AOE","YFACGROUP","Site group"
+3,"AOE",YFACGROUP
+4,"ACS",0,""
+4,"AOWSTA",0,1
+4,"CHRNUM",0,0
+4,"CODACT",0,"YLAND"
+4,"CODDBA",0,1
+4,"CREDAT",0,20180921
+4,"CREDATTIM",0,"2018-09-21T03:32:55Z"
+4,"CREUSR",0,"MAJID"
+4,"ENAFLG",0,2
+4,"ENAWRK",0,1
+4,"EXPORT",0,2
+4,"EXT",0,"YFACGROUP"
+4,"FIL",0,"AGRPFCY"
+4,"FIL",1,"COMPANY"
+4,"FIL",2,"FACGROUP"
+4,"FIL",3,""
+4,"FIL",4,""
+4,"FIL",5,""
+4,"FIL",6,""
+4,"FIL",7,""
+4,"FIL",8,""
+4,"FIL",9,""
+4,"FIL",10,""
+4,"FIL",11,""
+4,"FIL",12,""
+4,"FIL",13,""
+4,"FIL",14,""
+4,"FIL",15,""
+4,"FIL",16,""
+4,"FIL",17,""
+4,"FIL",18,""
+4,"FIL",19,""
+4,"FILEXT",0,""
+4,"FLDLIM",0,""
+4,"FLGEXP",0,""
+4,"FLGEXP",1,""
+4,"FLGEXP",2,""
+4,"FLGEXP",3,""
+4,"FLGEXP",4,""
+4,"FLGEXP",5,""
+4,"FLGEXP",6,""
+4,"FLGEXP",7,""
+4,"FLGEXP",8,""
+4,"FLGEXP",9,""
+4,"FLGEXP",10,""
+4,"FLGEXP",11,""
+4,"FLGEXP",12,""
+4,"FLGEXP",13,""
+4,"FLGEXP",14,""
+4,"FLGEXP",15,""
+4,"FLGEXP",16,""
+4,"FLGEXP",17,""
+4,"FLGEXP",18,""
+4,"FLGEXP",19,""
+4,"FLGFIL",0,"AGRPFCY"
+4,"FLGFIL",1,"COMPANY"
+4,"FLGFIL",2,"FACGROUP"
+4,"FLGFIL",3,""
+4,"FLGFIL",4,""
+4,"FLGFIL",5,""
+4,"FLGFIL",6,""
+4,"FLGFIL",7,""
+4,"FLGKEY",0,"AGF0"
+4,"FLGKEY",1,"CPY0"
+4,"FLGKEY",2,"FGR0"
+4,"FLGKEY",3,""
+4,"FLGKEY",4,""
+4,"FLGKEY",5,""
+4,"FLGKEY",6,""
+4,"FLGKEY",7,""
+4,"FLGLEV",0,1
+4,"FLGLEV",1,2
+4,"FLGLEV",2,3
+4,"FLGLEV",3,0
+4,"FLGLEV",4,0
+4,"FLGLEV",5,0
+4,"FLGLEV",6,0
+4,"FLGLEV",7,0
+4,"FLGLNK",0,""
+4,"FLGLNK",1,"[F:AGF]GRP"
+4,"FLGLNK",2,"[F:AGF]GRP"
+4,"FLGLNK",3,""
+4,"FLGLNK",4,""
+4,"FLGLNK",5,""
+4,"FLGLNK",6,""
+4,"FLGLNK",7,""
+4,"FLGREC",0,"A"
+4,"FLGREC",1,"C"
+4,"FLGREC",2,"F"
+4,"FLGREC",3,""
+4,"FLGREC",4,""
+4,"FLGREC",5,""
+4,"FLGREC",6,""
+4,"FLGREC",7,""
+4,"FONCTION",0,"GESAGF"
+4,"IMPORT",0,2
+4,"MODULE",0,1
+4,"NBRFLG",0,3
+4,"NBRLIG",0,18
+4,"OBJ",0,"AGF"
+4,"OPTCHA",0,1
+4,"OPTDAT",0,2
+4,"OPTMNL",0,0
+4,"OPTSPE",0,1
+4,"OPTUPD",0,2
+4,"RECLEN",0,0
+4,"RECLEN",1,0
+4,"RECLEN",2,0
+4,"RECLEN",3,0
+4,"RECLEN",4,0
+4,"RECLEN",5,0
+4,"RECLEN",6,0
+4,"RECLEN",7,0
+4,"REPFIN",0,"[TRA]"
+4,"SEPDEC",0,"."
+4,"SEPFLD",0,"ÿ"
+4,"SEPREC",0,"\013\010"
+4,"SPEIMP",0,"SPEYFACGROUP"
+4,"TRTIMP",0,""
+4,"TYPEXP",0,2
+4,"TYPFIL",0,2
+4,"UPDDAT",0,20180921
+4,"UPDDATTIM",0,"2018-09-21T05:57:41Z"
+4,"UPDUSR",0,"MAJID"
+9,"INTIT",0,"Site group","ENG","YFACGROUP",""
+9,"INTIT",0,"","***"
+6,"AOE"
+3,"AOD",1
+4,"BAL",0,""
+4,"COM",0,""
+4,"CREDATTIM",0,"2018-09-21T05:57:41Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YFACGROUP"
+4,"FIL",0,"AGRPFCY"
+4,"FLD",0,"/"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,1
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"A"
+4,"UPDDATTIM",0,"2018-09-21T05:57:41Z"
+4,"UPDUSR",0,"MAJID"
+9,"INTFLD",0,"","ENG","YFACGROUP","AGRPFCY/"
+9,"INTFLD",0,"","***"
+6,"AOD"
+3,"AOD",2
+4,"BAL",0,""
+4,"COM",0,"Group"
+4,"CREDATTIM",0,"2018-09-21T05:57:41Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YFACGROUP"
+4,"FIL",0,"AGRPFCY"
+4,"FLD",0,"GRP"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,2
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,2
+4,"STRVAL",0,""
+4,"TYP",0,"A"
+4,"UPDDATTIM",0,"2018-09-21T05:57:41Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",3
+4,"BAL",0,""
+4,"COM",0,"Description"
+4,"CREDATTIM",0,"2018-09-21T05:57:41Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YFACGROUP"
+4,"FIL",0,"AGRPFCY"
+4,"FLD",0,"DES"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,3
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"A"
+4,"UPDDATTIM",0,"2018-09-21T05:57:41Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",4
+4,"BAL",0,""
+4,"COM",0,"Short description"
+4,"CREDATTIM",0,"2018-09-21T05:57:41Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YFACGROUP"
+4,"FIL",0,"AGRPFCY"
+4,"FLD",0,"SHO"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,4
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"A"
+4,"UPDDATTIM",0,"2018-09-21T05:57:41Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",5
+4,"BAL",0,""
+4,"COM",0,"Group of company"
+4,"CREDATTIM",0,"2018-09-21T05:57:41Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YFACGROUP"
+4,"FIL",0,"AGRPFCY"
+4,"FLD",0,"FLGCPY"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,5
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"A"
+4,"UPDDATTIM",0,"2018-09-21T05:57:41Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",6
+4,"BAL",0,""
+4,"COM",0,"Legal company"
+4,"CREDATTIM",0,"2018-09-21T05:57:41Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YFACGROUP"
+4,"FIL",0,"AGRPFCY"
+4,"FLD",0,"FLGLEG"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,6
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"A"
+4,"UPDDATTIM",0,"2018-09-21T05:57:41Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",7
+4,"BAL",0,""
+4,"COM",0,"Group type"
+4,"CREDATTIM",0,"2018-09-21T05:57:41Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YFACGROUP"
+4,"FIL",0,"AGRPFCY"
+4,"FLD",0,"YGRPTYP"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,7
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"A"
+4,"UPDDATTIM",0,"2018-09-21T05:57:41Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",8
+4,"BAL",0,""
+4,"COM",0,"Group category"
+4,"CREDATTIM",0,"2018-09-21T05:57:41Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YFACGROUP"
+4,"FIL",0,"AGRPFCY"
+4,"FLD",0,"YGRPCAT"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,8
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"A"
+4,"UPDDATTIM",0,"2018-09-21T05:57:41Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",9
+4,"BAL",0,""
+4,"COM",0,"Date formed"
+4,"CREDATTIM",0,"2018-09-21T05:57:41Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YFACGROUP"
+4,"FIL",0,"AGRPFCY"
+4,"FLD",0,"YDATFRM"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,9
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"A"
+4,"UPDDATTIM",0,"2018-09-21T05:57:41Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",10
+4,"BAL",0,""
+4,"COM",0,""
+4,"CREDATTIM",0,"2018-09-21T05:57:41Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YFACGROUP"
+4,"FIL",0,"COMPANY"
+4,"FLD",0,"/"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,10
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"C"
+4,"UPDDATTIM",0,"2018-09-21T05:57:41Z"
+4,"UPDUSR",0,"MAJID"
+9,"INTFLD",0,"","ENG","YFACGROUP","COMPANY/"
+9,"INTFLD",0,"","***"
+6,"AOD"
+3,"AOD",11
+4,"BAL",0,""
+4,"COM",0,"Company"
+4,"CREDATTIM",0,"2018-09-21T05:57:41Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YFACGROUP"
+4,"FIL",0,"COMPANY"
+4,"FLD",0,"CPY"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,11
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"C"
+4,"UPDDATTIM",0,"2018-09-21T05:57:41Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",12
+4,"BAL",0,""
+4,"COM",0,"Company name"
+4,"CREDATTIM",0,"2018-09-21T05:57:41Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YFACGROUP"
+4,"FIL",0,"COMPANY"
+4,"FLD",0,"CPYNAM"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,12
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"C"
+4,"UPDDATTIM",0,"2018-09-21T05:57:41Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",13
+4,"BAL",0,""
+4,"COM",0,"Short description"
+4,"CREDATTIM",0,"2018-09-21T05:57:41Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YFACGROUP"
+4,"FIL",0,"COMPANY"
+4,"FLD",0,"CPYSHO"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,13
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"C"
+4,"UPDDATTIM",0,"2018-09-21T05:57:41Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",14
+4,"BAL",0,""
+4,"COM",0,"Legal company"
+4,"CREDATTIM",0,"2018-09-21T05:57:41Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YFACGROUP"
+4,"FIL",0,"COMPANY"
+4,"FLD",0,"CPYLEGFLG"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,14
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"C"
+4,"UPDDATTIM",0,"2018-09-21T05:57:41Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",15
+4,"BAL",0,""
+4,"COM",0,"Accounting currency"
+4,"CREDATTIM",0,"2018-09-21T05:57:41Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YFACGROUP"
+4,"FIL",0,"COMPANY"
+4,"FLD",0,"ACCCUR"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,15
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"C"
+4,"UPDDATTIM",0,"2018-09-21T05:57:41Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",16
+4,"BAL",0,""
+4,"COM",0,""
+4,"CREDATTIM",0,"2018-09-21T05:57:41Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YFACGROUP"
+4,"FIL",0,"FACGROUP"
+4,"FLD",0,"/"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,16
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"F"
+4,"UPDDATTIM",0,"2018-09-21T05:57:41Z"
+4,"UPDUSR",0,"MAJID"
+9,"INTFLD",0,"","ENG","YFACGROUP","FACGROUP/"
+9,"INTFLD",0,"","***"
+6,"AOD"
+3,"AOD",17
+4,"BAL",0,""
+4,"COM",0,"Company"
+4,"CREDATTIM",0,"2018-09-21T05:57:41Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YFACGROUP"
+4,"FIL",0,"FACGROUP"
+4,"FLD",0,"CPY"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,17
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"F"
+4,"UPDDATTIM",0,"2018-09-21T05:57:41Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",18
+4,"BAL",0,""
+4,"COM",0,"Site"
+4,"CREDATTIM",0,"2018-09-21T05:57:41Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YFACGROUP"
+4,"FIL",0,"FACGROUP"
+4,"FLD",0,"FCY"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,18
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"F"
+4,"UPDDATTIM",0,"2018-09-21T05:57:41Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+7,"AOE","YFACGROUP","Site group"
+8,"Patch DFC :DFCX1-169 on September 26,18 10: 57"
