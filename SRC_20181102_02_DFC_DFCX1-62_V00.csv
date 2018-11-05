@@ -1,0 +1,9 @@
+Date;Object type;Object;Comments;Patch;Code;Modifier;Activity code;Update type;Delivered on
+20181102;ADC;SPEYSUL;;;DFCX1-62;MB;;M;20181102
+20181102;ADC;SUBYSUL;;;;MB;;M;20181102
+20181101;TRT;SPEYSUL;Transaction restrictions;;;MB;;C;20181102
+20181101;TRT;SUBYSUL;Transaction restrictions;;;MB;;C;20181102
+20181031;ACT;YSUL;Set User level access;;;MB;;C;20181102
+20181031;AFC;YSUL;Set user level access;;;MB;;C;20181102
+20181102;AMK;YSUL1;;;;MB;;M;20181102
+20181102;AWI;YGENSUL;;;;MB;;M;20181102
