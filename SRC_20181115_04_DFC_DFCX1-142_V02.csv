@@ -1,0 +1,4 @@
+Date;Object type;Object;Comments;Patch;Code;Modifier;Activity code;Update type;Delivered on
+20181011;TRT;SPEYBBVAL;Business batch post;;DFCX1-142;DH;;C;20181115
+20181011;ACT;YBBPST;Business batch transaction;;;DH;;M;20181115
+20181002;AWI;YOBBT;;[PATCH]/SRC_20181004;;DH;;C;20181115
