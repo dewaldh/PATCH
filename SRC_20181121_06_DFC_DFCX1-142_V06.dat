@@ -1,0 +1,1878 @@
+1,"Patch DFC :DFCX1-142 on November  21,18 12: 11","ENG","1","","X3","3",
+2,"AML","6254"," Business batch messages "
+3,"AML",6254
+4,"AUZMOD",0,1
+4,"CODACT",0,"YICBS"
+4,"CREDAT",0,20180912
+4,"CREDATTIM",0,"2018-09-12T04:25:25Z"
+4,"CREUSR",0,"DH"
+4,"LONG",0,0
+4,"MAXI",0,0
+4,"MENLOC",0,6254
+4,"MENLOCAL",0,2
+4,"MINI",0,0
+4,"MODULE",0,9
+4,"NONTRA",0,1
+4,"SPECIF",0,0
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T01:35:02Z"
+4,"UPDUSR",0,"DH"
+6,"AML"
+3,"AST",6254
+4,"CREDAT",0,20180912
+4,"CREDATTIM",0,"2018-09-12T04:25:25Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,200
+4,"LANMES",0,"Business batch messages"
+4,"LANNUM",0,6054
+4,"LANORI",0,""
+4,"UPDDAT",0,20180912
+4,"UPDDATTIM",0,"2018-09-12T04:25:25Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20180912
+4,"CREDATTIM",0,"2018-09-12T04:25:25Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"abcdefghjklmnpqrstuvwxyzABC"
+4,"LANNUM",0,0
+4,"LANORI",0,""
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T01:35:02Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20180912
+4,"CREDATTIM",0,"2018-09-12T04:25:25Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"Journal type is not setup correctly. Please review journal code "
+4,"LANNUM",0,1
+4,"LANORI",0,""
+4,"UPDDAT",0,20180913
+4,"UPDDATTIM",0,"2018-09-12T23:44:02Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20180912
+4,"CREDATTIM",0,"2018-09-12T04:25:25Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"No valid entry type found"
+4,"LANNUM",0,2
+4,"LANORI",0,""
+4,"UPDDAT",0,20180912
+4,"UPDDATTIM",0,"2018-09-12T04:25:25Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20180912
+4,"CREDATTIM",0,"2018-09-12T04:25:25Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"Invalid entry type entered"
+4,"LANNUM",0,3
+4,"LANORI",0,""
+4,"UPDDAT",0,20180912
+4,"UPDDATTIM",0,"2018-09-12T04:25:25Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20180912
+4,"CREDATTIM",0,"2018-09-12T04:25:25Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"ELA not found"
+4,"LANNUM",0,4
+4,"LANORI",0,""
+4,"UPDDAT",0,20180912
+4,"UPDDATTIM",0,"2018-09-12T04:25:25Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20180912
+4,"CREDATTIM",0,"2018-09-12T04:25:25Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"ELA not active"
+4,"LANNUM",0,5
+4,"LANORI",0,""
+4,"UPDDAT",0,20180912
+4,"UPDDATTIM",0,"2018-09-12T04:25:25Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20180912
+4,"CREDATTIM",0,"2018-09-12T04:31:23Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"Unknown error creating business batch header"
+4,"LANNUM",0,6
+4,"LANORI",0,""
+4,"UPDDAT",0,20180912
+4,"UPDDATTIM",0,"2018-09-12T04:31:23Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20180912
+4,"CREDATTIM",0,"2018-09-12T04:32:21Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"Unknown error creating business batch detail"
+4,"LANNUM",0,7
+4,"LANORI",0,""
+4,"UPDDAT",0,20180912
+4,"UPDDATTIM",0,"2018-09-12T04:32:21Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20180912
+4,"CREDATTIM",0,"2018-09-12T04:33:35Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"Validation failed. Number of errors: "
+4,"LANNUM",0,8
+4,"LANORI",0,""
+4,"UPDDAT",0,20180913
+4,"UPDDATTIM",0,"2018-09-12T23:44:02Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20180913
+4,"CREDATTIM",0,"2018-09-13T04:09:25Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"Credit or Debit amount required"
+4,"LANNUM",0,9
+4,"LANORI",0,""
+4,"UPDDAT",0,20180914
+4,"UPDDATTIM",0,"2018-09-14T05:20:20Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20180913
+4,"CREDATTIM",0,"2018-09-13T04:09:25Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"Value cannot be less than 0"
+4,"LANNUM",0,10
+4,"LANORI",0,""
+4,"UPDDAT",0,20180914
+4,"UPDDATTIM",0,"2018-09-14T05:20:20Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20180921
+4,"CREDATTIM",0,"2018-09-21T00:28:10Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"Journal not marked as business batch"
+4,"LANNUM",0,11
+4,"LANORI",0,""
+4,"UPDDAT",0,20180921
+4,"UPDDATTIM",0,"2018-09-21T00:28:10Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20180925
+4,"CREDATTIM",0,"2018-09-25T04:35:53Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"Journal does not match Entry type"
+4,"LANNUM",0,12
+4,"LANORI",0,""
+4,"UPDDAT",0,20180926
+4,"UPDDATTIM",0,"2018-09-26T03:51:21Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20180926
+4,"CREDATTIM",0,"2018-09-26T04:21:54Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"BP required"
+4,"LANNUM",0,13
+4,"LANORI",0,""
+4,"UPDDAT",0,20180926
+4,"UPDDATTIM",0,"2018-09-26T04:21:54Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20180926
+4,"CREDATTIM",0,"2018-09-26T04:45:07Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"Selected bank not valid"
+4,"LANNUM",0,14
+4,"LANORI",0,""
+4,"UPDDAT",0,20180926
+4,"UPDDATTIM",0,"2018-09-26T04:58:55Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20180926
+4,"CREDATTIM",0,"2018-09-26T04:58:55Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"No bank linked for company "
+4,"LANNUM",0,15
+4,"LANORI",0,""
+4,"UPDDAT",0,20180926
+4,"UPDDATTIM",0,"2018-09-26T04:58:55Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20181001
+4,"CREDATTIM",0,"2018-10-01T03:28:15Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"Business batch marked as a template. "
+4,"LANNUM",0,16
+4,"LANORI",0,""
+4,"UPDDAT",0,20181001
+4,"UPDDATTIM",0,"2018-10-01T03:28:15Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20181001
+4,"CREDATTIM",0,"2018-10-01T05:22:13Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"Stored procedure failure: "
+4,"LANNUM",0,17
+4,"LANORI",0,""
+4,"UPDDAT",0,20181001
+4,"UPDDATTIM",0,"2018-10-01T05:22:13Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20181002
+4,"CREDATTIM",0,"2018-10-02T02:50:20Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"Validation failed: "
+4,"LANNUM",0,18
+4,"LANORI",0,""
+4,"UPDDAT",0,20181002
+4,"UPDDATTIM",0,"2018-10-02T02:50:20Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20181003
+4,"CREDATTIM",0,"2018-10-03T05:50:06Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"Company not active"
+4,"LANNUM",0,19
+4,"LANORI",0,""
+4,"UPDDAT",0,20181003
+4,"UPDDATTIM",0,"2018-10-03T05:50:06Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20181004
+4,"CREDATTIM",0,"2018-10-04T03:07:41Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"No account for site or chart code"
+4,"LANNUM",0,20
+4,"LANORI",0,""
+4,"UPDDAT",0,20181004
+4,"UPDDATTIM",0,"2018-10-04T03:07:41Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20181009
+4,"CREDATTIM",0,"2018-10-09T05:06:44Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"Debt and Credit amounts do not balance"
+4,"LANNUM",0,21
+4,"LANORI",0,""
+4,"UPDDAT",0,20181009
+4,"UPDDATTIM",0,"2018-10-09T05:06:44Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20181107
+4,"CREDATTIM",0,"2018-11-07T03:18:31Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"Update for batch detail failed"
+4,"LANNUM",0,22
+4,"LANORI",0,""
+4,"UPDDAT",0,20181107
+4,"UPDDATTIM",0,"2018-11-07T03:18:31Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20181120
+4,"CREDATTIM",0,"2018-11-20T01:31:10Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"Re-number transaction number from line"
+4,"LANNUM",0,23
+4,"LANORI",0,""
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T01:31:10Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20181120
+4,"CREDATTIM",0,"2018-11-20T01:32:17Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"Cannot re-number index from line 1"
+4,"LANNUM",0,24
+4,"LANORI",0,""
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T01:32:17Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20181120
+4,"CREDATTIM",0,"2018-11-20T01:35:02Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"Control account does not exist for this BP"
+4,"LANNUM",0,25
+4,"LANORI",0,""
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T01:35:02Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20181120
+4,"CREDATTIM",0,"2018-11-20T01:35:02Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"Project code is mandatory"
+4,"LANNUM",0,26
+4,"LANORI",0,""
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T01:35:02Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6254
+4,"CREDAT",0,20181120
+4,"CREDATTIM",0,"2018-11-20T01:35:02Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6254
+4,"LANMES",0,"Dimension mandatory"
+4,"LANNUM",0,27
+4,"LANORI",0,""
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T01:35:02Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+7,"AML","6254"," Business batch messages "
+2,"AML","6259"," Batch engine messages "
+3,"AML",6259
+4,"AUZMOD",0,2
+4,"CODACT",0,"YICBS"
+4,"CREDAT",0,20181018
+4,"CREDATTIM",0,"2018-10-17T22:49:29Z"
+4,"CREUSR",0,"DH"
+4,"LONG",0,0
+4,"MAXI",0,0
+4,"MENLOC",0,6259
+4,"MENLOCAL",0,2
+4,"MINI",0,0
+4,"MODULE",0,9
+4,"NONTRA",0,1
+4,"SPECIF",0,0
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T05:20:55Z"
+4,"UPDUSR",0,"DH"
+6,"AML"
+3,"AST",6259
+4,"CREDAT",0,20181018
+4,"CREDATTIM",0,"2018-10-17T22:49:29Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,200
+4,"LANMES",0,"Batch engine messages"
+4,"LANNUM",0,6059
+4,"LANORI",0,""
+4,"UPDDAT",0,20181018
+4,"UPDDATTIM",0,"2018-10-17T22:49:29Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6259
+4,"CREDAT",0,20181018
+4,"CREDATTIM",0,"2018-10-17T22:49:29Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6259
+4,"LANMES",0,"abcdefghijklmnoprst"
+4,"LANNUM",0,0
+4,"LANORI",0,""
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T01:25:57Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6259
+4,"CREDAT",0,20181018
+4,"CREDATTIM",0,"2018-10-17T22:49:29Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6259
+4,"LANMES",0,"Validation completed with errors:"
+4,"LANNUM",0,1
+4,"LANORI",0,""
+4,"UPDDAT",0,20181018
+4,"UPDDATTIM",0,"2018-10-17T22:49:29Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6259
+4,"CREDAT",0,20181018
+4,"CREDATTIM",0,"2018-10-17T22:49:29Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6259
+4,"LANMES",0,"Validation completed"
+4,"LANNUM",0,2
+4,"LANORI",0,""
+4,"UPDDAT",0,20181018
+4,"UPDDATTIM",0,"2018-10-17T22:49:29Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6259
+4,"CREDAT",0,20181018
+4,"CREDATTIM",0,"2018-10-17T22:49:29Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6259
+4,"LANMES",0,"Entity Loan Agreement not setup on bank"
+4,"LANNUM",0,3
+4,"LANORI",0,""
+4,"UPDDAT",0,20181018
+4,"UPDDATTIM",0,"2018-10-17T22:49:29Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6259
+4,"CREDAT",0,20181018
+4,"CREDATTIM",0,"2018-10-17T22:49:29Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6259
+4,"LANMES",0,"Principal bank account not setup"
+4,"LANNUM",0,4
+4,"LANORI",0,""
+4,"UPDDAT",0,20181018
+4,"UPDDATTIM",0,"2018-10-17T22:49:29Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6259
+4,"CREDAT",0,20181019
+4,"CREDATTIM",0,"2018-10-19T00:14:59Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6259
+4,"LANMES",0,"Batch details not populated"
+4,"LANNUM",0,5
+4,"LANORI",0,""
+4,"UPDDAT",0,20181019
+4,"UPDDATTIM",0,"2018-10-19T00:14:59Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6259
+4,"CREDAT",0,20181120
+4,"CREDATTIM",0,"2018-11-20T01:25:57Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6259
+4,"LANMES",0,"Balance exceeds 0 for transaction number"
+4,"LANNUM",0,6
+4,"LANORI",0,""
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T01:25:57Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6259
+4,"CREDAT",0,20181120
+4,"CREDATTIM",0,"2018-11-20T01:25:57Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6259
+4,"LANMES",0,"Critical error occurred"
+4,"LANNUM",0,7
+4,"LANORI",0,""
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T01:25:57Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6259
+4,"CREDAT",0,20181120
+4,"CREDATTIM",0,"2018-11-20T01:25:57Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6259
+4,"LANMES",0,"The number of sites for an Inter Entity does not match for transaction number"
+4,"LANNUM",0,8
+4,"LANORI",0,""
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T01:25:57Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6259
+4,"CREDAT",0,20181120
+4,"CREDATTIM",0,"2018-11-20T01:25:57Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6259
+4,"LANMES",0,"Site exceeds maximum limit for Journal entry type in transaction number"
+4,"LANNUM",0,9
+4,"LANORI",0,""
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T01:25:57Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6259
+4,"CREDAT",0,20181120
+4,"CREDATTIM",0,"2018-11-20T01:25:57Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6259
+4,"LANMES",0,"Site exceeds maximum limit for Cash entry type in transaction number"
+4,"LANNUM",0,10
+4,"LANORI",0,""
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T01:25:57Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6259
+4,"CREDAT",0,20181120
+4,"CREDATTIM",0,"2018-11-20T01:25:57Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6259
+4,"LANMES",0,"ELA provider site not found for current ELA"
+4,"LANNUM",0,11
+4,"LANORI",0,""
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T01:25:57Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6259
+4,"CREDAT",0,20181120
+4,"CREDATTIM",0,"2018-11-20T01:25:57Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6259
+4,"LANMES",0,"Site has no ELA path specified"
+4,"LANNUM",0,12
+4,"LANORI",0,""
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T01:25:57Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6259
+4,"CREDAT",0,20181120
+4,"CREDATTIM",0,"2018-11-20T01:25:57Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6259
+4,"LANMES",0,"Recipient line created from ELA"
+4,"LANNUM",0,13
+4,"LANORI",0,""
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T01:25:57Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6259
+4,"CREDAT",0,20181120
+4,"CREDATTIM",0,"2018-11-20T01:25:57Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6259
+4,"LANMES",0,"Provider line created from ELA"
+4,"LANNUM",0,14
+4,"LANORI",0,""
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T01:25:57Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6259
+4,"CREDAT",0,20181120
+4,"CREDATTIM",0,"2018-11-20T01:25:57Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6259
+4,"LANMES",0,"Cannot have more than 2 distinct bank accounts"
+4,"LANNUM",0,15
+4,"LANORI",0,""
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T01:25:57Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6259
+4,"CREDAT",0,20181120
+4,"CREDATTIM",0,"2018-11-20T01:25:57Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6259
+4,"LANMES",0,"Cannot have more than 2 distinct transaction lines"
+4,"LANNUM",0,16
+4,"LANORI",0,""
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T01:25:57Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6259
+4,"CREDAT",0,20181120
+4,"CREDATTIM",0,"2018-11-20T01:25:57Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6259
+4,"LANMES",0,"Bank selected is not active"
+4,"LANNUM",0,17
+4,"LANORI",0,""
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T01:25:57Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6259
+4,"CREDAT",0,20181120
+4,"CREDATTIM",0,"2018-11-20T01:25:57Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6259
+4,"LANMES",0,"ELA in bank account not setup correctly"
+4,"LANNUM",0,18
+4,"LANORI",0,""
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T01:25:57Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+3,"AST",6259
+4,"CREDAT",0,20181120
+4,"CREDATTIM",0,"2018-11-20T01:25:57Z"
+4,"CREUSR",0,"DH"
+4,"LAN",0,"ENG"
+4,"LANCHP",0,6259
+4,"LANMES",0,"Owner company of the Principal Bank is not same as the Provider Company on the last ELA"
+4,"LANNUM",0,19
+4,"LANORI",0,""
+4,"UPDDAT",0,20181120
+4,"UPDDATTIM",0,"2018-11-20T05:20:55Z"
+4,"UPDUSR",0,"DH"
+6,"AST"
+7,"AML","6259"," Batch engine messages "
+2,"TRT","SPEYBBPST",""
+#<AdxTL>@(#)0.0.0.0 $Revision$
+######################################################################################################
+# FILE NAME   : SPEYBBVAL
+# DESCRIPTION : Business Batch Validation
+######################################################################################################
+# DATE        : 11-10-2018
+# AUTHOR      : Dewald Henning
+# COMPANY     : Leverage Technologies
+#-----------------------------------------------------------------------------------------------------
+# Epics Code  : DFCX1-27
+#-----------------------------------------------------------------------------------------------------
+######################################################################################################
+
+$ACTION
+  Case ACTION
+    When "YBBPST"  :   Gosub POST
+    When Default
+  Endcase
+Return
+
+$POST
+Local Char MESSAGE(255) : MESSAGE = "Post business batch "-[M:YBB0]YBATNBR-" to journals?"
+  Call OUINON(MESSAGE,OK)  From GESECRAN
+  Case OK
+     When 2: Goto PST_BUSBAT  #yes
+  Endcase
+
+Return
+
+
+$PST_BUSBAT
+  #Call TRAITE_CHAR(VALBOUT,PARBOUT,"",”X1ACTAFF”,"",1,"SPEX1ACTAF") From GTRAITE
+
+#TABLE ITMCOST With Key = STOFCY+ITMREF+CSTTYP-ITCSEQ+UID
+#
+#     Local File ITMCOST [ITC]
+#
+#     CLE_COUT(0) = [M:ITF0]STOFCY
+#
+#     CLE_COUT(1) = "1" : # cost type
+#
+#     CLE_COUT(2) = num$(year(date$)) : # year
+#
+#     CLE_COUT(3) = "0" : # Sequence no.
+#
+#     CLE_ART     = [M:ITF0]ITMREF
+#
+#     Call OBJET("ITC",CLE_ART,CLE_COUT) From GOBJET
+Return
+
+**********
+7,"TRT","SPEYBBPST",""
+2,"TRT","SPEYBBVAL",""
+#<AdxTL>@(#)0.0.0.0 $Revision$
+######################################################################################################
+# FILE NAME   : SPEYBBVAL
+# DESCRIPTION : Business Batch Validation
+######################################################################################################
+# DATE        : 11-09-2018
+# AUTHOR      : Dewald Henning
+# COMPANY     : Leverage Technologies
+#-----------------------------------------------------------------------------------------------------
+# Epics Code  : DFCX1-27
+#-----------------------------------------------------------------------------------------------------
+######################################################################################################
+
+$ACTION
+  Case ACTION
+    When "YBBVAL"  :  Gosub VALIDATE
+  Endcase
+Return
+
+$VALIDATE
+Local Char MESSAGE(255) : MESSAGE = "Validate business batch "-[M:YBB0]YBATNBR+"?"
+  Call OUINON(MESSAGE,OK)  From GESECRAN
+  Case OK
+     When 2
+     Call VAL_BUSBAT([M:YBB0]YBATNBR)
+     Affzo [M:YBB0]
+     Affzo [M:YBB1]
+     Affzo [M:YBB2]
+     Affzo [M:YBB3]
+
+  Endcase
+
+Return
+
+Subprog VAL_BUSBAT(YBATNBR)
+Variable Char YBATNBR()
+
+  # DELETE ALL RECORDS IN THE SIMULATION TABLE, ERRORS TABLE and TEMP TABLE
+  If clalev([F:YBBS]) = 0 : Local File YBBSIM [YBBS]        : Endif
+  If clalev([F:YBBE]) = 0 : Local File YBBERR [YBBE]        : Endif
+  If clalev([F:YBDT]) = 0 : Local File YBBDETAILTEM [YBDT]  : Endif
+  Delete [F:YBBS]YBBS1 = YBATNBR
+  Delete [F:YBBE]YBBE1 = YBATNBR
+  Delete [F:YBDT]YBDT0 = YBATNBR
+  If clalev([F:YBBS]) = 0 : Close Local File [F:YBBS] : Endif
+  If clalev([F:YBBE]) = 0 : Close Local File [F:YBBE] : Endif
+  If clalev([F:YBDT]) = 0 : Close Local File [F:YBDT] : Endif
+
+  #Add Lines to Temp Table
+  Call ADD_DETAILTEMP()
+
+  #GST Calculations
+  Call EXE_GSTCALC(YBATNBR)
+
+  #Journal & Entry Type per Transaction
+  Call EXE_TRAJNL_VAL(YBATNBR)
+
+  #Balance Checks
+  Call EXE_BALANCE_VAL(YBATNBR)
+
+  #Site Checks
+  Call EXE_FCY_VAL(YBATNBR)
+
+  #After Validations
+  # -- Journals
+  Call BT_JOURNAL(YBATNBR)
+  # -- IE
+  Call BT_IE(YBATNBR)
+  # -- Cash
+  Call BT_CASH(YBATNBR)
+
+  #Update Status
+  If clalev([F:YBBH]) = 0 : Local File YBBHEADER [YBBH]  : Endif
+  If clalev([F:YBBE]) = 0 : Local File YBBERR [YBBE]     : Endif
+
+  Read [F:YBBH]YBBH0 = YBATNBR
+  # Get count of errors and update the status
+  Local Integer RET : RET = 0
+  For [F:YBBE] Where [F:YBBE]YBATNBR = YBATNBR
+    If [F:YBBE]YBATNBR = YBATNBR : RET += 1 : Endif
+  Next
+  If RET > 0
+    #SET THE BATCH status To “ERRRORS”
+    [F:YBBH]YBATSTA = 3
+    Call ADDMESSWARN(mess(1,6259,1)-num$(RET)) From AWEB
+  Else
+     #SET THE BATCH status To “VALIATED”
+    [F:YBBH]YBATSTA = 2
+    Call ADDMESSINF(mess(2,6259,1)) From AWEB
+  Endif
+  If fstat = 0 Then
+    Rewrite [F:YBBH]
+  Else
+    Call ADDMESSERR(mess(18,6254,1)-[V]CST_AERROR) From AWEB
+    Rollback
+    End
+  Endif
+
+  If clalev([F:YBBE]) = 0 : Close Local File [F:YBBE] : Endif
+  If clalev([F:YBBH]) = 0 : Close Local File [F:YBBH]  : Endif
+
+End
+
+#---------------------------------------------------------------------------------
+# Entry Type / Journal Checks
+#---------------------------------------------------------------------------------
+Subprog EXE_TRAJNL_VAL(BATNBR)
+Variable Char BATNBR()
+
+  If clalev([F:YBBE]) = 0 : Local File YBBERR [YBBE]        : Endif
+  If clalev([F:YBDT]) = 0 : Local File YBBDETAILTEM [YBDT]  : Endif
+
+  Local Integer I : I = 0
+  Local Char QUERY(255)
+  Local Char EXECSP(255)
+  Local Char YMSG(255)
+  Local Char YSRC(50)
+  Local Integer YNBRLIG
+
+  [L]EXECSP = "EXEC [BB_ENTRY_VALIDATIONS] '"+BATNBR+"'"
+  Execsql From "5" Sql EXECSP
+
+  QUERY = "SELECT YDETLIG_0, YRESVAL_0, YTRANSNBR_0 FROM YBBDETAILTEM WHERE YBATNBR_0 = '"+BATNBR+"'"
+  For (Integer DETLIG, Char RESULT, Integer YTRANSNO) From "5" Sql QUERY As [YLNK]
+    Read [F:YBDT]YBDT1 = BATNBR;[F:YLNK]DETLIG
+    #Infbox num$(DETLIG), num$(RESULT)
+    YNBRLIG = [F:YLNK]DETLIG
+    If [F:YLNK]RESULT = "ENTVAL_ERR" Then #Error
+      YMSG = "Journal and Entry type mismatch for transaction no."-num$(YTRANSNO)
+      YSRC =  BATNBR+"-"+num$([F:YLNK]DETLIG)
+      Call ADDLIG_ERR(BATNBR,YSRC,[F:YLNK]DETLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+    Endif
+  Next
+
+  If clalev([F:YBBE]) = 0 : Close Local File [F:YBBE] : Endif
+  If clalev([F:YBDT]) = 0 : Close Local File [F:YBDT] : Endif
+
+End
+
+#---------------------------------------------------------------------------------
+# Balance Checks
+#---------------------------------------------------------------------------------
+Subprog EXE_BALANCE_VAL(BATNBR)
+Variable Char BATNBR()
+
+  If clalev([F:YBBE]) = 0 : Local File YBBERR [YBBE]        : Endif
+  If clalev([F:YBDT]) = 0 : Local File YBBDETAILTEM [YBDT]  : Endif
+
+  Local Integer I : I = 0
+  Local Char QUERY(255)
+  Local Char EXECSP(255)
+  Local Char YMSG(255)
+  Local Char YSRC(50)
+  Local Integer YNBRLIG
+
+  [L]EXECSP = "EXEC [BB_BALANCE_VALIDATION] '"+BATNBR+"'"
+  Execsql From "5" Sql EXECSP
+
+  QUERY = "SELECT YDETLIG_0, YRESVAL_0, YTRANSNBR_0 FROM YBBDETAILTEM WHERE YBATNBR_0 = '"+BATNBR+"'"
+  For (Integer DETLIG, Char RESULT, Integer YTRANSNO) From "5" Sql QUERY As [YLNK]
+    Read [F:YBDT]YBDT1 = BATNBR;YDETLIG
+    #Infbox num$(DETLIG), num$(RESULT)
+    YNBRLIG = [F:YLNK]DETLIG
+    Affzo
+    If [F:YLNK]RESULT = "BAL1" Then #Error
+      YMSG = mess(6,6259,1)-num$(YTRANSNO)
+      YSRC =  BATNBR+"-"+num$([F:YLNK]DETLIG)
+      Call ADDLIG_ERR(BATNBR,YSRC,YNBRLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+#    Else
+#      Call ADDLIG_SIM(BATNBR,YNBRLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+#&          [F:YBDT]YDETDES,[F:YBDT]YFCY,[F:YBDT]YCOA,[F:YBDT]YACC,[F:YBDT]YLIGDES,[F:YBDT]YCTRL,
+#&          [F:YBDT]YBP,[F:YBDT]YDEB,[F:YBDT]YCDT,[F:YBDT]YTAX,[F:YBDT]YREF,[F:YBDT]YPJT,[F:YBDT]YCCE0,
+#&          [F:YBDT]YCCE1,[F:YBDT]YCCE2,[F:YBDT]YCCE3,[F:YBDT]YCCE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX)
+    Endif
+  Next
+
+  If clalev([F:YBBE]) = 0 : Close Local File [F:YBBE] : Endif
+  If clalev([F:YBDT]) = 0 : Close Local File [F:YBDT] : Endif
+
+End
+
+#---------------------------------------------------------------------------------
+# GST Calculations
+#---------------------------------------------------------------------------------
+Subprog EXE_GSTCALC(BATNBR)
+Variable Char BATNBR()
+
+  If clalev([F:TAX])    = 0 : Local File TABRATVAT    [TAX]     : Endif
+  If clalev([F:GAC])    = 0 : Local File GACCOUNT     [GAC]     : Endif
+  If clalev([F:TVT])    = 0 : Local File TABVAT       [TVT]     : Endif
+  If clalev([F:YELA])   = 0 : Local File YENTLOAAGR   [YELA]    : Endif
+  If clalev([F:YBDT])   = 0 : Local File YBBDETAILTEM [YBDT]    : Endif
+  If clalev([F:YBDT2])  = 0 : Local File YBBDETAILTEM [YBDT2]   : Endif
+
+  #Debugging
+  #Local Char BATNBR(50) : BATNBR = "BB20181100004"
+
+  Local Char TAX_OVERRIDE(5), TAX_RULE(5)
+  Local Decimal NEW_GST, NEW_VATRAT, NEW_AMT
+  Local Integer I : I = 0
+  # -- IE Declarations
+  Local Char PREVFCYIE(5)
+  Local Char PREVGSTGRP(5)
+
+  For [F:YBDT] Where YBATNBR = BATNBR
+    I = [F:YBDT]YDETLIG
+    Read [F:YBDT2]YBDT1 = BATNBR;I
+    #Get Vat Rates
+    Read [F:TVT]TVT1 = [F:YBDT2]YTAX
+    NEW_VATRAT = [F:TVT]VATRAT
+    TAX_RULE = [F:TVT]VATVAC
+    #Check ACCOUNT IS DEFINED As SUBJECTED
+    Read [F:GAC]GAC0 = [F:YBDT2]YCOA;[F:YBDT2]YACC
+    If [F:GAC]FLGVAT = 2 Then
+      #SET TAX To null
+      [L]TAX_OVERRIDE = ""
+      TAX_RULE = ""
+    Else
+      #IE Transaction Type for GST Calc
+      If [F:YBDT2]YBATTYP = 1 Then
+        If PREVFCYIE = "" : PREVFCYIE = [F:YBDT2]YFCY : Endif
+        If PREVGSTGRP = "" : PREVGSTGRP = [F:YBDT2]YTAX : Endif
+        If PREVFCYIE <> "" and PREVGSTGRP <> "" and [F:YBDT2]YFCY <> PREVFCYIE and [F:YBDT2]YTAX = PREVGSTGRP Then
+          #THE BUSINESS TRANSACTION ARE MEMBERS OF THE SAME GST GROUP
+          [L]TAX_OVERRIDE = func AFNC.PARAM("YIEVAT","")
+        Elsif PREVFCYIE <> "" and PREVGSTGRP <> "" and [F:YBDT2]YFCY <> PREVFCYIE and [F:YBDT2]YTAX = PREVGSTGRP Then
+          [L]TAX_OVERRIDE = TAX_RULE
+        Endif
+        [F:YBDT2]YTAX = [L]TAX_OVERRIDE
+      Else
+        If [L]TAX_OVERRIDE <> "" Then
+          #CALCULATE THE GST and AMOUNT + TAX (As PER SECTION 6.1.17 GST CALCULATIONS)
+          If [F:YBDT2]YDEB <> 0 : [L]NEW_AMT = [F:YBDT2]YDEB : Endif
+          If [F:YBDT2]YCDT <> 0 : [L]NEW_AMT = [F:YBDT2]YCDT : Endif
+          If [F:YBDT2]YGSTINC = 2 Then #GST Inc
+            #GST Amount = Amount - Round(Amount/(1+(Rate/100)))
+            [L]NEW_GST = [L]NEW_AMT - (1+([L]NEW_VATRAT/100))
+            [F:YBDT2]YAMTTAX = [L]NEW_AMT + [L]NEW_GST
+          Else #GST Ex
+            #GST Amount = Amount * (Rate/100)
+            [L]NEW_GST = [L]NEW_AMT * ([L]NEW_VATRAT/100)
+            [F:YBDT2]YAMTTAX = [L]NEW_AMT - [L]NEW_GST
+          Endif
+        Else
+          [F:YBDT2]YAMTTAX = [L]NEW_AMT
+          [L]NEW_GST = 0
+        Endif
+        [F:YBDT2]YGSTAMT = [L]NEW_GST
+        If fstat = 0
+          Rewrite [F:YBDT2]
+        Else
+          Call ADDMESSERR(mess(7,6259,1)-[V]CST_AERROR) From AWEB
+          Rollback
+          End
+        Endif
+      Endif
+    Endif
+  Next
+
+  If clalev([F:YELA]) = 0  : Close Local File [F:YELA] : Endif
+  If clalev([F:YBDT]) = 0  : Close Local File [F:YBDT] : Endif
+  If clalev([F:TAX])  = 0  : Close Local File [F:TAX]  : Endif
+  If clalev([F:GAC])  = 0  : Close Local File [F:GAC]  : Endif
+  If clalev([F:TVT])  = 0  : Close Local File [F:TVT]  : Endif
+
+End
+
+#---------------------------------------------------------------------------------
+# Site Calculations
+#---------------------------------------------------------------------------------
+Subprog EXE_FCY_VAL(BATNBR)
+Variable Char BATNBR()
+
+  #ADDLIG_ERR(YBATNBR,YSRC,YDETLIG,YFCY,YENTTYP,YJOU,YDETDES,YACC,YLIGDES,YMESS)
+
+  If clalev([F:YBBE]) = 0 : Local File YBBERR [YBBE]        : Endif
+  If clalev([F:YBDT]) = 0 : Local File YBBDETAILTEM [YBDT]  : Endif
+
+  Local Integer I : I = 0
+  Local Char QUERY(255)(0..)
+  Local Char EXECSP(255)
+  Local Char YMSG(255)
+  Local Char YSRC(50)
+  Local Integer YNBRLIG
+
+  EXECSP = "EXEC [BB_SITE_VALIDATION] '"+BATNBR+"'"
+  Execsql From "5" Sql EXECSP
+
+  QUERY(0) = "SELECT YTRANSNBR_0, YBATNBR_0 +'-'+CAST(YDETLIG_0 + 1 AS VARCHAR(10)),YDETLIG_0,YFCY_0,YENTTYP_0,YJOU_0,YDETDES_0,YACC_0,YLIGDES_0, YRESVAL_0"
+  QUERY(1) -= "From YBBDETAILTEM"
+  QUERY(2) -= "WHERE YBATNBR_0 = '"+BATNBR+"'"
+  For (Integer YTRANSNO, Char YSRC, Integer YDETLIG, Char YFCY, Char YENTTYP, Char YJOU, Char YDETDES, Char YACC, Char YLIGDES, Char RESULT) From "5" Sql QUERY As [YLNK]
+    Read [F:YBDT]YBDT1 = BATNBR;YDETLIG
+    If [F:YLNK]RESULT = "FCY1" Then #IE
+      YMSG = mess(8,6259,1)-num$([F:YLNK]YTRANSNO)
+      Call ADDLIG_ERR(BATNBR,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+    Elsif [F:YLNK]RESULT = "FCY2" Then #Journal
+      YMSG = mess(9,6259,1)-num$([F:YLNK]YTRANSNO)
+      Call ADDLIG_ERR(BATNBR,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+    Elsif [F:YLNK]RESULT = "FCY3" Then #Cash
+      YMSG = mess(10,6259,1)-num$([F:YLNK]YTRANSNO)
+      Call ADDLIG_ERR(BATNBR,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+    Endif
+  Next
+
+  If clalev([F:YBBE]) = 0 : Close Local File [F:YBBE] : Endif
+  If clalev([F:YBDT]) = 0 : Close Local File [F:YBDT] : Endif
+
+End
+
+#---------------------------------------------------------------------------------
+# Journal
+#---------------------------------------------------------------------------------
+Subprog BT_JOURNAL(BATNBR)
+Variable Char BATNBR()
+
+#Open Tables
+If clalev([F:YBDT]) = 0 : Local File YBBDETAILTEM [YBDT]  : Endif
+Local Integer YDETLIG
+
+For [F:YBDT] Where [F:YBDT]YBATNBR = BATNBR
+  If [F:YBDT]YRESVAL = "Validating" and [F:YBDT]YBATTYP = 3 Then
+    [L]YDETLIG = [F:YBDT]YDETLIG
+    Call ADDLIG_SIM([F:YBDT]YBATNBR,[L]YDETLIG, [F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&               [F:YBDT]YDETDES,[F:YBDT]YCPY,[F:YBDT]YCOA,[F:YBDT]YACC,[F:YBDT]YLIGDES,[F:YBDT]YCTRL,
+&               [F:YBDT]YBP,[F:YBDT]YDEB,[F:YBDT]YCDT,[F:YBDT]YTAX,[F:YBDT]YREF,[F:YBDT]YPJT,[F:YBDT]YCCE0,
+&               [F:YBDT]YCCE1,[F:YBDT]YCCE2,[F:YBDT]YCCE3,[F:YBDT]YCCE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN)
+  Endif
+Next
+
+#Close Tables
+If clalev([F:YBDT]) = 0 : Close Local File [F:YBDT] : Endif
+
+End
+
+#---------------------------------------------------------------------------------
+# Inter Company/Entity
+#---------------------------------------------------------------------------------
+Subprog BT_IE(BATNBR)
+Variable Char BATNBR()
+
+  Local Char YMSG(255)
+
+  If clalev([F:YBDT]) = 0  : Local File YBBDETAILTEM [YBDT]  : Endif
+  If clalev([F:YELA]) = 0  : Local File YENTLOAAGR   [YELA]  : Endif
+
+  Local Char QUERY(255)(0..)
+  Local Char ELAQRY(255)(0..)
+  Local Char EXECSP(255)
+  Local Char YMSG(255)
+  Local Char YSRC(50)
+  Local Integer YLIG
+  Local Decimal YDEBT, YCRED
+  Local Char ELADES(255)
+  Local Char PREFCY(50) : PREFCY = ""
+
+  EXECSP = "EXEC [BB_IE_TRANSACTION_VALIDATION] '"+BATNBR+"'"
+  Execsql From "5" Sql EXECSP
+
+  QUERY(0) = "SELECT YTRANSNBR_0, YBATNBR_0 +'-'+CAST(YDETLIG_0 AS VARCHAR(10)),YDETLIG_0,YFCY_0,YENTTYP_0,YJOU_0,YDETDES_0,YACC_0,YLIGDES_0, YRESVAL_0"
+  QUERY(1) -= "From YBBDETAILTEM"
+  QUERY(2) -= "WHERE YBATNBR_0 = '"+BATNBR+"' and YBATTYP_0 = 1"
+  #QUERY(3) -= "and YRESVAL_0 in ('FCY1PTH','FCY2PTH','FCY1ELA','FCY2ELA')"
+
+  For (Integer YTRANSNO, Char YSRC, Integer YDETLIG, Char YFCY, Char YENTTYP, Char YJOU, Char YDETDES, Char YACC, Char YLIGDES, Char RESULT) From "5" Sql QUERY As [YLNK]
+    Read [F:YBDT]YBDT1 = BATNBR;[F:YLNK]YDETLIG
+    # Error Handling --- Start
+    If [F:YLNK]RESULT = "ELAPROFCY"
+      YMSG = mess(11,6259,1)
+      Call ADDLIG_ERR(BATNBR,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+    #Elsif [F:YLNK]RESULT = "ELAFCYPAT"
+    #  YMSG = "Line site has not been found in the ELA Path"
+    #  Call ADDLIG_ERR(BATNBR,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+    Elsif [F:YLNK]RESULT = "FCY1ELAPATH"
+      YMSG = mess(12,6259,1)
+      Call ADDLIG_ERR(BATNBR,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+    Elsif [F:YLNK]RESULT = "FCY2ELAPATH"
+      YMSG = mess(12,6259,1)
+      Call ADDLIG_ERR(BATNBR,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+    # Error Handling --- END
+    Else #Validation Passed - Write to Simulation Line based on every ELA in the RESULT
+      If left$([F:YLNK]RESULT,1) = "S" Then #Single ELA and should not find new source
+        Read [F:YELA]YELA0 = right$([F:YLNK]RESULT,2)
+        YLIG = [F:YLNK]YDETLIG + 1
+        If [F:YBDT]YCDT = 0 : YDEBT = [F:YBDT]YDEB : YCRED = 0 : Endif
+        If [F:YBDT]YDEB = 0 : YCRED = [F:YBDT]YCDT : YDEBT = 0 : Endif
+        # --- First FCY
+        Call ADDLIG_SIM(BATNBR,[F:YLNK]YDETLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&               [F:YBDT]YDETDES,[F:YBDT]YFCY,[F:YBDT]YCOA,[F:YBDT]YACC,[F:YBDT]YLIGDES,[F:YBDT]YCTRL,
+&               [F:YBDT]YBP,YDEBT,YCRED,[F:YBDT]YTAX,[F:YBDT]YREF,[F:YBDT]YPJT,[F:YBDT]YCCE0,
+&               [F:YBDT]YCCE1,[F:YBDT]YCCE2,[F:YBDT]YCCE3,[F:YBDT]YCCE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN)
+       # ---> ELA from FCY - Provider
+       If PREFCY = "" Then
+         ELADES = "Created from ELA"-right$([F:YLNK]RESULT,2)-"from provider site"-[F:YBDT]YFCY
+         Call ADDLIG_SIM(BATNBR,YLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&                 ELADES,[F:YELA]YFCYPRO,[F:YELA]YCOAPRO,[F:YELA]YACCPRO,[F:YBDT]YLIGDES,[F:YBDT]YCTRL,
+&                 [F:YBDT]YBP,YCRED,YDEBT,[F:YBDT]YTAX,[F:YBDT]YREF,[F:YBDT]YPJT,[F:YELA]YPRODIE,
+&                 [F:YELA]YPRODIE1,[F:YELA]YPRODIE2,[F:YELA]YPRODIE3,[F:YELA]YPRODIE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN)
+          #Set FCY as Previous FCY
+          PREFCY = [F:YBDT]YFCY
+        Elsif PREFCY <> "" and [F:YBDT]YFCY <> PREFCY
+          ELADES = "Created from ELA"-right$([F:YLNK]RESULT,2)-"from recipient site"-[F:YBDT]YFCY
+          Call ADDLIG_SIM(BATNBR,YLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&                 ELADES,[F:YELA]YFCYREC,[F:YELA]YCOAREC,[F:YELA]YACCREC,[F:YBDT]YLIGDES,[F:YBDT]YCTRL,
+&                 [F:YBDT]YBP,YCRED,YDEBT,[F:YBDT]YTAX,[F:YBDT]YREF,[F:YBDT]YPJT,[F:YELA]YRECDIE,
+&                 [F:YELA]YRECDIE1,[F:YELA]YRECDIE2,[F:YELA]YRECDIE3,[F:YELA]YRECDIE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN)
+          #Set PREFCY back to "" since only 2 distinct sites are required
+          PREFCY = ""
+        Endif
+      Else #Multiple ELA, find the source in the path
+        Call ADDLIG_SIM(BATNBR,[F:YLNK]YDETLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&             [F:YBDT]YDETDES,[F:YBDT]YFCY,[F:YBDT]YCOA,[F:YBDT]YACC,[F:YBDT]YLIGDES,[F:YBDT]YCTRL,
+&             [F:YBDT]YBP,[F:YBDT]YDEB,[F:YBDT]YCDT,[F:YBDT]YTAX,[F:YBDT]YREF,[F:YBDT]YPJT,[F:YBDT]YCCE0,
+&             [F:YBDT]YCCE1,[F:YBDT]YCCE2,[F:YBDT]YCCE3,[F:YBDT]YCCE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN)
+        ELAQRY(0) = "SELECT value FROM YICELA"
+        ELAQRY(1) -= "CROSS APPLY STRING_SPLIT(YELAPATH_0,',')"
+        ELAQRY(2) -= "WHERE YELASTR_0 = '"+[F:YLNK]RESULT+"'"
+        For (Char YVAL(255)) From "5" Sql ELAQRY As [YLNK2]
+          #Using THE CURRENT ELA
+          Read [F:YELA]YELA0 = [F:YLNK2]YVAL
+          YLIG = [F:YLNK]YDETLIG + 1
+          If [F:YLNK2]YVAL <> "" Then
+            ELADES = mess(13,6259,1)-[F:YLNK2]YVAL
+            If [F:YBDT]YCDT = 0 : YDEBT = [F:YBDT]YDEB : YCRED = 0 : Endif
+            If [F:YBDT]YDEB = 0 : YCRED = [F:YBDT]YCDT : YDEBT = 0 : Endif
+            #CREATE SIMULATION LINE For THE ELA RECIPIENT COMPANY (DR/CR OPPOSITE To THE BALANCE For THE S1 SITE) IN THE S1SLL
+            Call ADDLIG_SIM(BATNBR,YLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&                 ELADES,[F:YELA]YFCYREC,[F:YELA]YCOAREC,[F:YELA]YACCREC,[F:YBDT]YLIGDES,[F:YBDT]YCTRL,
+&                 [F:YBDT]YBP,YCRED,YDEBT,[F:YBDT]YTAX,[F:YBDT]YREF,[F:YBDT]YPJT,[F:YELA]YRECDIE,
+&                 [F:YELA]YRECDIE1,[F:YELA]YRECDIE2,[F:YELA]YRECDIE3,[F:YELA]YRECDIE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN)
+            #CREATE SIMULATION LINE For THE ELA PROVIDER COMPANY (DR/CR SAME As THE BALANCE For THE S1 SITE) IN THE S1SLL
+            YLIG = YLIG + 1
+            ELADES = mess(14,6259,1)-[F:YLNK2]YVAL
+            Call ADDLIG_SIM(BATNBR,YLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&                 ELADES,[F:YELA]YFCYPRO,[F:YELA]YCOAPRO,[F:YELA]YACCPRO,[F:YBDT]YLIGDES,[F:YBDT]YCTRL,
+&                 [F:YBDT]YBP,YDEBT,YCRED,[F:YBDT]YTAX,[F:YBDT]YREF,[F:YBDT]YPJT,[F:YELA]YPRODIE,
+&                 [F:YELA]YPRODIE1,[F:YELA]YPRODIE2,[F:YELA]YPRODIE3,[F:YELA]YPRODIE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN)
+          Endif
+        Next
+        ELAQRY(0) = "" : ELAQRY(1) = "" : ELAQRY(2) = ""
+      Endif
+    Endif
+  Next
+
+  If clalev([F:YBDT]) = 0 : Close Local File [F:YBDT]  : Endif
+  If clalev([F:YELA]) = 0 : Close Local File [F:YELA]  : Endif
+
+End
+
+Subprog BT_CASH(BATNBR)
+Variable Char BATNBR()
+
+  If clalev([F:YBDT]) = 0  : Local File YBBDETAILTEM [YBDT]  : Endif
+  If clalev([F:YELA]) = 0  : Local File YENTLOAAGR [YELA]  : Endif
+
+  Local Integer I : I = 0
+  Local Char QUERY(255)(0..)
+  Local Char EXECSP(255)
+  Local Char EXELSP(255)
+  Local Char YMSG(255)
+  Local Char YSRC(50)
+  Local Integer YLIG
+  Local Decimal YDEBT, YCRED
+  Local Char ELAQRY(255)(0..)
+  Local Char LSTELA(50)
+  Local Char ELADES(250)
+
+  EXECSP = "EXEC [BB_CASH_TRANSACTION_VALIDATION] '"+BATNBR+"'"
+  Execsql From "5" Sql EXECSP
+
+  QUERY(0) = "SELECT YTRANSNBR_0, YBATNBR_0 +'-'+CAST(YDETLIG_0 + 1 AS VARCHAR(10)),YDETLIG_0,YFCY_0,YENTTYP_0,YJOU_0,YDETDES_0,YACC_0,YLIGDES_0, YRESVAL_0"
+  QUERY(1) -= "From YBBDETAILTEM"
+  QUERY(2) -= "WHERE YBATNBR_0 = '"+BATNBR+"' and YBATTYP_0 = 2"
+  #QUERY(3) -= "and YRESVAL_0 in ('BCNT1','BREQ1','BACT1','BPASSPRI')"
+
+  For (Integer YTRANSNO, Char YSRC, Integer YDETLIG, Char YFCY, Char YENTTYP, Char YJOU, Char YDETDES, Char YACC, Char YLIGDES, Char RESULT) From "5" Sql QUERY As [YLNK]
+    Read [F:YBDT]YBDT1 = BATNBR;[F:YLNK]YDETLIG
+    If [F:YLNK]RESULT = "BCNT1" Then #More than 2 distinct bank accounts
+      YMSG = mess(15,6259,1)
+      Call ADDLIG_ERR(BATNBR,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+    Elsif [F:YLNK]RESULT = "BREQ1" Then #Transaction line count exceeds 2
+      YMSG = mess(16,6259,1)
+      Call ADDLIG_ERR(BATNBR,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+    Elsif [F:YLNK]RESULT = "BACT1" Then #Selected Bank is not active
+      YMSG = mess(17,6259,1)
+      Call ADDLIG_ERR(BATNBR,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+    Elsif [F:YLNK]RESULT = "BANELA" Then #Selected Bank is not active
+      YMSG = mess(18,6259,1)
+      Call ADDLIG_ERR(BATNBR,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+    Elsif [F:YLNK]RESULT = "Validating"
+      Call ADDLIG_SIM(BATNBR,[F:YLNK]YDETLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&             [F:YBDT]YDETDES,[F:YBDT]YFCY,[F:YBDT]YCOA,[F:YBDT]YACC,[F:YBDT]YLIGDES,[F:YBDT]YCTRL,
+&             [F:YBDT]YBP,[F:YBDT]YDEB,[F:YBDT]YCDT,[F:YBDT]YTAX,[F:YBDT]YREF,[F:YBDT]YPJT,[F:YBDT]YCCE0,
+&             [F:YBDT]YCCE1,[F:YBDT]YCCE2,[F:YBDT]YCCE3,[F:YBDT]YCCE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN)
+    Elsif [F:YLNK]RESULT = "BPASSPRI"
+      Call ADDLIG_SIM(BATNBR,[F:YLNK]YDETLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&             [F:YBDT]YDETDES,[F:YBDT]YFCY,[F:YBDT]YCOA,[F:YBDT]YACC,[F:YBDT]YLIGDES,[F:YBDT]YCTRL,
+&             [F:YBDT]YBP,[F:YBDT]YDEB,[F:YBDT]YCDT,[F:YBDT]YTAX,[F:YBDT]YREF,[F:YBDT]YPJT,[F:YBDT]YCCE0,
+&             [F:YBDT]YCCE1,[F:YBDT]YCCE2,[F:YBDT]YCCE3,[F:YBDT]YCCE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN)
+    Elsif [F:YLNK]RESULT = "BPASSELA"
+      Call ADDLIG_SIM(BATNBR,[F:YLNK]YDETLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&             [F:YBDT]YDETDES,[F:YBDT]YFCY,[F:YBDT]YCOA,[F:YBDT]YACC,[F:YBDT]YLIGDES,[F:YBDT]YCTRL,
+&             [F:YBDT]YBP,[F:YBDT]YDEB,[F:YBDT]YCDT,[F:YBDT]YTAX,[F:YBDT]YREF,[F:YBDT]YPJT,[F:YBDT]YCCE0,
+&             [F:YBDT]YCCE1,[F:YBDT]YCCE2,[F:YBDT]YCCE3,[F:YBDT]YCCE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN)
+# opposite dr/cr
+      Call ADDLIG_SIM(BATNBR,[F:YLNK]YDETLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&             [F:YBDT]YDETDES,[F:YBDT]YFCY,[F:YBDT]YCOA,[F:YBDT]YACC,[F:YBDT]YLIGDES,[F:YBDT]YCTRL,
+&             [F:YBDT]YBP,[F:YBDT]YCDT,[F:YBDT]YDEB,[F:YBDT]YTAX,[F:YBDT]YREF,[F:YBDT]YPJT,[F:YBDT]YCCE0,
+&             [F:YBDT]YCCE1,[F:YBDT]YCCE2,[F:YBDT]YCCE3,[F:YBDT]YCCE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN)
+
+      ELAQRY(0) = "SELECT value FROM YICELA"
+      ELAQRY(1) -= "CROSS APPLY STRING_SPLIT(YELAPATH_0,',')"
+      ELAQRY(2) -= "WHERE YELASTR_0 = '"+[F:YBDT]YELA+"'"
+
+      For (Char YVAL(255)) From "5" Sql ELAQRY As [YLNK2]
+        #Using THE CURRENT ELA
+        Read [F:YELA]YELA0 = [F:YLNK2]YVAL
+        YLIG = [F:YLNK]YDETLIG + 1
+        If [F:YBDT]YCDT = 0 : YDEBT = [F:YBDT]YDEB : YCRED = 0 : Endif
+        If [F:YBDT]YDEB = 0 : YCRED = [F:YBDT]YCDT : YDEBT = 0 Endif
+        ELADES = "Created from ELA"-[F:YLNK2]YVAL-"with recipient"-[F:YELA]YFCYREC
+        #CREATE SIMULATION LINE For THE ELA RECIPIENT COMPANY (DR/CR OPPOSITE To THE BALANCE For THE S1 SITE)
+        Call ADDLIG_SIM(BATNBR,YLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&             ELADES,[F:YELA]YFCYREC,[F:YELA]YCOAREC,[F:YELA]YACCREC,[F:YBDT]YLIGDES,[F:YBDT]YCTRL,
+&             [F:YBDT]YBP,YDEBT,YCRED,[F:YBDT]YTAX,[F:YBDT]YREF,[F:YBDT]YPJT,[F:YELA]YRECDIE,
+&             [F:YELA]YRECDIE1,[F:YELA]YRECDIE2,[F:YELA]YRECDIE3,[F:YELA]YRECDIE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN)
+        #CREATE SIMULATION LINE For THE ELA PROVIDER COMPANY (DR/CR SAME As THE BALANCE For THE S1 SITE)
+        YLIG = YLIG + 1
+        ELADES = "Created from ELA"-[F:YLNK2]YVAL-"with provider"-[F:YELA]YFCYPRO
+        Call ADDLIG_SIM(BATNBR,YLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&             ELADES,[F:YELA]YFCYPRO,[F:YELA]YCOAPRO,[F:YELA]YACCPRO,[F:YBDT]YLIGDES,[F:YBDT]YCTRL,
+&             [F:YBDT]YBP,[F:YBDT]YCDT,[F:YBDT]YDEB,[F:YBDT]YTAX,[F:YBDT]YREF,[F:YBDT]YPJT,[F:YELA]YPRODIE,
+&             [F:YELA]YPRODIE1,[F:YELA]YPRODIE2,[F:YELA]YPRODIE3,[F:YELA]YPRODIE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN)
+        #Set last ELA
+        If [F:YELA]YSRCLONAGR = '' :  LSTELA = [F:YELA]YLONAGR : Endif
+      Next
+      ELAQRY(0) = "" : ELAQRY(1) = "" : ELAQRY(2) = ""
+
+      ELAQRY(0) = "SELECT YBAN_0, YBANCPY_0, YTREACC_0, YBANPRI_0 FROM [YBANELA] WHERE YELA_0 = '"+[F:YBDT]YELA+"'"
+      For (Char NBAN, Char NBANCPY, Char NTREACC, Char NBANPRI) From "5" Sql ELAQRY As [YLNK3]
+        If [F:YLNK3]NBAN <> "" and [F:YLNK3]NBANCPY <> "" and [F:YLNK3]NBANPRI = "2" Then
+          YLIG = YLIG + 1
+          Read [F:YELA]YELA0 = LSTELA
+          If [F:YLNK3]NBANCPY = [F:YELA]YCPYPRO Then
+            If [F:YBDT]YCDT = 0 : YDEBT = [F:YBDT]YDEB : YCRED = 0 : Endif
+            If [F:YBDT]YDEB = 0 : YCRED = [F:YBDT]YCDT : YDEBT = 0 Endif
+            #Get Principal Bank and Account
+            ELADES = "Created from owner company of the Principal Bank"-[F:YLNK3]NBAN
+            Call ADDLIG_SIM(BATNBR,YLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&                 ELADES,[F:YELA]YFCYPRO,[F:YELA]YCOAPRO,[F:YLNK3]NTREACC,[F:YBDT]YLIGDES,[F:YBDT]YCTRL,
+&                 [F:YBDT]YBP,YDEBT,YCRED,[F:YBDT]YTAX,[F:YBDT]YREF,[F:YBDT]YPJT,[F:YELA]YPRODIE,
+&                 [F:YELA]YPRODIE1,[F:YELA]YPRODIE2,[F:YELA]YPRODIE3,[F:YELA]YPRODIE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YLNK3]NBAN)
+          Else
+            YMSG = mess(19,6259,1)
+            Local Char YSRC(250) : YSRC = "Generated in transaction"
+            Call ADDLIG_ERR(BATNBR,YSRC,YLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+          Endif
+        Else
+          YMSG = "No Principal Bank information found"#mess(19,6259,1)
+          Local Char YSRC(250) : YSRC = "Generated in transaction"
+          Call ADDLIG_ERR(BATNBR,YSRC,YLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+        Endif
+      Next
+      ELAQRY(0) = ""
+
+    Endif
+  Next
+
+  If clalev([F:YBDT1]) = 0  : Close Local File  [F:YBDT]  : Endif
+  If clalev([F:YELA])  = 0  : Close Local File  [F:YELA] : Endif
+
+End
+
+#---------------------------------------------------------------------------------
+# Add Detail Temp Line for Current Batch number
+#---------------------------------------------------------------------------------
+Subprog ADD_DETAILTEMP()
+If clalev([F:YBDT]) = 0  : Local File YBBDETAILTEM [YBDT]  : Endif
+  For I = 0 To [M:YBB1]NBLIG - 1
+    nolign = I
+    [F:YBDT] = [M:YBB1]
+    [F:YBDT]YBATNBR = [M:YBB0]YBATNBR
+    [F:YBDT]YFCY = [M:YBB1]YFCY(I)
+    [F:YBDT]YENTTYP = [M:YBB1]YENTTYP(I)
+    [F:YBDT]YTRANSNBR = [M:YBB1]YTRANSNBR(I)
+    [F:YBDT]YJOU = [M:YBB1]YJOU(I)
+    [F:YBDT]YCPY = [M:YBB1]YCPY(I)
+    [F:YBDT]YACM = [M:YBB1]YACM(I)
+    [F:YBDT]YLED1 = [M:YBB1]YLED1(I)
+    [F:YBDT]YELA = [M:YBB1]YELA(I)
+    [F:YBDT]YCOA = [M:YBB1]YCOA(I)
+    [F:YBDT]YELA = [M:YBB1]YELA(I)
+    [F:YBDT]YBAN = [M:YBB1]YBAN(I)
+    [F:YBDT]YACC = [M:YBB1]YACC(I)
+    [F:YBDT]YLIGDES = [M:YBB1]YLIGDES(I)
+    [F:YBDT]YDETDES = [M:YBB1]YDETDES(I)
+    [F:YBDT]YCTRL = [M:YBB1]YCTRL(I)
+    [F:YBDT]YBP = [M:YBB1]YBP(I)
+    [F:YBDT]YDEB = [M:YBB1]YDEB(I)
+    [F:YBDT]YCDT = [M:YBB1]YCDT(I)
+    [F:YBDT]YTAX = [M:YBB1]YTAX(I)
+    [F:YBDT]YGSTAMT = [M:YBB1]YGSTAMT(I)
+    [F:YBDT]YAMTTAX = [M:YBB1]YAMTTAX(I)
+    [F:YBDT]YREF = [M:YBB1]YREF(I)
+    [F:YBDT]YPJT = [M:YBB1]YPJT(I)
+    [F:YBDT]YDIE0 = [M:YBB1]YDIE0(I)
+    [F:YBDT]YCCE0 = [M:YBB1]YCCE0(I)
+    [F:YBDT]YDIE1 = [M:YBB1]YDIE1(I)
+    [F:YBDT]YCCE1 = [M:YBB1]YCCE1(I)
+    [F:YBDT]YDIE2 = [M:YBB1]YDIE2(I)
+    [F:YBDT]YCCE2 = [M:YBB1]YCCE2(I)
+    [F:YBDT]YDIE3 = [M:YBB1]YDIE3(I)
+    [F:YBDT]YCCE3 = [M:YBB1]YCCE3(I)
+    [F:YBDT]YDIE4 = [M:YBB1]YDIE4(I)
+    [F:YBDT]YCCE4 = [M:YBB1]YCCE4(I)
+    [F:YBDT]YBATTYP = [M:YBB1]YBATTYP(I)
+    [F:YBDT]YGSTINC = [M:YBB1]YGSTINC(I)
+    [F:YBDT]YDETLIG = [M:YBB1]YDETLIG(I)
+    [F:YBDT]YRESVAL = "Validating"
+     Write [F:YBDT]
+  Next
+  Close Local File [YBDT]
+End
+
+#---------------------------------------------------------------------------------
+# Simulation Line Write
+#---------------------------------------------------------------------------------
+Subprog ADDLIG_SIM(YBATNBR,YDETLIG, YENTTYP,YJOU,YTRANSNBR,YDETDES,YFCY,YCOA,YACC,YLIGDES,YCTRL,YBP,YDEB,YCDT,
+&                  YTAX,YREF,YPJT,YCCE0,YCCE1,YCCE2,YCCE3,YCCE4,YGSTAMT,YAMTTAX,YBAN)
+Variable Char YBATNBR()
+Variable Integer YDETLIG()
+Variable Char YENTTYP()
+Variable Char YJOU()
+Variable Integer YTRANSNBR()
+Variable Char YDETDES()
+Variable Char YFCY()
+Variable Char YCOA()
+Variable Char YACC()
+Variable Char YLIGDES()
+Variable Char YCTRL()
+Variable Char YBP()
+Variable Decimal YDEB()
+Variable Decimal YCDT()
+Variable Char YTAX()
+Variable Char YREF()
+Variable Char YPJT()
+Variable Char YCCE0()
+Variable Char YCCE1()
+Variable Char YCCE2()
+Variable Char YCCE3()
+Variable Char YCCE4()
+Variable Decimal YGSTAMT
+Variable Decimal YAMTTAX
+Variable Char YBAN()
+Local Integer YLIG : YLIG = YDETLIG
+
+  If clalev([F:YBBS]) = 0 : Local File YBBSIM [YBBS]  : Endif
+  Raz [F:YBBS]
+  [F:YBBS]YBATNBR = YBATNBR
+  [F:YBBS]YDETLIG = YDETLIG
+  [F:YBBS]YENTTYP = YENTTYP
+  [F:YBBS]YJOU = YJOU
+  [F:YBBS]YTRANSNBR = YTRANSNBR
+  [F:YBBS]YDETDES = YDETDES
+  [F:YBBS]YFCY = YFCY
+  [F:YBBS]YCOA = YCOA
+  [F:YBBS]YACC = YACC
+  [F:YBBS]YLIGDES = YLIGDES
+  [F:YBBS]YCTRL = YCTRL
+  [F:YBBS]YBP = YBP
+  [F:YBBS]YDEB = YDEB
+  [F:YBBS]YCDT = YCDT
+  [F:YBBS]YTAX = YTAX
+  [F:YBBS]YREF = YREF
+  [F:YBBS]YPJT = YPJT
+  [F:YBBS]YCCE0 = YCCE0
+  [F:YBBS]YCCE1 = YCCE1
+  [F:YBBS]YCCE2 = YCCE2
+  [F:YBBS]YCCE3 = YCCE3
+  [F:YBBS]YCCE4 = YCCE4
+  [F:YBBS]YGSTAMT = YGSTAMT
+  [F:YBBS]YAMTTAX = YAMTTAX
+  [F:YBBS]YLIG = YLIG
+  [F:YBBS]YBAN = YBAN
+  Write [F:YBBS]
+  Close Local File [YBBS]
+
+End
+
+#---------------------------------------------------------------------------------
+# Error Line Write
+#---------------------------------------------------------------------------------
+Subprog ADDLIG_ERR(YBATNBR,YSRC,YDETLIG,YFCY,YENTTYP,YJOU,YDETDES,YACC,YLIGDES,YMESS)
+Variable Char YBATNBR()
+Variable Char YSRC()
+Variable Integer YDETLIG()
+Variable Char YFCY()
+Variable Char YENTTYP()
+Variable Char YJOU()
+Variable Char YDETDES()
+Variable Char YACC()
+Variable Char YLIGDES()
+Variable Char YMESS()
+Local Integer YLIG : YLIG = YDETLIG
+
+  If clalev([F:YBBE]) = 0 : Local File YBBERR [YBBE]  : Endif
+  Raz [F:YBBE]
+  [F:YBBE]YBATNBR = YBATNBR
+  [F:YBBE]YSRC = YSRC
+  [F:YBBE]YDETLIG = YDETLIG
+  [F:YBBE]YFCY = YFCY
+  [F:YBBE]YENTTYP = YENTTYP
+  [F:YBBE]YJOU = YJOU
+  [F:YBBE]YDETDES = YDETDES
+  [F:YBBE]YACC = YACC
+  [F:YBBE]YLIGDES = YLIGDES
+  [F:YBBE]YMESS = YMESS
+  [F:YBBE]YLIG = YLIG
+  Write [F:YBBE]
+  Close Local File [YBBE]
+
+End
+
+**********
+7,"TRT","SPEYBBVAL",""
+2,"ACT","YBBPST",""
+3,"ACT",YBBPST
+4,"ABTFLG",0,1
+4,"ACTION",0,"YBBPST"
+4,"ACTSUI",0,""
+4,"AMSFLG",0,1
+4,"CODACT",0,"YICBS"
+4,"CODTRT",0,""
+4,"CREDAT",0,20181011
+4,"CREDATTIM",0,"2018-10-11T01:12:37Z"
+4,"CREUSR",0,"DH"
+4,"INSTRU",0,""
+5,"INTITA",0,"Business batch post","ENG",100740,""
+5,"INTITA",0,"","***"
+5,"INTITC",0,"","ENG",0,""
+5,"INTITC",0,"","***"
+5,"INTITL",0,"","ENG",0,""
+5,"INTITL",0,"","***"
+4,"MODULE",0,9
+4,"NBPAR",0,0
+4,"NOWEB",0,1
+4,"PARAM1",0,""
+4,"PARAM2",0,""
+4,"PARAM3",0,1
+4,"PARAM4",0,""
+4,"PARAM5",0,""
+4,"PARAM6",0,1
+4,"PUBFLG",0,1
+4,"SPETRT",0,"SPEYBBPST"
+4,"SUBPRG",0,""
+4,"TYP",0,3
+4,"TYPACT",0,2
+4,"TYPUTI",0,1
+4,"UPDDAT",0,20181011
+4,"UPDDATTIM",0,"2018-10-11T01:12:37Z"
+4,"UPDUSR",0,"DH"
+6,"ACT"
+7,"ACT","YBBPST",""
+2,"ACT","YBBVAL","Business batch validate"
+3,"ACT",YBBVAL
+4,"ABTFLG",0,1
+4,"ACTION",0,"YBBVAL"
+4,"ACTSUI",0,""
+4,"AMSFLG",0,1
+4,"CODACT",0,"YICBS"
+4,"CODTRT",0,""
+4,"CREDAT",0,20180828
+4,"CREDATTIM",0,"2018-08-28T04:12:58Z"
+4,"CREUSR",0,"DH"
+4,"INSTRU",0,""
+5,"INTITA",0,"Business batch validate","ENG",100739,""
+5,"INTITA",0,"","***"
+5,"INTITC",0,"","ENG",0,""
+5,"INTITC",0,"","***"
+5,"INTITL",0,"","ENG",0,""
+5,"INTITL",0,"","***"
+4,"MODULE",0,9
+4,"NBPAR",0,0
+4,"NOWEB",0,1
+4,"PARAM1",0,""
+4,"PARAM2",0,""
+4,"PARAM3",0,1
+4,"PARAM4",0,""
+4,"PARAM5",0,""
+4,"PARAM6",0,1
+4,"PUBFLG",0,1
+4,"SPETRT",0,"SPEYBBVAL"
+4,"SUBPRG",0,""
+4,"TYP",0,3
+4,"TYPACT",0,1
+4,"TYPUTI",0,1
+4,"UPDDAT",0,20181019
+4,"UPDDATTIM",0,"2018-10-19T02:57:50Z"
+4,"UPDUSR",0,"DH"
+6,"ACT"
+7,"ACT","YBBVAL","Business batch validate"
+2,"AWI","YOBBT",""
+3,"AWI",YOBBT
+4,"ACS",0,""
+4,"ACTMSK",0,""
+4,"ACTMSK",1,""
+4,"ACTMSK",2,""
+4,"ACTMSK",3,""
+4,"ACTMSK",4,""
+4,"ACTMSK",5,""
+4,"ACTMSK",6,""
+4,"ACTMSK",7,""
+4,"ACTMSK",8,""
+4,"ACTMSK",9,""
+4,"ACTMSK",10,""
+4,"ACTMSK",11,""
+4,"ACTMSK",12,""
+4,"ACTMSK",13,""
+4,"ACTMSK",14,""
+4,"ACTSTD",0,""
+4,"ACTSTD",1,""
+4,"ACTSTD",2,""
+4,"ACTSTD",3,""
+4,"ACTSTD",4,""
+4,"ACTSTD",5,""
+4,"ACTSTD",6,""
+4,"ACTSTD",7,""
+4,"ACTSTD",8,""
+4,"ACTSTD",9,""
+4,"ACTSTD",10,""
+4,"ACTSTD",11,""
+4,"ACTSTD",12,""
+4,"ACTSTD",13,""
+4,"ACTSTD",14,""
+4,"ACTSTD",15,""
+4,"ACTSTD",16,""
+4,"ACTSTD",17,""
+4,"ACTSTD",18,""
+4,"ACTSTD",19,""
+4,"BSTD",0,2
+4,"BSTD",1,2
+4,"BSTD",2,2
+4,"BSTD",3,2
+4,"BSTD",4,1
+4,"BSTD",5,1
+4,"BSTD",6,2
+4,"BSTD",7,2
+4,"BSTD",8,2
+4,"BSTD",9,2
+4,"BSTD",10,2
+4,"BSTD",11,2
+4,"BSTD",12,2
+4,"BSTD",13,2
+4,"BSTD",14,2
+4,"BSTD",15,2
+4,"BSTD",16,2
+4,"BSTD",17,2
+4,"BSTD",18,0
+4,"BSTD",19,0
+4,"CNS",0,""
+4,"CODACT",0,"YICBS"
+4,"CREDAT",0,20180829
+4,"CREDATTIM",0,"2018-08-29T03:37:45Z"
+4,"CREUSR",0,"DH"
+5,"DES",0,"Business batch transaction","ENG",100738,""
+5,"DES",0,"","***"
+4,"ENAFLG",0,2
+4,"FLGMSK",0,2
+4,"FLGMSK",1,2
+4,"FLGMSK",2,2
+4,"FLGMSK",3,0
+4,"FLGMSK",4,0
+4,"FLGMSK",5,0
+4,"FLGMSK",6,0
+4,"FLGMSK",7,0
+4,"FLGMSK",8,0
+4,"FLGMSK",9,0
+4,"FLGMSK",10,0
+4,"FLGMSK",11,0
+4,"FLGMSK",12,0
+4,"FLGMSK",13,0
+4,"FLGMSK",14,0
+4,"FVT",0,1
+4,"INTFOLD",0,""
+4,"INTFOLD",1,""
+4,"INTFOLD",2,""
+4,"INTFOLD",3,""
+4,"INTFOLD",4,""
+4,"INTFOLD",5,""
+4,"INTFOLD",6,""
+4,"INTFOLD",7,""
+4,"INTFOLD",8,""
+4,"INTFOLD",9,""
+4,"INTFOLD",10,""
+4,"INTFOLD",11,""
+4,"INTFOLD",12,""
+4,"INTFOLD",13,""
+4,"INTFOLD",14,""
+5,"INTMSK",0,"Details","ENG",6521,"Other"
+5,"INTMSK",0,"","***"
+5,"INTMSK",1,"Simulation","ENG",4973,""
+5,"INTMSK",1,"","***"
+5,"INTMSK",2,"Errors","ENG",12022,""
+5,"INTMSK",2,"","***"
+5,"INTMSK",3,"","ENG",0,""
+5,"INTMSK",3,"","***"
+5,"INTMSK",4,"","ENG",0,""
+5,"INTMSK",4,"","***"
+5,"INTMSK",5,"","ENG",0,""
+5,"INTMSK",5,"","***"
+5,"INTMSK",6,"","ENG",0,""
+5,"INTMSK",6,"","***"
+5,"INTMSK",7,"","ENG",0,""
+5,"INTMSK",7,"","***"
+5,"INTMSK",8,"","ENG",0,""
+5,"INTMSK",8,"","***"
+5,"INTMSK",9,"","ENG",0,""
+5,"INTMSK",9,"","***"
+5,"INTMSK",10,"","ENG",0,""
+5,"INTMSK",10,"","***"
+5,"INTMSK",11,"","ENG",0,""
+5,"INTMSK",11,"","***"
+5,"INTMSK",12,"","ENG",0,""
+5,"INTMSK",12,"","***"
+5,"INTMSK",13,"","ENG",0,""
+5,"INTMSK",13,"","***"
+5,"INTMSK",14,"","ENG",0,""
+5,"INTMSK",14,"","***"
+4,"LIBEL",0,""
+4,"MDL",0,1
+4,"MODULE",0,9
+4,"MSKENT",0,"YBUSBAT0"
+4,"NBMSK",0,3
+4,"NOMMSK",0,"YBUSBAT1"
+4,"NOMMSK",1,"YBUSBAT2"
+4,"NOMMSK",2,"YBUSBAT3"
+4,"NOMMSK",3,""
+4,"NOMMSK",4,""
+4,"NOMMSK",5,""
+4,"NOMMSK",6,""
+4,"NOMMSK",7,""
+4,"NOMMSK",8,""
+4,"NOMMSK",9,""
+4,"NOMMSK",10,""
+4,"NOMMSK",11,""
+4,"NOMMSK",12,""
+4,"NOMMSK",13,""
+4,"NOMMSK",14,""
+4,"OBJ",0,"YBB"
+4,"ROWMSK",0,5
+4,"ROWMSK",1,10
+4,"ROWMSK",2,15
+4,"ROWMSK",3,0
+4,"ROWMSK",4,0
+4,"ROWMSK",5,0
+4,"ROWMSK",6,0
+4,"ROWMSK",7,0
+4,"ROWMSK",8,0
+4,"ROWMSK",9,0
+4,"ROWMSK",10,0
+4,"ROWMSK",11,0
+4,"ROWMSK",12,0
+4,"ROWMSK",13,0
+4,"ROWMSK",14,0
+4,"TRN",0,""
+4,"TYP",0,1
+4,"UPDDAT",0,20181011
+4,"UPDDATTIM",0,"2018-10-11T01:12:46Z"
+4,"UPDFLG",0,0
+4,"UPDUSR",0,"DH"
+4,"WIN",0,"YOBBT"
+4,"WINTYP",0,2
+6,"AWI"
+3,"AWT",1
+4,"ACTBOUT",0,"YBBVAL"
+4,"CODACTBOUT",0,""
+4,"CODBOUT",0,"1"
+4,"CREDATTIM",0,"2018-10-11T01:12:46Z"
+4,"CREUSR",0,"DH"
+4,"NUM",0,1
+5,"TXTBOUT",0,"Validate","ENG",21803,""
+5,"TXTBOUT",0,"","***"
+4,"TYPBOUT",0,1
+4,"UPDDATTIM",0,"2018-10-11T01:12:46Z"
+4,"UPDUSR",0,"DH"
+4,"VALBOUT",0,2
+4,"WIN",0,"YOBBT"
+6,"AWT"
+3,"AWT",2
+4,"ACTBOUT",0,"YBBPST"
+4,"CODACTBOUT",0,""
+4,"CODBOUT",0,"2"
+4,"CREDATTIM",0,"2018-10-11T01:12:46Z"
+4,"CREUSR",0,"DH"
+4,"NUM",0,2
+5,"TXTBOUT",0,"Post","ENG",18624,"Accounting"
+5,"TXTBOUT",0,"","***"
+4,"TYPBOUT",0,1
+4,"UPDDATTIM",0,"2018-10-11T01:12:46Z"
+4,"UPDUSR",0,"DH"
+4,"VALBOUT",0,2
+4,"WIN",0,"YOBBT"
+6,"AWT"
+3,"AWB",YOBBT
+4,"ABRLIS",0,""
+4,"ABRLIS",1,""
+4,"ABRLIS",2,""
+4,"ABRLIS",3,""
+4,"ABRLIS",4,""
+4,"ABRLIS",5,""
+4,"ABRLIS",6,""
+4,"ABRLIS",7,""
+4,"ABRLIS",8,""
+4,"ACTLIS",0,""
+4,"ACTLIS",1,""
+4,"ACTLIS",2,""
+4,"ACTLIS",3,""
+4,"ACTLIS",4,""
+4,"ACTLIS",5,""
+4,"ACTLIS",6,""
+4,"ACTLIS",7,""
+4,"ACTLIS",8,""
+4,"AFLBRO",0,1
+4,"BROLIS",0,2
+4,"BROLIS",1,0
+4,"BROLIS",2,0
+4,"BROLIS",3,0
+4,"BROLIS",4,0
+4,"BROLIS",5,0
+4,"BROLIS",6,0
+4,"BROLIS",7,0
+4,"BROLIS",8,0
+4,"CHGLIS",0,2
+4,"CHGLIS",1,0
+4,"CHGLIS",2,0
+4,"CHGLIS",3,0
+4,"CHGLIS",4,0
+4,"CHGLIS",5,0
+4,"CHGLIS",6,0
+4,"CHGLIS",7,0
+4,"CHGLIS",8,0
+4,"CLELIS",0,"YBBH0"
+4,"CLELIS",1,""
+4,"CLELIS",2,""
+4,"CLELIS",3,""
+4,"CLELIS",4,""
+4,"CLELIS",5,""
+4,"CLELIS",6,""
+4,"CLELIS",7,""
+4,"CLELIS",8,""
+4,"CREDATTIM",0,"2018-10-11T01:12:46Z"
+4,"CREUSR",0,"DH"
+4,"DERLU",0,2
+4,"EXPLIS",0,""
+4,"EXPLIS",1,""
+4,"EXPLIS",2,""
+4,"EXPLIS",3,""
+4,"EXPLIS",4,""
+4,"EXPLIS",5,""
+4,"EXPLIS",6,""
+4,"EXPLIS",7,""
+4,"EXPLIS",8,""
+4,"FIRLIS",0,1
+4,"FLELIS",0,2
+4,"FLELIS",1,0
+4,"FLELIS",2,0
+4,"FLELIS",3,0
+4,"FLELIS",4,0
+4,"FLELIS",5,0
+4,"FLELIS",6,0
+4,"FLELIS",7,0
+4,"FLELIS",8,0
+5,"INTLIS",0,"Business batch","ENG",100736,""
+5,"INTLIS",0,"","***"
+5,"INTLIS",1,"","ENG",0,""
+5,"INTLIS",1,"","***"
+5,"INTLIS",2,"","ENG",0,""
+5,"INTLIS",2,"","***"
+5,"INTLIS",3,"","ENG",0,""
+5,"INTLIS",3,"","***"
+5,"INTLIS",4,"","ENG",0,""
+5,"INTLIS",4,"","***"
+5,"INTLIS",5,"","ENG",0,""
+5,"INTLIS",5,"","***"
+5,"INTLIS",6,"","ENG",0,""
+5,"INTLIS",6,"","***"
+5,"INTLIS",7,"","ENG",0,""
+5,"INTLIS",7,"","***"
+5,"INTLIS",8,"","ENG",0,""
+5,"INTLIS",8,"","***"
+4,"NBLIS",0,1
+4,"OBJLIS",0,"YBB"
+4,"OBJLIS",1,""
+4,"OBJLIS",2,""
+4,"OBJLIS",3,""
+4,"OBJLIS",4,""
+4,"OBJLIS",5,""
+4,"OBJLIS",6,""
+4,"OBJLIS",7,""
+4,"OBJLIS",8,""
+4,"ORDLIS",0,1
+4,"ORDLIS",1,0
+4,"ORDLIS",2,0
+4,"ORDLIS",3,0
+4,"ORDLIS",4,0
+4,"ORDLIS",5,0
+4,"ORDLIS",6,0
+4,"ORDLIS",7,0
+4,"ORDLIS",8,0
+4,"ROWLIS",0,5
+4,"ROWLIS",1,0
+4,"ROWLIS",2,0
+4,"ROWLIS",3,0
+4,"ROWLIS",4,0
+4,"ROWLIS",5,0
+4,"ROWLIS",6,0
+4,"ROWLIS",7,0
+4,"ROWLIS",8,0
+4,"TRELIS",0,1
+4,"TRELIS",1,0
+4,"TRELIS",2,0
+4,"TRELIS",3,0
+4,"TRELIS",4,0
+4,"TRELIS",5,0
+4,"TRELIS",6,0
+4,"TRELIS",7,0
+4,"TRELIS",8,0
+4,"UPDDATTIM",0,"2018-10-11T01:12:46Z"
+4,"UPDUSR",0,"DH"
+4,"WIN",0,"YOBBT"
+6,"AWB"
+7,"AWI","YOBBT",""
+8,"Patch DFC :DFCX1-142 on November  21,18 12: 11"
