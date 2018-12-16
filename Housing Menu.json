@@ -1,0 +1,201 @@
+{
+	"$prototypes": {
+		"navigationPage": {
+			"$key": "pageName",
+			"modules": {
+				"$key": "code",
+				"application": {
+					"$key": [
+						"application",
+						"contract"
+					]
+				},
+				"submodules": {
+					"$key": "code",
+					"application": {
+						"$key": [
+							"application",
+							"contract"
+						]
+					},
+					"items": {
+						"$variants": {
+							"menuBlock": {
+								"$key": "code",
+								"$id": "menuBlock",
+								"items": {
+									"$variants": {
+										"menuBlock": {
+											"$id": "menuBlock",
+											"$type": "pointer"
+										},
+										"menuItem": {
+											"$key": "code",
+											"application": {
+												"$key": [
+													"application",
+													"contract"
+												]
+											},
+											"endpoint": {
+												"$key": "dataset"
+											},
+											"representationRef": {},
+											"module": {
+												"$key": "code"
+											},
+											"categories": {
+												"$key": "code",
+												"$localized": [
+													"description"
+												]
+											},
+											"parameters": {
+												"$key": "name",
+												"$localized": [
+													"title"
+												]
+											},
+											"$localized": [
+												"title",
+												"description"
+											]
+										}
+									}
+								},
+								"$localized": [
+									"title"
+								]
+							},
+							"menuItem": {
+								"$key": "code",
+								"application": {
+									"$key": [
+										"application",
+										"contract"
+									]
+								},
+								"endpoint": {
+									"$key": "dataset"
+								},
+								"representationRef": {},
+								"module": {
+									"$key": "code"
+								},
+								"categories": {
+									"$key": "code",
+									"$localized": [
+										"description"
+									]
+								},
+								"parameters": {
+									"$key": "name",
+									"$localized": [
+										"title"
+									]
+								},
+								"$localized": [
+									"title",
+									"description"
+								]
+							}
+						}
+					},
+					"$localized": [
+						"title",
+						"description"
+					]
+				},
+				"$localized": [
+					"title",
+					"description"
+				]
+			},
+			"$localized": [
+				"title",
+				"description"
+			]
+		},
+		"menuItem": {
+			"$key": "code",
+			"application": {
+				"$key": [
+					"application",
+					"contract"
+				]
+			},
+			"endpoint": {
+				"$key": "dataset"
+			},
+			"representationRef": {},
+			"module": {
+				"$key": "code"
+			},
+			"categories": {
+				"$key": "code",
+				"$localized": [
+					"description"
+				]
+			},
+			"parameters": {
+				"$key": "name",
+				"$localized": [
+					"title"
+				]
+			},
+			"$localized": [
+				"title",
+				"description"
+			]
+		}
+	},
+	"$items": [
+		{
+			"$type": "menuItem",
+			"code": "SPE_X3_ERP_YHOU",
+			"title": "title_e84ab306-799a-4f5a-a7f6-73b4bdbd071f",
+			"description": "description_e84ab306-799a-4f5a-a7f6-73b4bdbd071f",
+			"linkType": "$representation",
+			"icon": "",
+			"applicationMenu": false,
+			"facet": "$query",
+			"keyIsWhere": false,
+			"target": "self",
+			"$factory": null,
+			"requestLevel": "1",
+			"application": {
+				"application": "x3",
+				"contract": "erp"
+			},
+			"endpoint": null,
+			"representationRef": {
+				"$type": "representationProxy",
+				"entity": "YHOU",
+				"representation": "YHOU"
+			},
+			"module": {
+				"code": "STD_X3_ERP_CPTA"
+			},
+			"categories": [],
+			"parameters": []
+		}
+	],
+	"$localization": {
+		"ar-sa": {},
+		"de-de": {},
+		"en-au": {},
+		"en-gb": {},
+		"en-us": {
+			"title_e84ab306-799a-4f5a-a7f6-73b4bdbd071f": "Housing Jobs",
+			"description_e84ab306-799a-4f5a-a7f6-73b4bdbd071f": "Housing Jobs"
+		},
+		"es-es": {},
+		"fr-fr": {},
+		"it-it": {},
+		"pl-pl": {},
+		"pt-br": {},
+		"pt-pt": {},
+		"ru-ru": {},
+		"zh-cn": {}
+	}
+}
