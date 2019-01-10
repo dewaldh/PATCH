@@ -1,0 +1,6 @@
+Date;Object type;Object;Comments;Patch;Code;Modifier;Activity code;Update type;Delivered on
+20190107;TRT;YSELGTE;Entry type selection;;SETRUL;DH;;C;20190107
+20190107;TRT;YSELJOU;Settlement Rule type;;;DH;;M;20190107
+20190107;ACT;YSELGTE;Journal selection;;;DH;;C;20190107
+20190107;ACT;YSELJOU;Entry type script;;;DH;;C;20190107
+20190107;AMK;YSETRULTYP;Journal type script;;;DH;;C;20190107
