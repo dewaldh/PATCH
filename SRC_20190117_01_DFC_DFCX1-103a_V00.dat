@@ -1,0 +1,2333 @@
+1,"Patch DFC :DFCX1-103a on January   17,19 05: 15","ENG","1","","X3","3",
+2,"ADC","SPEPJMSRC","Project Source"
+3,"ADC",SPEPJMSRC
+4,"CODACT",0,"YPJM"
+4,"CODTRT",0,"SPEPJMSRC"
+4,"CREDAT",0,20190115
+4,"CREDATTIM",0,"2019-01-15T06:44:50Z"
+4,"CREUSR",0,"MB"
+4,"DES",0,"Project Source"
+4,"INTERN",0,1
+4,"MODULE",0,1
+4,"SRC",0,1
+4,"SRCINT",0,2
+4,"UPDDAT",0,20190117
+4,"UPDDATTIM",0,"2019-01-16T18:15:19Z"
+4,"UPDUSR",0,"MB"
+6,"ADC"
+7,"ADC","SPEPJMSRC","Project Source"
+2,"TRT","SPEPJM","Project management"
+#<AdxTL>@(#)0.0.0.0 $Revision$
+#######################################################################################################
+# FILE NAME   : SPEPJM
+# DESCRIPTION : This process uses for Project management
+# COMPANY     : Leverage Technologies (MZ)
+#-------------------------------------------------------------------------------------------------------
+# Detail
+#
+# DFCX1-147     Majid   Project sequence number should be manual for Integration user
+#######################################################################################################
+# Mask management PJMA0 (Specific)
+
+#------------------------------------------------------------------------------------#
+#Action
+#------------------------------------------------------------------------------------#
+$ACTION
+
+Case ACTION
+   When "RAZCRE"      : #Gosub RAZCRE
+   When "SETBOUT"     : Gosub SETBOUT
+   When "AFFMASK"     : #Gosub AFFMASK
+   When "STYLE"       : #Gosub STYLE
+   When "OUVRE"       : Gosub OUVRE
+   When "LIENS"       : #Gosub LIENS
+   When "APRES_MOD"   : #Gosub APRES_MOD
+   When "VERIF_MOD"   : #Gosub VERIF_MOD
+   When "VERIF_CRE"   : #Gosub VERIF_CRE
+   When "CREATION"    : #Gosub CREATION
+   When "EXEBOUT"     : #Gosub EXEBOUT
+   When "MODIF"       : #Gosub MODIF
+   When "INICRE"      : Gosub INICRE
+ When Default
+Endcase
+Return
+
+
+
+$INICRE
+If GWEBSERV
+  If WW_ACTION = "CREATE"
+    [F:OPP]YGUID = num$(getUuid)
+  Endif
+Endif
+
+Return
+
+
+
+Subprog AM_SALFCY(VALEUR)
+Variable Char    VALEUR()
+End
+
+
+#------------------------------------------------------------------------------------#
+#On Load
+#------------------------------------------------------------------------------------#
+$LIENS
+#Read[F:OPP]OPP0 = [M:PJM0]OPPNUM
+#
+#
+#If fstat = 0 & [F:OPP]YJOBCOD = ""
+#   Read[F:YPJM]OPPPJM0 = [M:PJM0]OPPNUM
+#
+#  [F:OPP]YJOBCOD = [F:YPJM]CCE(2)
+#  Rewrite[F:OPP]
+#Endif
+
+#Check Project Related tab Activity Code is active
+If func AFNC.ACTIV("YPJMR") = 1
+
+  #Read Housing Job Related and transfer File to Screen
+  nolign = 1
+  For [F:YRMA]YRMA0 Where [F:YRMA]YGUID = [F:OPP]YGUID
+    [M:YPJMR] = [F:YRMA]
+    nolign += 1
+  Next
+  [M:YPJMR]NBLIG = nolign - 1
+
+Endif
+
+Return
+
+
+#------------------------------------------------------------------------------------#
+#Open tables and masks
+#------------------------------------------------------------------------------------#
+$OUVRE
+
+#If clalev([F:YBAN]) = 0 : Local File BANK[YBAN]     : Endif
+#If clalev([F:YPJM]) = 0 : Local File OPPORPJM[YPJM] : Endif
+#If clalev([F:YDIE]) = 0 : Local File GDIE[YDIE]     : Endif
+#If clalev([F:YRMA]) = 0 : Local File YRELMAST[YRMA]   : Endif
+If clalev([F:YPPO]) = 0 : Local File OPPOR[YPPO] : Endif
+
+Return
+
+#------------------------------------------------------------------------------------#
+#On creation
+#------------------------------------------------------------------------------------#
+$APRES_CRE
+
+Return
+
+#------------------------------------------------------------------------------------#
+#On modification
+#------------------------------------------------------------------------------------#
+$APRES_MOD
+Read[OPP]OPP0 = [M:PJM0]OPPNUM
+If fstat = 0
+  [F:OPP]YJOBCOD = [M:PJM4]CCE(2)
+  Rewrite[F:OPP]
+Endif
+Return
+
+
+#------------------------------------------------------------------------------------#
+# creation
+# override the standard creation method in order to
+# perform job dimension validations
+#------------------------------------------------------------------------------------#
+$CREATION
+
+#Check Project Related tab Activity Code is active
+If func AFNC.ACTIV("YPJMR") = 1
+
+  #Clean the collection. This handles the case were you got an error during a first attempt, and you fixed it before trying again.
+  #If you don't clean the collection all of lines will be duplicated in the collection.
+  Local Integer I_YRMA
+  For I_YRMA=1 To maxtab(GZINSPJM.YRMA)
+    If (fmet GZINSPJM.ADELLINE("YRMA", GZINSPJM.YRMA(I_YRMA).AORDER) <> [V]CST_AOK)
+      GMESSAGE = func SYRSTACKTOOLS.MSGSTACK_GET_FIRST_MAX_MESSAGE(GZINSPJM)
+      GOK = 0
+      GERR = 1
+      Return
+    Endif
+  Next
+
+  #Add YRMA lines to collection to be inserted
+  Local Integer I_YRMA, INDEX_YRMA
+  For I_YRMA = 0 To [M:YPJMR]NBLIG - 1
+    INDEX_YRMA = fmet GZINSPJM.ADDLINE("YRMA", [V]CST_ALASTPOS)
+    If (INDEX_YRMA = [V]CST_ANOTDEFINED)
+      # Error management
+      GMESSAGE = func SYRSTACKTOOLS.MSGSTACK_GET_FIRST_MAX_MESSAGE(GZINSPJM)
+      GOK = 0
+      GERR = 1
+      Return
+    Endif
+
+    nolign = I_YRMA + 1
+    # Need to use [F] because it is impossible to set a class from [M]
+    [F:YRMA] = [M:YPJMR]
+    [F:YRMA]YGUID = GZINSPJM.YGUID
+
+    # Use the SetInstance
+    SetInstance GZINSPJM.YRMA(INDEX_YRMA) With [F:YRMA]
+  Next
+
+Endif
+
+Local Integer RNBRLED
+Local Tinyint RLEDTYP(1..len(mess(0,2644,1)))
+Local Char    RLEDCOD(GLONLED)(1..len(mess(0,2644,1)))
+Local Char    RLEDCUR(GLONCUR)(1..len(mess(0,2644,1)))
+Local Char    RCOA(GLONCOA)(1..len(mess(0,2644,1)))
+Local Char    RCOAFMT(15)(1..len(mess(0,2644,1)))
+Local Char    RCOACOLHEA(15)(1..len(mess(0,2644,1)))
+Local Integer RNBRDIE
+Local Char    RDIE(GLONDIE)(1..max(1,GOPTCANA))
+Local Char    RDIEFMT(15)(1..max(1,GOPTCANA))
+Local Char    RDIECOLHEA(15)(1..max(1,GOPTCANA))
+Local Integer RDIEOBYFLG(1..max(1,GOPTCANA))
+Local Char    RERRMES(250)
+Local Char    MSG(250)
+
+Local Integer BPJMFND
+Local Integer BFND
+Local Integer I_FCY
+Local Char    L_CPY(GLONCPY)
+Local Integer L_PJTAUTCRE
+
+Local Integer I_LED
+Local Integer I_DIE
+Local Char    L_FCY(GLONFCY)
+
+Local Integer IANSWER
+Local Integer MY_STATUS                          # Hybrid part
+
+  # Issue 109158-7
+  # En cas de création d'une affaire, il faut tenter de supprimer la section de l'axe cochée "Gestion à l'affaire"
+  # A partir du site récupération du modèle, référentiels,...
+  I_FCY = fmet GZINSPJM.ACTX.ACACHE.AFCY.AGETINDEX([F:OPP]SALFCY)
+  If I_FCY <> [V]CST_ANOTDEFINED Then
+    L_CPY = fmet GZINSPJM.ACTX.ACACHE.AFCY.AGETVALCHAR([F:OPP]SALFCY, "LEGCPY")
+  Endif
+  L_PJTAUTCRE = fmet GZINSPJM.ACTX.APARAM.AGETVALNUM([V]CST_ALEVCPY, L_CPY, "PJTAUTCRE")
+  If find(L_PJTAUTCRE,[V]CST_ANO,[V]CST_AYES) = 0 Then
+    L_PJTAUTCRE = [V]CST_AYES      # Confirmation / Toujours
+  Endif
+  #
+  If func FINACM_SYRA.GET_FINSTC(GZINSPJM.ACTX, L_CPY, 2, RNBRLED, RLEDTYP, RLEDCOD, RLEDCUR, RCOA, RCOAFMT, RCOACOLHEA, RNBRDIE, RDIE, RDIEFMT, RDIECOLHEA, RDIEOBYFLG, RERRMES) = [V]CST_AOK Then
+    # Récupération du référentiel Gérée à l'affaire
+    BFND = [V]CST_AFALSE
+    For I_LED = 1 To RNBRLED
+      Call LEC_LED(RLEDCOD(I_LED)) From CPTLEC
+      If [F:LED]PJMFLG = [V]CST_AYES Then
+        # Référentiel Flagué Gestion à l'affaire
+        BFND = [V]CST_ATRUE
+        Break
+      Endif
+    Next I_LED
+    BPJMFND = [V]CST_AFALSE
+    If BFND = [V]CST_ATRUE Then
+      # Récupération de l'axe géré à l'affaire
+      If func FINCCE_SYRA.GET_DIELST(GZINSPJM.ACTX, L_CPY, RLEDTYP(I_LED), RNBRDIE, RDIE, RERRMES) = [V]CST_AOK Then
+        For I_DIE = 1 To RNBRDIE
+          Call LEC_DIE(RDIE(I_DIE)) From CPTLEC
+          If [F:DIE]PJMFLG = [V]CST_AYES Then
+            # Axe flagué Gestion à l'affaire
+            BPJMFND = [V]CST_ATRUE
+            Break
+          Endif
+        Next I_DIE
+      Endif
+    Endif
+    #--
+    If BPJMFND = [V]CST_ATRUE Then
+      Call LEC_CCE([F:OPP]OPPNUM, RDIE(I_DIE)) From CPTLEC
+      If fstat Then
+        #If GZINSPJM.OPPNUM = vireblc(format$([F:DIE]CCEFMT,GZINSPJM.OPPNUM),1) Then # OPPNUM pas encore défini à ce moment !
+          GZINSPJM.PJM(1).TCHREPDIECCE = [V]CST_AYES
+          IANSWER = GZINSPJM.PJM(1).TCHREPDIECCE
+          If L_PJTAUTCRE = [V]CST_AYES and [M:PJM4]CCE(2) = '' Then
+             # Confirmation
+             MSG = func ASYRFNC.MES2(mess(115,103, 1), [F:OPP]OPPNUM, RDIE(I_DIE))
+             Call YESNO_CHX(MSG, mess(114,103,1), mess(2,1,1), mess(1,1,1), IANSWER) From GESECRAN
+             GZINSPJM.PJM(1).TCHREPDIECCE = IANSWER
+          Endif
+        #Endif
+      Endif
+    Endif
+  Endif
+
+  #validate if the job dimension is filled in
+  Read [F:YDIE]DIE0 = [M:PJM4]DIE(2)
+  If fstat = 0
+    If [F:YDIE]PJMFLG = 2 and [M:PJM4]CCE(2) = '' and GZINSPJM.PJM(1).TCHREPDIECCE = 1
+      GMESSAGE = mess(33,6201,1)
+      GERR = 1
+      GOK = 0
+      GPE=1
+      Return
+    Endif
+  Endif
+
+  # End issue 109158-7
+  # ----------------------------------------------------------
+  # Hybrid part (begin)
+  Call COPY_SCREEN_TO_CLASS() From SUBPJMA
+  If GERR = 1 Then
+    GOK = 0
+    GPE=1
+    Return
+  Endif
+  # ----------------------------------
+  [L]MY_STATUS = fmet GZINSPJM.AINSERT()
+  If [L]MY_STATUS <> [V]CST_AOK Then
+    Call RECOVERS_ERROR_IN_CLASSIC(GZINSPJM) From SUBPJMA
+    If GMESSAGE = AVOID.ACHAR Then
+      GMESSAGE = mess(158,2260,1)
+    Endif
+    If [L]MY_STATUS <> [V]CST_AWARNING Then
+      GOK = 0
+      GPE=1
+      Return
+    Endif
+  Endif
+  # ----------------------------------
+  SetInstance [F:OPP] With GZINSPJM    # IMPORTANT TO NO LOST THE CURRENT RECORD IN OBJECT GESTION
+  [M:PJM0] = [F:OPP]
+
+  # Hybrid part (end)
+  # ----------------------------------------------------------
+  Raz SCRMOPPNUM
+
+GPE=1
+
+Return
+#------------------------------------------------------------------------------------#
+#Modify
+#------------------------------------------------------------------------------------#
+$MODIF
+
+#Check Project Related tab Activity Code is active
+If func AFNC.ACTIV("YPJMR") = 1
+
+  #Related
+  Local Integer I, INDEX
+  For I = 0 To [M:YPJMR]NBLIG - 1
+    nolign = I + 1
+    Raz [F:YRMA]
+
+    # Retrieve the element using the screen's AUUID. If AUUID is blank, then its a new row
+    INDEX=0
+    If [M:YPJMR]AUUID(I) <> ""
+      [F:YRMA]AUUID = toUuid([M:YPJMR]AUUID(I))
+      INDEX = find(toUuid([M:YPJMR]AUUID(I)), GZINSPJM.YRMA(1..maxtab(GZINSPJM.YRMA)).AUUID)
+    Endif
+    If (INDEX = 0)
+      # We did not find the element matching with the array line, we add a line.
+      INDEX = fmet GZINSPJM.ADDLINE("YRMA", [V]CST_ALASTPOS)
+      If (INDEX = [V]CST_ANOTDEFINED)
+        # Error management
+        GMESSAGE = func SYRSTACKTOOLS.MSGSTACK_GET_FIRST_MAX_MESSAGE(GZINSPJM)
+        GOK = 0
+        GERR = 1
+        Break
+      Endif
+    Endif
+
+    # Need to use [F] because it's not possible to set a class from [M]
+    [F:YRMA] = [M:PJM0]
+    [F:YRMA] = [M:YPJMR]
+
+    # Use the SetInstance
+    SetInstance GZINSPJM.YRMA(INDEX) With [F:YRMA]
+  Next
+  If (GERR = 1) : Return : Endif
+
+  # Now, all elements that don't have the status Updated or Created must be deleted, because it means they don't match with lines in the array
+  For I = 1 To maxtab(GZINSPJM.YRMA)
+    If GZINSPJM.YRMA(I) <> null and find(GZINSPJM.YRMA(I).ASTALIN, [V]CST_ANEW, [V]CST_AUPD) = 0
+      If (fmet GZINSPJM.ADELLINE("YRMA", GZINSPJM.YRMA(I).AORDER) <> [V]CST_AOK)
+        # Error management
+        GMESSAGE = func SYRSTACKTOOLS.MSGSTACK_GET_FIRST_MAX_MESSAGE(GZINSPJM)
+        GOK = 0
+        GERR = 1
+        Return
+      Endif
+    Endif
+  Next
+  If (GERR = 1) : Return : Endif
+
+Endif
+
+Return
+#------------------------------------------------------------------------------------#
+#before creation
+#------------------------------------------------------------------------------------#
+$VERIF_CRE
+
+#check if the web service had an error.
+  If GWEBSERV
+    If GYOK = 0
+      OK = 0
+    Endif
+  Endif
+
+Return
+
+#------------------------------------------------------------------------------------#
+#before modification
+#------------------------------------------------------------------------------------#
+$VERIF_MOD
+#validate if the job dimension is filled in
+Read [F:YDIE]DIE0 = [M:PJM4]DIE(2)
+If fstat = 0
+  If [F:YDIE]PJMFLG = 2 and [M:PJM4]CCE(2) = ''
+    GMESSAGE = mess(33,6201,1)
+    GERR = 1
+    OK = 0
+  Endif
+Endif
+
+#check if the web service had an error.
+  If GWEBSERV
+    If GYOK = 0
+      OK = 0
+    Endif
+  Endif
+
+Return
+
+
+
+#------------------------------------------------------------------------------------#
+#Disable / Enable screen buttons
+#------------------------------------------------------------------------------------#
+$STYLE
+
+Chgfmt[M:PJM1]OPPFRT With "-K:10"
+Chgfmt[M:PJM1]OPPINT With "-K:10"
+Chgfmt[M:PJM1]CUROPP With "-K:10"
+Chgfmt[M:PJM1]CHGTYP With "-K:10"
+Chgfmt[M:PJM1]OPPPROACTIV With "-K:10"
+Chgfmt[M:PJM1]TASBUDAUT With "-K:10"
+Chgfmt[M:PJM1]OPPIMPT With "-K:10"
+
+Read[F:OPP]OPP0 = [M:PJM0]OPPNUM
+
+
+If fstat = 0 & [F:OPP]YJOBCOD = ""
+   Read[F:YPJM]OPPPJM0 = [M:PJM0]OPPNUM
+
+  [F:OPP]YJOBCOD = [F:YPJM]CCE(2)
+  Rewrite[F:OPP]
+Endif
+
+Return
+
+#------------------------------------------------------------------------------------#
+#Disable / Enable screen buttons
+#------------------------------------------------------------------------------------#
+$AFFMASK
+
+
+Return
+
+#------------------------------------------------------------------------------------#
+#Disable / Enable screen buttons
+#------------------------------------------------------------------------------------#
+$SETBOUT
+#Infbox "1"
+#  Gosub SETBOUT             From SUBPJMA
+#  #Call VIREBOUT(CHAINE,"5") From GOBJET        #
+#
+#  Raz CHMEN
+
+  Read [F:YPPO]OPP0 = [PJM0]OPPNUM
+  If fstat = 0
+    If [F:YPPO]YSRC = "YHOU"
+      CHMEN += "Jz"   #HOUSING
+      Else If [F:YPPO]YSRC = "YSTA"
+          CHMEN += "Jy"   #DEVELOPMENT
+        Else If [F:YPPO]YSRC = "YGSC"
+          CHMEN += "Jy"   #DEVELOPMENT
+          Else If [F:YPPO]YSRC = "YLDP"
+            CHMEN += "Jy"   #DEVELOPMENT
+          Endif
+        Endif
+      Endif
+    Endif
+    Gosub SET_BOUT_SPE From GSAISIE
+  Endif
+#
+#  GPE=1
+Return
+
+#------------------------------------------------------------------------------------#
+#After Field
+#------------------------------------------------------------------------------------#
+Subprog AM_YDEFBAN(VALEUR)
+Variable Char    VALEUR()
+
+Local Integer YVALID : YVALID = 1
+
+If VALEUR <> ""
+  Filter [F:YBAN] Where FCY=[M:PJM0]SALFCY
+  For [F:YBAN]
+    If VALEUR = [F:YBAN]BAN
+      YVALID = 2
+      Break
+    Endif
+  Next
+  Filter [F:YBAN]
+
+
+  If YVALID = 1
+    GMESSAGE = mess(32,6201,1)
+    GERR = 1
+    mkstat = 2
+    Else
+    GZINSPJM.PJM(1).YDEFBAN = VALEUR
+  Endif
+Endif
+
+End
+
+
+#############################################################################
+
+######################################################################################
+## Section automatically added (screen PJMA1) 17/07/2018 13:27:04 (DEWAL)
+######################################################################################
+Subprog C_OPPTYP(VALEUR)
+Variable Char    VALEUR()
+  Call C_OPPTYP(VALEUR) From YSELPJMCAT
+End
+
+
+######################################################################################
+
+$EXEBOUT
+# To have in mind that is an action doing an update on OPPOR* table, it's mandatory to reRead the project
+# when you'll go back in the PJM function
+
+  Case BOUT
+    When Default
+  Endcase
+Return
+
+######################################################################################
+$RAZCRE
+# DFCX1-147
+If func AFNC.ACTIV("YPJM")
+  Local Char YPJMMANSEQ, YPRJCPT
+  Call PARAMUTIL ("YINTUSR",YPJMMANSEQ,GUSER,"") From SUBAUS
+  If val(YPJMMANSEQ) <> 2
+    Grizo [M:PJM0]OPPNUM      # Deactivate the field if sequence supposed to generate by system
+  Endif
+Endif
+# DFCX1-147
+Return
+
+######################################################################################
+#------------------------------------------------------------------------------------#
+#Control - Related tab - Line
+#------------------------------------------------------------------------------------#
+Subprog C_NBLIG
+  #Check Project Related tab Activity Code is active
+  If func AFNC.ACTIV("YPJMR") = 1
+    #Disable Line No field
+    Diszo [M:YPJMR]YLIGID(nolign-1)
+
+    #Auto-increment line number
+    If [M:YPJMR]YLIGID(nolign-1) = 0
+
+      Local Integer LINENO : LINENO = 1
+      For NI = 0 To [M:YPJMR]NBLIG-1
+        If [M:YPJMR]YLIGID(NI) >= LINENO
+          LINENO = [M:YPJMR]YLIGID(NI) + 1
+        Endif
+      Next
+
+      [M:YPJMR]YLIGID(nolign-1) = LINENO
+      [M:YPJMR]YGUID(nolign-1) = GZINSPJM.YGUID
+    Endif
+  Endif
+
+End
+#------------------------------------------------------------------------------------#
+#After Change - Related tab - BP
+#------------------------------------------------------------------------------------#
+Subprog AM_YBP(VALEUR)
+Variable Char    VALEUR()
+
+  #Check Project Related tab Activity Code is active
+  If func AFNC.ACTIV("YPJMR") = 1
+    Raz [M:YPJMR]YBPCLS(nolign-1)
+
+    #Default Classification from BP
+    If VALEUR <> ""
+
+      #Open table
+      If !clalev ([F:YBP]) : Local File BPARTNER [F:YBP] : Endif
+
+      Read [F:YBP]BPR0 = VALEUR
+
+      If fstat = 0
+        [M:YPJMR]YBPCLS(nolign-1) = [F:YBP]YBPCLS
+      Endif
+
+      #Close table
+      If clalev([F:YBP]) : Close Local File [F:YBP] : Endif
+
+    Endif
+
+    Affzo [M:YPJMR]YBPCLS
+  Endif
+
+End
+#------------------------------------------------------------------------------------#
+#Control - Related tab - Valid Date From
+#------------------------------------------------------------------------------------#
+Subprog C_YVALFRM(VALEUR)
+Variable Date    VALEUR
+
+  #Check Project Related tab Activity Code is active
+  If func AFNC.ACTIV("YPJMR") = 1
+    If [M:YPJMR]YVALTO(nolign-1) <> [00/00/0000]
+      If VALEUR > [M:YPJMR]YVALTO(nolign-1)
+        Call ERREURT(mess(43,6251,1), 1) From GESECRAN
+        mkstat=2
+      Endif
+    Endif
+  Endif
+
+End
+#------------------------------------------------------------------------------------#
+#Control - Related tab - Valid Date To
+#------------------------------------------------------------------------------------#
+Subprog C_YVALTO(VALEUR)
+Variable Date    VALEUR
+
+  #Check Project Related tab Activity Code is active
+  If func AFNC.ACTIV("YPJMR") = 1
+    If VALEUR <> [00/00/0000]
+      If [M:YPJMR]YVALFRM(nolign-1) <> [00/00/0000]
+        If VALEUR < [M:YPJMR]YVALFRM(nolign-1)
+          Call ERREURT(mess(44,6251,1), 1) From GESECRAN
+          mkstat=2
+        Endif
+      Endif
+    Endif
+  Endif
+
+End
+######################################################################################
+
+######################################################################################
+## Section automatically added (screen PJMA1) 07/12/2018 13:55:01 (JR)
+######################################################################################
+Subprog C_YDEFACC(VALEUR)
+Variable Char    VALEUR()
+End
+
+Subprog S_YDEFACC(VALEUR)
+Variable Char    VALEUR()
+End
+
+
+######################################################################################
+
+######################################################################################
+## Section automatically added (screen PJMA1) 07/12/2018 14:00:51 (JR)
+######################################################################################
+Subprog AM_YDEFACC(VALEUR)
+Variable Char    VALEUR()
+End
+
+
+######################################################################################
+
+**********
+7,"TRT","SPEPJM","Project management"
+2,"TRT","SPEPJMSRC","Project Source"
+#<AdxTL>@(#)0.0.0.0 $Revision$ Project Source
+######################################################################################################################
+# Script            : SPEPJMSRC                                                                                        #
+# Creation date     : 14 /01/2019                                                                                     #
+# Version           : 1.0.0                                                                                          #
+# Authors (Company) : Michael (Leverage)                                                                                  #
+# Module            : Project Management                                                                               #
+# -------------------------------------------------------------------------------------------------------------------#
+# Epic              : https://jira.leveragetech.com.au/browse/DFCX1-103                                               #
+# Description       : DFCX1-103 Right List Actions                                                          #
+#--------------------------------------------------------------------------------------------------------------------#
+# Evolutions        :                                                                                                #
+#
+######################################################################################################################
+
+$ACTION
+Case ACTION
+  When "EXEC"      :  Gosub EXEC
+  When Default
+Endcase
+Return
+
+$EXEC
+Local Char PARBOUT(250)(1..20)
+Local Integer FLGEXE : FLGEXE = 1
+
+If clalev([F:YPPO]) = 0 : Local File OPPOR[YPPO] : Endif
+
+Read [F:YPPO]OPP0 = [PJM0]OPPNUM
+  If fstat = 0
+    If [F:YPPO]YSRC = "YSTA"      #OPEN STAGE WINDOW
+      PARBOUT(1)  = [F:YPPO]YSRCNUM
+      PARBOUT(2)  = "YSTA"
+      PARBOUT(3)  = "OYSTA"
+      GACTION = "GOBJETC1"
+      Call OBJET_CHAR(PARBOUT(1),PARBOUT(2),PARBOUT(3)) From GOBJET
+    Endif
+
+    If [F:YPPO]YSRC = "YGSC"      #OPEN GENERAL SCHEME WINDOW
+      PARBOUT(1)  = [F:YPPO]YSRCNUM
+      PARBOUT(2)  = "YGSC"
+      PARBOUT(3)  = "OYGSC"
+      GACTION = "GOBJETC1"
+      Call OBJET_CHAR(PARBOUT(1),PARBOUT(2),PARBOUT(3)) From GOBJET
+    Endif
+
+    If [F:YPPO]YSRC = "YLDP"      #OPEN LAND PURCHASE WINDOW
+      PARBOUT(1)  = [F:YPPO]YSRCNUM
+      PARBOUT(2)  = "YLDP"
+      PARBOUT(3)  = "OYLDP"
+      GACTION = "GOBJETC1"
+      Call OBJET_CHAR(PARBOUT(1),PARBOUT(2),PARBOUT(3)) From GOBJET
+    Endif
+
+    If [F:YPPO]YSRC = "YHOU"      #OPEN HOUSING WINDOW
+      PARBOUT(1)  = [F:YPPO]YSRCNUM
+      PARBOUT(2)  = "YHOU"
+      PARBOUT(3)  = "OYHOU"
+      GACTION = "GOBJETC1"
+      Call OBJET_CHAR(PARBOUT(1),PARBOUT(2),PARBOUT(3)) From GOBJET
+    Endif
+
+  Endif
+Return
+
+**********
+7,"TRT","SPEPJMSRC","Project Source"
+2,"TRT","SPEYHOU_CSPE",""
+#<AdxTL>@(#)0.0.0.0 $Revision$
+#------------------------------------------------------------------------------------#
+# Refresh Financial Summary Fields
+#------------------------------------------------------------------------------------#
+$REFRESH_FINANCIAL_SUMMARY_FIELDS
+
+  [M:YHOU1]YISSMAR  = GZINSYHOU.YHJF.YISSMAR
+  [M:YHOU1]YISSMARP = GZINSYHOU.YHJF.YISSMARP
+  [M:YHOU1]YSTRMAR  = GZINSYHOU.YHJF.YSTRMAR
+  [M:YHOU1]YSTRMARP = GZINSYHOU.YHJF.YSTRMARP
+  [M:YHOU1]YCURMAR  = GZINSYHOU.YHJF.YCURMAR
+  [M:YHOU1]YCURMARP = GZINSYHOU.YHJF.YCURMARP
+
+  Affzo [M:YHOU1]
+
+Return
+#------------------------------------------------------------------------------------#
+# Refresh Display Home Current Expiry and Max Extension Date Fields
+#------------------------------------------------------------------------------------#
+$REFRESH_CUREXP
+
+  [M:YHOU5]YCUREXP    = GZINSYHOU.YHDH.YCUREXP
+  [M:YHOU5]YMAXEXTDAT = GZINSYHOU.YHDH.YMAXEXTDAT
+
+  Affzo [M:YHOU5]YCUREXP, YMAXEXTDAT
+
+Return
+#------------------------------------------------------------------------------------#
+# Update stages from JobType if no Stages exist
+#------------------------------------------------------------------------------------#
+$UPDATE_STAGES
+
+  If [M:YHOU]YJBTYP <> ""
+
+    Local Char JOBTYPE(30)
+    JOBTYPE = [M:YHOU]YJBTYP
+
+    Local Integer ROWS
+    ROWS = 0
+
+    #Check if we have any rows NOT deleted
+    For I = 0 To [M:YHOU3]NBSTA - 1
+      ROWS+=1
+    Next I
+
+    #If all rows are deleted, then add Stages
+    If ROWS = 0
+
+      #Open table
+      If !clalev ([F:MSC]) : Local File ATABDIV [F:MSC] : Endif
+
+      Local Integer J : J = 0
+
+      #Read records
+      nolign = 1
+      Filter [F:MSC] Where [F:MSC]NUMTAB = 6010 and [F:MSC]DEPCOD = JOBTYPE Order By [F:MSC]CODE
+      For [F:MSC]
+
+        [M:YHOU3]YSTANBR(nolign-1) = [F:MSC]N4
+        [M:YHOU3]YVNCOD(nolign-1) = [F:MSC]A1
+        [M:YHOU3]YINVSTAGE(nolign-1) = [F:MSC]N5
+        [M:YHOU3]YSTAGEPERC(nolign-1) = [F:MSC]N2
+        [M:YHOU3]YRECGPREC(nolign-1) = [F:MSC]N3
+        [M:YHOU3]YSENDINV(nolign-1) = [F:MSC]N1
+        [M:YHOU3]YAMTINCGST(nolign-1) = arr([M:YHOU1]YISSPRCINC * ([F:MSC]N2/100), 0.01)
+
+        Call LECTEXTRA([M:YHOU3]YSTAGENAM(nolign-1),"ATABDIV","LNGDES","6010",[F:MSC]CODE) From ATEXTRA
+
+        nolign += 1
+
+      Next
+      Filter [F:MSC] #Reset filter
+
+      [M:YHOU3]NBSTA = nolign - 1
+      Affzo [M:YHOU3]
+
+      #Close table
+      If clalev([F:MSC]) : Close Local File [F:MSC] : Endif
+
+    Endif
+
+  Endif
+
+Return
+#------------------------------------------------------------------------------------#
+# Update AutoInvoice from JobType if new Job
+#------------------------------------------------------------------------------------#
+$UPDATE_AUTOINV
+
+  If [M:YHOU]YJBTYP <> ""
+    Local Char JOBTYPE(30)
+
+    JOBTYPE = [M:YHOU]YJBTYP
+
+    #Open table
+    If !clalev ([F:JBH]) : Local File YHOUJDET [F:JBH] : Endif
+    If !clalev ([F:MSC]) : Local File ATABDIV [F:MSC] : Endif
+
+    Read [F:JBH]YHJD0 = [M:YHOU]YJBNR
+
+    #Proceed if its a NEW Job
+    If [S]fstat = 5
+
+      #Read records
+      Filter [F:MSC] Where [F:MSC]NUMTAB = 6009 and [F:MSC]CODE = JOBTYPE
+      For [F:MSC]
+        [M:YHOU]YAUTINV = [F:MSC]N1
+        Break
+      Next
+      Filter [F:MSC] #Reset filter
+
+    Endif
+
+    #Close table
+    If clalev([F:JBH]) : Close Local File [F:JBH] : Endif
+    If clalev([F:MSC]) : Close Local File [F:MSC] : Endif
+
+    Affzo [M:YHOU]YAUTINV
+
+  Endif
+
+Return
+#------------------------------------------------------------------------------------#
+# Create Dimension on Housing Job creation
+#------------------------------------------------------------------------------------#
+$CREATE_DIMENSION
+
+  #Open table
+  If !clalev ([F:CCE]) : Local File CACCE [F:CCE] : Endif
+
+  #Check if dimension exists
+  Read [F:CCE]CCE0 = "HJB";[M:YHOU]YJBNR
+
+  If fstat = 5
+
+    Raz [F:CCE]
+
+    [F:CCE]DIE = 'HJB'
+    [F:CCE]CCE = [M:YHOU]YJBNR
+    [F:CCE]DES = left$([M:YHOU]YHOUTYP,30)
+    [F:CCE]FRW = 2
+    [F:CCE]BUDTRK = 2
+    [F:CCE]IPT = 2
+    [F:CCE]ENAFLG = 2
+
+    Trbegin [F:CCE]
+
+    Write [F:CCE]
+
+    If fstat = 0
+
+      Commit
+
+      Call MAJTEXTRA([M:YHOU]YHOUTYP,"CACCE","DESTRA","HJB",[M:YHOU]YJBNR) From ATEXTRA
+      Call MAJTEXTRA(left$([M:YHOU]YHOUTYP,12),"CACCE","SHOTRA","HJB",[M:YHOU]YJBNR) From ATEXTRA
+
+    Else
+      Rollback
+      GMESSAGE = mess(16,6251,1) + " - " + num$([S]fstat)
+      GOK = 0
+      GERR = 1
+    Endif
+
+  Endif
+
+  #Close table
+  If clalev([F:CCE]) : Close Local File [F:CCE] : Endif
+
+Return
+#------------------------------------------------------------------------------------#
+# Create Project and set as Launched on Housing Job creation
+#------------------------------------------------------------------------------------#
+$CREATE_PROJECT
+
+  #Check if Project already exists
+  If !clalev ([F:YPJM])   : Local File OPPORPJM  [F:YPJM]   : Endif
+
+  #Read [F:YPJM]OPPPJM0 = [M:YHOU]YCPY + "-" + [M:YHOU]YJBNR
+  Read [F:YPJM]OPPPJM0 = [M:YHOU]YJBNR
+
+  If fstat=0
+
+    #Update Housing Job
+    If !clalev ([F:YJDE])   : Local File YHOUJDET  [F:YJDE]   : Endif
+
+    Read [F:YJDE]YHJD0 = [M:YHOU]YJBNR
+
+    If fstat = 0
+      #[F:YJDE]YJBCOD = [M:YHOU]YCPY + "-" + [M:YHOU]YJBNR
+      [F:YJDE]YJBCOD = [M:YHOU]YJBNR
+      Rewrite [F:YJDE]
+
+      #[M:YHOU]YJBCOD = [M:YHOU]YCPY + "-" + [M:YHOU]YJBNR
+      [M:YHOU]YJBCOD = [M:YHOU]YJBNR
+      Affzo [M:YHOU]YJBCOD
+    Endif
+
+    If clalev([F:YJDE]) : Close Local File [F:YJDE] : Endif
+
+  Else
+
+    #Get PJM Template
+    Local Char YTEMPLATE(30)
+
+    #Open table
+    If !clalev ([F:MSC]) : Local File ATABDIV [F:MSC] : Endif
+
+    #Read records
+    Filter [F:MSC] Where [F:MSC]NUMTAB = 6009 and [F:MSC]CODE = [M:YHOU]YJBTYP
+    For [F:MSC]
+      YTEMPLATE = [F:MSC]A2
+      Break
+    Next
+
+    #Close table
+    If clalev([F:MSC]) : Close Local File [F:MSC] : Endif
+
+    If YTEMPLATE = ""
+      #GMESSAGE = func AFNC.MES1(mess(17,6251,1), [M:YHOU]YJBTYP)
+      #GOK=0
+      Call ERREURT(func AFNC.MES1(mess(17,6251,1), [M:YHOU]YJBTYP), 1) From GESECRAN
+      If GWEBSERV = 1
+        Call ADDMESSERR(mess(17,6251,1)) From AWEB
+        GOK = 0
+      Endif
+    Else
+
+      Global Instance GZINSPJMCOP Using C_OPPOR        # project class
+      Global Instance GZTECPJMCOP Using C_PJMACOPY     # project copy (instance) class
+
+      If GZTECPJMCOP <> null Then
+        FreeGroup GZTECPJMCOP
+      Endif
+
+      If GZINSPJMCOP <> null Then
+        FreeGroup GZINSPJMCOP
+      Endif
+
+      Local Integer MY_STATUS
+
+      GZINSPJMCOP = NewInstance C_OPPOR AllocGroup null
+      GZINSPJMCOP.TCHTOREAD = "PJM"
+      [L]MY_STATUS = fmet GZINSPJMCOP.AREAD(YTEMPLATE)
+      If [L]MY_STATUS >= [V]CST_AERROR Then
+        GMESSAGE = func SYRSTACKTOOLS.MSGSTACK_GET_FIRST_MAX_MESSAGE(GZINSPJMCOP)
+        GOK=0
+        Return
+      Endif
+
+      GZTECPJMCOP = NewInstance C_PJMACOPY AllocGroup null
+
+      #Assign new YGUID before initializing new copy project otherwise you get YGUID error
+      GZINSPJMCOP.YGUID = num$(getUuid)
+      GZINSPJMCOP.YSRC = "YHOU"
+      GZINSPJMCOP.YSRCNUM = [M:YHOU]YJBNR
+
+      [L]MY_STATUS = fmet GZTECPJMCOP.INIT_FROM_PROJECT(GZINSPJMCOP)
+      If [L]MY_STATUS >= [V]CST_AERROR Then
+        GMESSAGE = func SYRSTACKTOOLS.MSGSTACK_GET_FIRST_MAX_MESSAGE(GZTECPJMCOP)
+        GOK=0
+        End
+      Endif
+
+      #GZTECPJMCOP.TCHREPDIECCE = [V]CST_AYES
+      GZTECPJMCOP.TCHREPDIECCE = [V]CST_ANO
+      #GZTECPJMCOP.DESTAFF = [M:YHOU]YCPY + "-" + [M:YHOU]YJBNR
+      GZTECPJMCOP.DESTAFF = [M:YHOU]YJBNR
+      GZTECPJMCOP.DESDES = left$([M:YHOU]YLOTNO + " " + [M:YHOU]YADD1, 60)
+
+      GZTECPJMCOP.AFFDESC   = [V]CST_ANO  #Project description
+      GZTECPJMCOP.AFFCOM    = [V]CST_ANO  #Project comment
+      GZTECPJMCOP.BUDALL    = [V]CST_AYES #All budgets
+      GZTECPJMCOP.BLIGNES   = [V]CST_AYES #All budget lines
+      GZTECPJMCOP.TACALL    = [V]CST_ANO  #All tasks
+      GZTECPJMCOP.TASASSL   = [V]CST_ANO  #All assignment lines
+      GZTECPJMCOP.TASOPL    = [V]CST_ANO  #All operation lines
+      GZTECPJMCOP.TASPRL    = [V]CST_ANO  #All product lines
+
+      GZTECPJMCOP.TASPRDES  = [V]CST_ANO  #All product descriptions
+      GZTECPJMCOP.TASPRCOM  = [V]CST_ANO  #All product comments
+      GZTECPJMCOP.TASOPDES  = [V]CST_ANO  #All operation descriptions
+      GZTECPJMCOP.TASOPCOM  = [V]CST_ANO  #All operation comments
+      GZTECPJMCOP.TASOPDAT  = [V]CST_AYES #Clear operation dates
+      GZTECPJMCOP.TASASSDES = [V]CST_ANO  #All assignment descriptions
+      GZTECPJMCOP.TASASSCOM = [V]CST_ANO  #All assignment comments
+      GZTECPJMCOP.TASASSDAT = [V]CST_AYES #Clear assignment dates
+      GZTECPJMCOP.BUDDES    = [V]CST_AYES #All budget descriptions
+      GZTECPJMCOP.BUDCOM    = [V]CST_ANO  #All budget comments
+      GZTECPJMCOP.BUDDAT    = [V]CST_AYES #Clear budget dates
+      GZTECPJMCOP.BUDLDES   = [V]CST_AYES #All budget line descriptions
+      GZTECPJMCOP.BUDLCOM   = [V]CST_ANO  #All budget line comments
+      GZTECPJMCOP.TACDES    = [V]CST_ANO  #All task descriptions
+      GZTECPJMCOP.TACCOM    = [V]CST_ANO  #All task comments
+      GZTECPJMCOP.TACDAT    = [V]CST_AYES #Clear task dates
+
+      For NI = 1 To maxtab(GZTECPJMCOP.BUDGET)
+        GZTECPJMCOP.BUDGET(NI).SELBUD = [V]CST_AYES
+      Next
+
+      Local Char SLOGFILE(250)
+      Local Char ZMESS(250)
+      Local Char NEWSEQNUM(GLONPIM)
+
+      [L]MY_STATUS = fmet GZINSPJMCOP.PJM_COPY(GZTECPJMCOP, NEWSEQNUM, SLOGFILE)
+
+      If [L]MY_STATUS >= [V]CST_AERROR Then
+        GMESSAGE = SLOGFILE
+        GOK=0
+        End
+      Endif
+
+      If GZINSPJMCOP <> null Then
+        FreeGroup GZINSPJMCOP
+      Endif
+      Kill GZINSPJMCOP
+      If GZTECPJMCOP <> null Then
+        FreeGroup GZTECPJMCOP
+      Endif
+      Kill GZTECPJMCOP
+
+      If SLOGFILE <> "" Then
+        GTRACE = SLOGFILE
+        Call LEC_TRACE From LECFIC
+      Else
+
+        Global Instance GZINSPJMCOP Using C_OPPOR        # project class
+
+        If GZINSPJMCOP <> null Then
+          FreeGroup GZINSPJMCOP
+        Endif
+
+        #Read new Project
+        GZINSPJMCOP = NewInstance C_OPPOR AllocGroup null
+        GZINSPJMCOP.TCHTOREAD = "PJM"
+        [L]MY_STATUS = fmet GZINSPJMCOP.AREAD(NEWSEQNUM)
+        If [L]MY_STATUS >= [V]CST_AERROR Then
+          GMESSAGE = func SYRSTACKTOOLS.MSGSTACK_GET_FIRST_MAX_MESSAGE(GZINSPJMCOP)
+          GOK=0
+          Return
+        Endif
+
+        #Set DIE from Housing
+        Local Integer ILINE
+        For ILINE = 1 To maxtab(GZINSPJMCOP.PJM(1).CDIE)
+          If GZINSPJMCOP.PJM(1).CDIE(ILINE).DIE = "HJB"
+            GZINSPJMCOP.PJM(1).CDIE(ILINE).CCE = [M:YHOU]YJBNR
+          Endif
+          If GZINSPJMCOP.PJM(1).CDIE(ILINE).DIE = "HBG"
+            GZINSPJMCOP.PJM(1).CDIE(ILINE).CCE = [M:YHOU]YREG
+          Endif
+        Next
+
+        #Create Preliminary Budget Line
+        #Open table
+        If !clalev ([F:MSC]) : Local File ATABDIV [F:MSC] : Endif
+
+        #Read records
+        Filter [F:MSC] Where [F:MSC]NUMTAB = 6011 and [F:MSC]A1 = [M:YHOU]YREG and [F:MSC]N1 = [M:YHOU]YSTOR
+        For [F:MSC]
+
+          Local Integer BLINE
+          BLINE = fmet GZINSPJMCOP.PJM(1).ADDLINE("BUD", [V]CST_ALASTPOS)
+
+          Local Char MDESC(30)
+          Call LECTEXTRA(MDESC,"ATABDIV","LNGDES","6011",[F:MSC]CODE) From ATEXTRA
+          GZINSPJMCOP.PJM(1).BUD(BLINE).PIMPL.PIMDESAXX = MDESC
+          GZINSPJMCOP.PJM(1).BUD(BLINE).PIMPL.PIMDESAX1 = MDESC
+          GZINSPJMCOP.PJM(1).BUD(BLINE).PBUIMP = 2 #Chargeable
+          GZINSPJMCOP.PJM(1).BUD(BLINE).PBUCOD = [F:MSC]A2
+
+          Local Integer BSLINE
+          BSLINE = fmet GZINSPJMCOP.PJM(1).BUD(BLINE).ADDLINE("BUDLIG", [V]CST_ALASTPOS)
+          GZINSPJMCOP.PJM(1).BUD(BLINE).BUDLIG(BSLINE).PCCCOD = [F:MSC]A4
+          GZINSPJMCOP.PJM(1).BUD(BLINE).BUDLIG(BSLINE).PLBAMT = [F:MSC]N2
+          GZINSPJMCOP.PJM(1).BUD(BLINE).BUDLIG(BSLINE).PLBDESAXX = MDESC
+
+          Break
+        Next
+
+        #Close table
+        If clalev([F:MSC]) : Close Local File [F:MSC] : Endif
+
+        #Update Project
+        [L]MY_STATUS = fmet GZINSPJMCOP.AUPDATE()
+        If [L]MY_STATUS >= [V]CST_AERROR Then
+          GMESSAGE = func SYRSTACKTOOLS.MSGSTACK_GET_FIRST_MAX_MESSAGE(GZINSPJMCOP)
+          #Return
+        Endif
+
+        #Read project to get latest data
+        GZINSPJMCOP = NewInstance C_OPPOR AllocGroup null
+        GZINSPJMCOP.TCHTOREAD = "PJM"
+        [L]MY_STATUS = fmet GZINSPJMCOP.AREAD(NEWSEQNUM)
+        If [L]MY_STATUS >= [V]CST_AERROR Then
+          GMESSAGE = func SYRSTACKTOOLS.MSGSTACK_GET_FIRST_MAX_MESSAGE(GZINSPJMCOP)
+          GOK=0
+          Return
+        Endif
+
+        #Update new Project status from NEW to LAUNCHED
+        Local Instance TECOPPACT Using C_TECOPPACT
+        Local Integer IRET
+
+        TECOPPACT = NewInstance C_TECOPPACT AllocGroup null
+
+        TECOPPACT.EVTDAT = date$
+
+        [L]MY_STATUS = fmet GZINSPJMCOP.PJM_PROJECT_LAUNCH(NEWSEQNUM, TECOPPACT)
+        If [L]MY_STATUS >= [V]CST_AERROR Then
+          GMESSAGE = func SYRSTACKTOOLS.MSGSTACK_GET_FIRST_MAX_MESSAGE(GZINSPJMCOP)
+          #GOK=0
+          #Return
+        Endif
+
+        If TECOPPACT.LOGFILNAM <> AVOID.ACHAR Then
+          GTRACE = TECOPPACT.LOGFILNAM
+          Call LEC_TRACE From LECFIC
+        Endif
+
+        If GZINSPJMCOP <> null Then
+          FreeGroup GZINSPJMCOP
+        Endif
+        Kill GZINSPJMCOP
+
+        If TECOPPACT <> null Then
+          FreeGroup TECOPPACT
+        Endif
+        Kill TECOPPACT
+
+      Endif
+
+      #Assign Job Code
+      [M:YHOU]YJBCOD = NEWSEQNUM
+      Affzo [M:YHOU]YJBCOD
+
+    Endif
+
+  Endif
+
+  If clalev([F:YPJM])     : Close Local File [F:YPJM]       : Endif
+
+Return
+#------------------------------------------------------------------------------------#
+# Activates or de-activates the current Job if it exists
+#------------------------------------------------------------------------------------#
+$UPDATE_JOB_STATUS
+
+If [M:YHOU]YJBNR <> ""
+
+  #Open table
+  If !clalev ([F:CCE]) : Local File CACCE [F:CCE] : Endif
+  If !clalev ([F:JDE]) : Local File YHOUJDET [F:JDE] : Endif
+
+  #Read record
+  Read [F:JDE]YHJD0 = [M:YHOU]YJBNR
+
+  If [S]fstat <> 5
+
+    #Read record
+    Read [F:CCE]CCE0 = 'HJB';[M:YHOU]YJBNR
+
+    #Update record
+    Case [S]fstat
+      When 0
+
+        If [F:CCE]ENAFLG = 2
+          [F:CCE]ENAFLG = 1
+        Else
+          [F:CCE]ENAFLG = 2
+        Endif
+
+        Trbegin [F:CCE]
+        Rewrite [F:CCE]
+
+        If [S]fstat = 0
+          Commit
+          Gosub REFRESH_JOB_STATUS From SPEYHOU_RSPE
+        Else
+          Rollback
+          [L]ASTATUS = fmet this.ASETERROR("",mess(18,6251,1) + " - " + num$([S]fstat), [V]CST_AERROR)
+        Endif
+      When Default
+        [L]ASTATUS = fmet this.ASETERROR("",mess(19,6251,1) + " - " + num$([S]fstat), [V]CST_AERROR)
+    Endcase
+  Else
+    [L]ASTATUS = fmet this.ASETERROR("",mess(20,6251,1), [V]CST_AWARNING)
+  Endif
+
+  #Close table
+  If clalev([F:CCE]) : Close Local File [F:CCE] : Endif
+  If clalev([F:JDE]) : Close Local File [F:JDE] : Endif
+
+Endif
+
+Return
+
+**********
+7,"TRT","SPEYHOU_CSPE",""
+2,"ACT","YPJMSRC","Project Source"
+3,"ACT",YPJMSRC
+4,"ABTFLG",0,1
+4,"ACTION",0,"YPJMSRC"
+4,"ACTSUI",0,""
+4,"AMSFLG",0,1
+4,"CODACT",0,"YPJM"
+4,"CODTRT",0,""
+4,"CREDAT",0,20190115
+4,"CREDATTIM",0,"2019-01-15T06:49:50Z"
+4,"CREUSR",0,"MB"
+4,"INSTRU",0,""
+5,"INTITA",0,"Project Source","ENG",101281,""
+5,"INTITA",0,"","***"
+5,"INTITC",0,"","ENG",0,""
+5,"INTITC",0,"","***"
+5,"INTITL",0,"","ENG",0,""
+5,"INTITL",0,"","***"
+4,"MODULE",0,1
+4,"NBPAR",0,1
+4,"NOWEB",0,1
+4,"PARAM1",0,""
+4,"PARAM2",0,""
+4,"PARAM3",0,1
+4,"PARAM4",0,""
+4,"PARAM5",0,""
+4,"PARAM6",0,1
+4,"PUBFLG",0,1
+4,"SPETRT",0,"SPEPJMSRC"
+4,"SUBPRG",0,""
+4,"TYP",0,3
+4,"TYPACT",0,2
+4,"TYPUTI",0,1
+4,"UPDDAT",0,20190115
+4,"UPDDATTIM",0,"2019-01-15T06:49:50Z"
+4,"UPDUSR",0,"MB"
+6,"ACT"
+3,"ATR",NUM
+4,"ACTION",0,"YPJMSRC"
+4,"ADRVAL",0,2
+4,"CODPAR",0,"NUM"
+4,"CREDATTIM",0,"2019-01-15T06:49:50Z"
+4,"CREUSR",0,"MB"
+5,"INTITPAR",0,"","ENG",0,""
+5,"INTITPAR",0,"","***"
+4,"NOPAR",0,1
+4,"TYPPAR",0,1
+4,"UPDDATTIM",0,"2019-01-15T06:49:50Z"
+4,"UPDUSR",0,"MB"
+6,"ATR"
+3,"AAR",NUM
+4,"CODPAR",0,"NUM"
+4,"CREDAT",0,000000
+4,"CREDATTIM",0,"2018-04-17T00:37:52Z"
+4,"CREUSR",0,"LSEY"
+5,"INTITPAR",0,"Document no.","ENG",402,"Invalid text - Do not use"
+5,"INTITPAR",0,"","***"
+4,"TYPPAR",0,1
+4,"UPDDAT",0,000000
+4,"UPDDATTIM",0,"2018-04-17T00:37:52Z"
+4,"UPDUSR",0,"ADMIN"
+6,"AAR"
+7,"ACT","YPJMSRC","Project Source"
+2,"AWI","OPJM","Project management"
+3,"AWI",OPJM
+4,"ACS",0,""
+4,"ACTMSK",0,""
+4,"ACTMSK",1,""
+4,"ACTMSK",2,""
+4,"ACTMSK",3,""
+4,"ACTMSK",4,""
+4,"ACTMSK",5,"YPJMR"
+4,"ACTMSK",6,""
+4,"ACTMSK",7,""
+4,"ACTMSK",8,""
+4,"ACTMSK",9,""
+4,"ACTMSK",10,""
+4,"ACTMSK",11,""
+4,"ACTMSK",12,""
+4,"ACTMSK",13,""
+4,"ACTMSK",14,""
+4,"ACTSTD",0,""
+4,"ACTSTD",1,""
+4,"ACTSTD",2,""
+4,"ACTSTD",3,""
+4,"ACTSTD",4,""
+4,"ACTSTD",5,""
+4,"ACTSTD",6,""
+4,"ACTSTD",7,""
+4,"ACTSTD",8,""
+4,"ACTSTD",9,""
+4,"ACTSTD",10,""
+4,"ACTSTD",11,""
+4,"ACTSTD",12,""
+4,"ACTSTD",13,""
+4,"ACTSTD",14,""
+4,"ACTSTD",15,""
+4,"ACTSTD",16,""
+4,"ACTSTD",17,""
+4,"ACTSTD",18,""
+4,"ACTSTD",19,""
+4,"BSTD",0,2
+4,"BSTD",1,2
+4,"BSTD",2,2
+4,"BSTD",3,2
+4,"BSTD",4,1
+4,"BSTD",5,2
+4,"BSTD",6,2
+4,"BSTD",7,2
+4,"BSTD",8,2
+4,"BSTD",9,2
+4,"BSTD",10,2
+4,"BSTD",11,1
+4,"BSTD",12,2
+4,"BSTD",13,2
+4,"BSTD",14,2
+4,"BSTD",15,2
+4,"BSTD",16,2
+4,"BSTD",17,2
+4,"BSTD",18,0
+4,"BSTD",19,0
+4,"CNS",0,""
+4,"CODACT",0,"PJM"
+4,"CREDAT",0,20180417
+4,"CREDATTIM",0,"2018-04-17T00:37:41Z"
+4,"CREUSR",0,"ADMIN"
+5,"DES",0,"Project management","ENG",42084,""
+5,"DES",0,"","***"
+4,"ENAFLG",0,2
+4,"FLGMSK",0,2
+4,"FLGMSK",1,2
+4,"FLGMSK",2,2
+4,"FLGMSK",3,2
+4,"FLGMSK",4,2
+4,"FLGMSK",5,2
+4,"FLGMSK",6,0
+4,"FLGMSK",7,0
+4,"FLGMSK",8,0
+4,"FLGMSK",9,0
+4,"FLGMSK",10,0
+4,"FLGMSK",11,0
+4,"FLGMSK",12,0
+4,"FLGMSK",13,0
+4,"FLGMSK",14,0
+4,"FVT",0,1
+4,"INTFOLD",0,""
+4,"INTFOLD",1,""
+4,"INTFOLD",2,""
+4,"INTFOLD",3,""
+4,"INTFOLD",4,""
+4,"INTFOLD",5,""
+4,"INTFOLD",6,""
+4,"INTFOLD",7,""
+4,"INTFOLD",8,""
+4,"INTFOLD",9,""
+4,"INTFOLD",10,""
+4,"INTFOLD",11,""
+4,"INTFOLD",12,""
+4,"INTFOLD",13,""
+4,"INTFOLD",14,""
+5,"INTMSK",0,"Project","ENG",18260,"CRM"
+5,"INTMSK",0,"","***"
+5,"INTMSK",1,"Assigned employees","ENG",54412,""
+5,"INTMSK",1,"","***"
+5,"INTMSK",2,"Associated projects","ENG",16224,""
+5,"INTMSK",2,"","***"
+5,"INTMSK",3,"Competitors","ENG",15072,""
+5,"INTMSK",3,"","***"
+5,"INTMSK",4,"Analytical dimension","ENG",1688,""
+5,"INTMSK",4,"","***"
+5,"INTMSK",5,"Related","ENG",100097,""
+5,"INTMSK",5,"","***"
+5,"INTMSK",6,"","ENG",0,""
+5,"INTMSK",6,"","***"
+5,"INTMSK",7,"","ENG",0,""
+5,"INTMSK",7,"","***"
+5,"INTMSK",8,"","ENG",0,""
+5,"INTMSK",8,"","***"
+5,"INTMSK",9,"","ENG",0,""
+5,"INTMSK",9,"","***"
+5,"INTMSK",10,"","ENG",0,""
+5,"INTMSK",10,"","***"
+5,"INTMSK",11,"","ENG",0,""
+5,"INTMSK",11,"","***"
+5,"INTMSK",12,"","ENG",0,""
+5,"INTMSK",12,"","***"
+5,"INTMSK",13,"","ENG",0,""
+5,"INTMSK",13,"","***"
+5,"INTMSK",14,"","ENG",0,""
+5,"INTMSK",14,"","***"
+4,"LIBEL",0,""
+4,"MDL",0,1
+4,"MODULE",0,9
+4,"MSKENT",0,"PJMA0"
+4,"NBMSK",0,6
+4,"NOMMSK",0,"PJMA1"
+4,"NOMMSK",1,"PJMA6"
+4,"NOMMSK",2,"PJMA3"
+4,"NOMMSK",3,"PJMA2"
+4,"NOMMSK",4,"PJMA4"
+4,"NOMMSK",5,"YPJMR"
+4,"NOMMSK",6,""
+4,"NOMMSK",7,""
+4,"NOMMSK",8,""
+4,"NOMMSK",9,""
+4,"NOMMSK",10,""
+4,"NOMMSK",11,""
+4,"NOMMSK",12,""
+4,"NOMMSK",13,""
+4,"NOMMSK",14,""
+4,"OBJ",0,"PJM"
+4,"ROWMSK",0,5
+4,"ROWMSK",1,10
+4,"ROWMSK",2,15
+4,"ROWMSK",3,20
+4,"ROWMSK",4,25
+4,"ROWMSK",5,30
+4,"ROWMSK",6,0
+4,"ROWMSK",7,0
+4,"ROWMSK",8,0
+4,"ROWMSK",9,0
+4,"ROWMSK",10,0
+4,"ROWMSK",11,0
+4,"ROWMSK",12,0
+4,"ROWMSK",13,0
+4,"ROWMSK",14,0
+4,"TRN",0,""
+4,"TYP",0,1
+4,"UPDDAT",0,20190116
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDFLG",0,0
+4,"UPDUSR",0,"MB"
+4,"WIN",0,"OPJM"
+4,"WINTYP",0,2
+6,"AWI"
+3,"AWT",1
+4,"ACTBOUT",0,"PJMACTBUD"
+4,"CODACTBOUT",0,""
+4,"CODBOUT",0,"2"
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"LTR"
+4,"NUM",0,1
+5,"TXTBOUT",0,"Cost structure","ENG",49730,"Long title"
+5,"TXTBOUT",0,"","***"
+4,"TYPBOUT",0,1
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"LTR"
+4,"VALBOUT",0,1
+4,"WIN",0,"OPJM"
+6,"AWT"
+3,"AWT",2
+4,"ACTBOUT",0,"PJMACTTAS"
+4,"CODACTBOUT",0,"YPJM1"
+4,"CODBOUT",0,"5"
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"LTR"
+4,"NUM",0,2
+5,"TXTBOUT",0,"Task planning","ENG",54488,""
+5,"TXTBOUT",0,"","***"
+4,"TYPBOUT",0,1
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"LTR"
+4,"VALBOUT",0,1
+4,"WIN",0,"OPJM"
+6,"AWT"
+3,"AWT",3
+4,"ACTBOUT",0,"PJMEVEN"
+4,"CODACTBOUT",0,""
+4,"CODBOUT",0,"3"
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"LTR"
+4,"NUM",0,3
+5,"TXTBOUT",0,"Change status","ENG",16964,""
+5,"TXTBOUT",0,"","***"
+4,"TYPBOUT",0,1
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"LTR"
+4,"VALBOUT",0,1
+4,"WIN",0,"OPJM"
+6,"AWT"
+3,"AWT",4
+4,"ACTBOUT",0,"PJMFINOV0"
+4,"CODACTBOUT",0,""
+4,"CODBOUT",0,"1"
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"LTR"
+4,"NUM",0,4
+5,"TXTBOUT",0,"Financial overview","ENG",54486,""
+5,"TXTBOUT",0,"","***"
+4,"TYPBOUT",0,1
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"LTR"
+4,"VALBOUT",0,1
+4,"WIN",0,"OPJM"
+6,"AWT"
+3,"AWT",5
+4,"ACTBOUT",0,"PJMACTAFCP"
+4,"CODACTBOUT",0,""
+4,"CODBOUT",0,"4"
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"LTR"
+4,"NUM",0,5
+5,"TXTBOUT",0,"Project copy","ENG",42253,""
+5,"TXTBOUT",0,"","***"
+4,"TYPBOUT",0,1
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"LTR"
+4,"VALBOUT",0,2
+4,"WIN",0,"OPJM"
+6,"AWT"
+3,"AWT",6
+4,"ACTBOUT",0,""
+4,"CODACTBOUT",0,""
+4,"CODBOUT",0,"8"
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"LTR"
+4,"NUM",0,6
+5,"TXTBOUT",0,"Customer relation","ENG",14393,""
+5,"TXTBOUT",0,"","***"
+4,"TYPBOUT",0,2
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"LTR"
+4,"VALBOUT",0,0
+4,"WIN",0,"OPJM"
+6,"AWT"
+3,"AWT",7
+4,"ACTBOUT",0,"GOBJETC1"
+4,"CODACTBOUT",0,""
+4,"CODBOUT",0,"8("
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"LTR"
+4,"NUM",0,7
+5,"TXTBOUT",0,"Task","ENG",1195,""
+5,"TXTBOUT",0,"","***"
+4,"TYPBOUT",0,3
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"LTR"
+4,"VALBOUT",0,1
+4,"WIN",0,"OPJM"
+6,"AWT"
+3,"AWT",8
+4,"ACTBOUT",0,"GOBJETC1"
+4,"CODACTBOUT",0,""
+4,"CODBOUT",0,"8)"
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"LTR"
+4,"NUM",0,8
+5,"TXTBOUT",0,"Call","ENG",13606,""
+5,"TXTBOUT",0,"","***"
+4,"TYPBOUT",0,3
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"LTR"
+4,"VALBOUT",0,1
+4,"WIN",0,"OPJM"
+6,"AWT"
+3,"AWT",9
+4,"ACTBOUT",0,"GOBJETC1"
+4,"CODACTBOUT",0,"YPJM1"
+4,"CODBOUT",0,"8["
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"LTR"
+4,"NUM",0,9
+5,"TXTBOUT",0,"Appointment","ENG",14423,""
+5,"TXTBOUT",0,"","***"
+4,"TYPBOUT",0,3
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"LTR"
+4,"VALBOUT",0,1
+4,"WIN",0,"OPJM"
+6,"AWT"
+3,"AWT",10
+4,"ACTBOUT",0,"GOBJETC1"
+4,"CODACTBOUT",0,"YPJM1"
+4,"CODBOUT",0,"8]"
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"LTR"
+4,"NUM",0,10
+5,"TXTBOUT",0,"Service request","ENG",14603,""
+5,"TXTBOUT",0,"","***"
+4,"TYPBOUT",0,3
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"LTR"
+4,"VALBOUT",0,1
+4,"WIN",0,"OPJM"
+6,"AWT"
+3,"AWT",11
+4,"ACTBOUT",0,""
+4,"CODACTBOUT",0,"YPJM"
+4,"CODBOUT",0,"J"
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"LTR"
+4,"NUM",0,11
+5,"TXTBOUT",0,"Source object","ENG",168,""
+5,"TXTBOUT",0,"","***"
+4,"TYPBOUT",0,2
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"LTR"
+4,"VALBOUT",0,0
+4,"WIN",0,"OPJM"
+6,"AWT"
+3,"AWT",12
+4,"ACTBOUT",0,""
+4,"CODACTBOUT",0,""
+4,"CODBOUT",0,"9"
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"LTR"
+4,"NUM",0,12
+5,"TXTBOUT",0,"Sales","ENG",3821,"Noun (plural)"
+5,"TXTBOUT",0,"","***"
+4,"TYPBOUT",0,2
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"LTR"
+4,"VALBOUT",0,0
+4,"WIN",0,"OPJM"
+6,"AWT"
+3,"AWT",13
+4,"ACTBOUT",0,"PJMACTSPLD"
+4,"CODACTBOUT",0,"YPJM1"
+4,"CODBOUT",0,"96"
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"LTR"
+4,"NUM",0,13
+5,"TXTBOUT",0,"Saleable products","ENG",55649,""
+5,"TXTBOUT",0,"","***"
+4,"TYPBOUT",0,3
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"LTR"
+4,"VALBOUT",0,1
+4,"WIN",0,"OPJM"
+6,"AWT"
+3,"AWT",14
+4,"ACTBOUT",0,"GOBJETC1"
+4,"CODACTBOUT",0,"YPJM1"
+4,"CODBOUT",0,"9-"
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"LTR"
+4,"NUM",0,14
+5,"TXTBOUT",0,"Sold product management","ENG",56315,""
+5,"TXTBOUT",0,"","***"
+4,"TYPBOUT",0,3
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"LTR"
+4,"VALBOUT",0,1
+4,"WIN",0,"OPJM"
+6,"AWT"
+3,"AWT",15
+4,"ACTBOUT",0,"PJMAUTSPLD"
+4,"CODACTBOUT",0,"YPJM1"
+4,"CODBOUT",0,"97"
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"LTR"
+4,"NUM",0,15
+5,"TXTBOUT",0,"Sales automation","ENG",56277,""
+5,"TXTBOUT",0,"","***"
+4,"TYPBOUT",0,3
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"LTR"
+4,"VALBOUT",0,1
+4,"WIN",0,"OPJM"
+6,"AWT"
+3,"AWT",16
+4,"ACTBOUT",0,""
+4,"CODACTBOUT",0,""
+4,"CODBOUT",0,"C"
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"LTR"
+4,"NUM",0,16
+5,"TXTBOUT",0,"WIPs","ENG",44372,""
+5,"TXTBOUT",0,"","***"
+4,"TYPBOUT",0,2
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"LTR"
+4,"VALBOUT",0,0
+4,"WIN",0,"OPJM"
+6,"AWT"
+3,"AWT",17
+4,"ACTBOUT",0,"FMFGB"
+4,"CODACTBOUT",0,"YPJM1"
+4,"CODBOUT",0,"CO"
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"LTR"
+4,"NUM",0,17
+5,"TXTBOUT",0,"Enterprise planning","ENG",11543,""
+5,"TXTBOUT",0,"","***"
+4,"TYPBOUT",0,3
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"LTR"
+4,"VALBOUT",0,1
+4,"WIN",0,"OPJM"
+6,"AWT"
+3,"AWT",18
+4,"ACTBOUT",0,"YPJMSRC"
+4,"CODACTBOUT",0,"YPJM"
+4,"CODBOUT",0,"Jy"
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"LTR"
+4,"NUM",0,18
+5,"TXTBOUT",0,"Development","ENG",1099,""
+5,"TXTBOUT",0,"","***"
+4,"TYPBOUT",0,3
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"LTR"
+4,"VALBOUT",0,1
+4,"WIN",0,"OPJM"
+6,"AWT"
+3,"AWT",19
+4,"ACTBOUT",0,"YPJMSRC"
+4,"CODACTBOUT",0,"YPJM"
+4,"CODBOUT",0,"Jz"
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"LTR"
+4,"NUM",0,19
+5,"TXTBOUT",0,"Housing","ENG",100020,""
+5,"TXTBOUT",0,"","***"
+4,"TYPBOUT",0,3
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"LTR"
+4,"VALBOUT",0,1
+4,"WIN",0,"OPJM"
+6,"AWT"
+3,"AWB",OPJM
+4,"ABRLIS",0,""
+4,"ABRLIS",1,"PJ3"
+4,"ABRLIS",2,"PJ2"
+4,"ABRLIS",3,"PJ1"
+4,"ABRLIS",4,"PJ4"
+4,"ABRLIS",5,"OP3"
+4,"ABRLIS",6,""
+4,"ABRLIS",7,""
+4,"ABRLIS",8,""
+4,"ACTLIS",0,""
+4,"ACTLIS",1,""
+4,"ACTLIS",2,""
+4,"ACTLIS",3,""
+4,"ACTLIS",4,""
+4,"ACTLIS",5,""
+4,"ACTLIS",6,""
+4,"ACTLIS",7,""
+4,"ACTLIS",8,""
+4,"AFLBRO",0,1
+4,"BROLIS",0,2
+4,"BROLIS",1,2
+4,"BROLIS",2,2
+4,"BROLIS",3,2
+4,"BROLIS",4,2
+4,"BROLIS",5,2
+4,"BROLIS",6,0
+4,"BROLIS",7,0
+4,"BROLIS",8,0
+4,"CHGLIS",0,2
+4,"CHGLIS",1,2
+4,"CHGLIS",2,2
+4,"CHGLIS",3,2
+4,"CHGLIS",4,2
+4,"CHGLIS",5,2
+4,"CHGLIS",6,0
+4,"CHGLIS",7,0
+4,"CHGLIS",8,0
+4,"CLELIS",0,""
+4,"CLELIS",1,""
+4,"CLELIS",2,""
+4,"CLELIS",3,""
+4,"CLELIS",4,""
+4,"CLELIS",5,""
+4,"CLELIS",6,""
+4,"CLELIS",7,""
+4,"CLELIS",8,""
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"FGR"
+4,"DERLU",0,2
+4,"EXPLIS",0,""
+4,"EXPLIS",1,""
+4,"EXPLIS",2,""
+4,"EXPLIS",3,""
+4,"EXPLIS",4,""
+4,"EXPLIS",5,""
+4,"EXPLIS",6,""
+4,"EXPLIS",7,""
+4,"EXPLIS",8,""
+4,"FIRLIS",0,1
+4,"FLELIS",0,2
+4,"FLELIS",1,2
+4,"FLELIS",2,2
+4,"FLELIS",3,2
+4,"FLELIS",4,2
+4,"FLELIS",5,2
+4,"FLELIS",6,0
+4,"FLELIS",7,0
+4,"FLELIS",8,0
+5,"INTLIS",0,"List of projects","ENG",14732,""
+5,"INTLIS",0,"","***"
+5,"INTLIS",1,"Open projects","ENG",42618,""
+5,"INTLIS",1,"","***"
+5,"INTLIS",2,"Suspended projects","ENG",54687,""
+5,"INTLIS",2,"","***"
+5,"INTLIS",3,"Closed projects","ENG",54688,""
+5,"INTLIS",3,"","***"
+5,"INTLIS",4,"Template projects","ENG",54719,""
+5,"INTLIS",4,"","***"
+5,"INTLIS",5,"Customer relation","ENG",14393,""
+5,"INTLIS",5,"","***"
+5,"INTLIS",6,"","ENG",0,""
+5,"INTLIS",6,"","***"
+5,"INTLIS",7,"","ENG",0,""
+5,"INTLIS",7,"","***"
+5,"INTLIS",8,"","ENG",0,""
+5,"INTLIS",8,"","***"
+4,"NBLIS",0,6
+4,"OBJLIS",0,"PJM"
+4,"OBJLIS",1,"PJ3"
+4,"OBJLIS",2,"PJ2"
+4,"OBJLIS",3,"PJ1"
+4,"OBJLIS",4,"PJ4"
+4,"OBJLIS",5,"OPPCRM"
+4,"OBJLIS",6,""
+4,"OBJLIS",7,""
+4,"OBJLIS",8,""
+4,"ORDLIS",0,2
+4,"ORDLIS",1,2
+4,"ORDLIS",2,2
+4,"ORDLIS",3,2
+4,"ORDLIS",4,2
+4,"ORDLIS",5,2
+4,"ORDLIS",6,0
+4,"ORDLIS",7,0
+4,"ORDLIS",8,0
+4,"ROWLIS",0,5
+4,"ROWLIS",1,10
+4,"ROWLIS",2,15
+4,"ROWLIS",3,20
+4,"ROWLIS",4,25
+4,"ROWLIS",5,30
+4,"ROWLIS",6,0
+4,"ROWLIS",7,0
+4,"ROWLIS",8,0
+4,"TRELIS",0,1
+4,"TRELIS",1,1
+4,"TRELIS",2,1
+4,"TRELIS",3,1
+4,"TRELIS",4,1
+4,"TRELIS",5,1
+4,"TRELIS",6,0
+4,"TRELIS",7,0
+4,"TRELIS",8,0
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"DH"
+4,"WIN",0,"OPJM"
+6,"AWB"
+3,"AWP",1
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,1
+4,"NUM",0,1
+4,"PARAM",0,"AFFAIRE"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,"[M:PJM0]OPPNUM"
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",1
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,2
+4,"NUM",0,1
+4,"PARAM",0,"BUD"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",2
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,1
+4,"NUM",0,2
+4,"PARAM",0,"AFFAIRE"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,"[M:PJM0]OPPNUM"
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",2
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,2
+4,"NUM",0,2
+4,"PARAM",0,"TAC"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",3
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,1
+4,"NUM",0,3
+4,"PARAM",0,"CODE"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""OPPORPJM""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",3
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,2
+4,"NUM",0,3
+4,"PARAM",0,"CLE1"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,"[M:PJM0]OPPNUM"
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",4
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,1
+4,"NUM",0,4
+4,"PARAM",0,"AFFAIRE"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,"[M:PJM0]OPPNUM"
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",4
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,2
+4,"NUM",0,4
+4,"PARAM",0,"BUD"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",5
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,1
+4,"NUM",0,5
+4,"PARAM",0,"AFFAIRE"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,"[M:PJM0]OPPNUM"
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",5
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,2
+4,"NUM",0,5
+4,"PARAM",0,"FCY"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",5
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,3
+4,"NUM",0,5
+4,"PARAM",0,"STATUT"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",5
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,4
+4,"NUM",0,5
+4,"PARAM",0,"ACTSILENCE"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",7
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,1
+4,"NUM",0,7
+4,"PARAM",0,"OBJCLEC1"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,"GBIDC3"
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",7
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,2
+4,"NUM",0,7
+4,"PARAM",0,"OBJETC1"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""TSK""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",7
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,3
+4,"NUM",0,7
+4,"PARAM",0,"OBJZONC1"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",8
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,1
+4,"NUM",0,8
+4,"PARAM",0,"OBJCLEC1"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,"GBIDC3"
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",8
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,2
+4,"NUM",0,8
+4,"PARAM",0,"OBJETC1"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""CLL""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",8
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,3
+4,"NUM",0,8
+4,"PARAM",0,"OBJZONC1"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",9
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,1
+4,"NUM",0,9
+4,"PARAM",0,"OBJCLEC1"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,"GBIDC3"
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",9
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,2
+4,"NUM",0,9
+4,"PARAM",0,"OBJETC1"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""BAP""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",9
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,3
+4,"NUM",0,9
+4,"PARAM",0,"OBJZONC1"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",10
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,1
+4,"NUM",0,10
+4,"PARAM",0,"OBJCLEC1"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,"GBIDC3"
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",10
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,2
+4,"NUM",0,10
+4,"PARAM",0,"OBJETC1"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""SRE""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",10
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,3
+4,"NUM",0,10
+4,"PARAM",0,"OBJZONC1"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",13
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,1
+4,"NUM",0,13
+4,"PARAM",0,"ORI"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""PJM""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",13
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,2
+4,"NUM",0,13
+4,"PARAM",0,"COD"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",14
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,1
+4,"NUM",0,14
+4,"PARAM",0,"OBJCLEC1"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,"GBIDC3"
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",14
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,2
+4,"NUM",0,14
+4,"PARAM",0,"OBJETC1"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""PSO""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",14
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,3
+4,"NUM",0,14
+4,"PARAM",0,"OBJZONC1"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",15
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,1
+4,"NUM",0,15
+4,"PARAM",0,"AFFAIRE"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,"[M:PJM0]OPPNUM"
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",15
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,2
+4,"NUM",0,15
+4,"PARAM",0,"BUD"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",15
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,3
+4,"NUM",0,15
+4,"PARAM",0,"TAC"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",15
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,4
+4,"NUM",0,15
+4,"PARAM",0,"CALFUN"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""PJM""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",17
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,1
+4,"NUM",0,17
+4,"PARAM",0,"FCY"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",17
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,2
+4,"NUM",0,17
+4,"PARAM",0,"PLANNER"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",17
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,3
+4,"NUM",0,17
+4,"PARAM",0,"SRTCOD"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",17
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,4
+4,"NUM",0,17
+4,"PARAM",0,"ITMREF"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",17
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,5
+4,"NUM",0,17
+4,"PARAM",0,"PJT"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",17
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,6
+4,"NUM",0,17
+4,"PARAM",0,"BPR"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",17
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,7
+4,"NUM",0,17
+4,"PARAM",0,"DAT"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",17
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,8
+4,"NUM",0,17
+4,"PARAM",0,"ORI"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""
+4,"WIN",0,"OPJM"
+6,"AWP"
+3,"AWP",17
+4,"CREDATTIM",0,"2019-01-16T10:49:52Z"
+4,"CREUSR",0,"MB"
+4,"NOPAR",0,9
+4,"NUM",0,17
+4,"PARAM",0,"RET"
+4,"UPDDATTIM",0,"2019-01-16T10:49:52Z"
+4,"UPDUSR",0,"MB"
+4,"VALEUR",0,""
+4,"WIN",0,"OPJM"
+6,"AWP"
+7,"AWI","OPJM","Project management"
+8,"Patch DFC :DFCX1-103a on January   17,19 05: 15"
