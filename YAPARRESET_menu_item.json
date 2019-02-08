@@ -1401,7 +1401,7 @@
 				"contract": "erp"
 			},
 			"endpoint": {
-				"dataset": "DEV00"
+				"dataset": ""
 			},
 			"representationRef": null,
 			"module": null,
