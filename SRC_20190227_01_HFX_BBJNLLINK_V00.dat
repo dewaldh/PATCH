@@ -1,0 +1,123 @@
+1,"Patch HFX :BBJNLLINK on February  27,19 17: 36","ENG","1","","X3","3",
+2,"TRT","SPEYBBJNLENT",""
+#<AdxTL>@(#)0.0.0.0 $Revision$ 
+######################################################################################################
+# FILE NAME   : SPEYBBJNLENT
+# DESCRIPTION : Tunneling to Journal Entry Screen from Business Batch
+######################################################################################################
+# DATE        : 23-01-2019
+# AUTHOR      : Dewald Henning
+# COMPANY     : Leverage Technologies
+# VERSION     : 1.0.0
+#-----------------------------------------------------------------------------------------------------
+# Epics Code  : DFCX1-218 (Version 1)
+#-----------------------------------------------------------------------------------------------------
+######################################################################################################
+Gosub YBBJNLENT
+End
+
+$ACTION
+  Case ACTION
+    When "EXEC"   : Gosub YBBJNLENT
+    When Default
+  Endcase
+
+Return
+
+#-------------------------------------------------------------------------------#
+# Tunnel to Journal from Business Batch
+#-------------------------------------------------------------------------------#
+$YBBJNLENT
+
+  Local Char PARBOUT(250)(1..3)
+  PARBOUT(1)  = [M:YBB0]YBATNBR
+  PARBOUT(2)  = "GAS"
+  PARBOUT(3)  = ""
+  GACTION = "GOBJETC1"
+  Global Char PARAM(250)(0..)
+  [V]PARAM(0) = [M:YBB0]YBATNBR
+  [V]PARAM(1) = "DOC"
+  Call OBJET_CHAR(PARBOUT(1),PARBOUT(2),PARBOUT(3)) From GOBJET
+  Kill [V]PARAM
+
+Return
+
+**********
+7,"TRT","SPEYBBJNLENT",""
+2,"ACT","YBBJNLENT","Journal entry"
+3,"ACT",YBBJNLENT
+4,"ABTFLG",0,1
+4,"ACTION",0,"YBBJNLENT"
+4,"ACTSUI",0,""
+4,"AMSFLG",0,1
+4,"CODACT",0,"YICBS"
+4,"CODTRT",0,""
+4,"CREDAT",0,20190123
+4,"CREDATTIM",0,"2019-01-23T04:41:55Z"
+4,"CREUSR",0,"DH"
+4,"INSTRU",0,""
+5,"INTITA",0,"Journal entry","ENG",5339,""
+5,"INTITA",0,"","***"
+5,"INTITC",0,"","ENG",0,""
+5,"INTITC",0,"","***"
+5,"INTITL",0,"","ENG",0,""
+5,"INTITL",0,"","***"
+4,"MODULE",0,9
+4,"NBPAR",0,0
+4,"NOWEB",0,1
+4,"PARAM1",0,""
+4,"PARAM2",0,""
+4,"PARAM3",0,1
+4,"PARAM4",0,""
+4,"PARAM5",0,""
+4,"PARAM6",0,1
+4,"PUBFLG",0,1
+4,"SPETRT",0,"SPEYBBJNLENT"
+4,"SUBPRG",0,""
+4,"TYP",0,3
+4,"TYPACT",0,2
+4,"TYPUTI",0,1
+4,"UPDDAT",0,20190226
+4,"UPDDATTIM",0,"2019-02-26T02:57:23Z"
+4,"UPDUSR",0,"DH"
+6,"ACT"
+7,"ACT","YBBJNLENT","Journal entry"
+2,"ACT","YJNLBBENT","Business batch entry"
+3,"ACT",YJNLBBENT
+4,"ABTFLG",0,1
+4,"ACTION",0,"YJNLBBENT"
+4,"ACTSUI",0,""
+4,"AMSFLG",0,1
+4,"CODACT",0,"YICBS"
+4,"CODTRT",0,""
+4,"CREDAT",0,20190201
+4,"CREDATTIM",0,"2019-02-01T03:53:21Z"
+4,"CREUSR",0,"DH"
+4,"INSTRU",0,""
+5,"INTITA",0,"Business batch entry","ENG",101314,""
+5,"INTITA",0,"","***"
+5,"INTITC",0,"","ENG",0,""
+5,"INTITC",0,"","***"
+5,"INTITL",0,"","ENG",0,""
+5,"INTITL",0,"","***"
+4,"MODULE",0,9
+4,"NBPAR",0,0
+4,"NOWEB",0,1
+4,"PARAM1",0,""
+4,"PARAM2",0,""
+4,"PARAM3",0,1
+4,"PARAM4",0,""
+4,"PARAM5",0,""
+4,"PARAM6",0,1
+4,"PUBFLG",0,1
+4,"SPETRT",0,"SPEYJNLBBENT"
+4,"SUBPRG",0,""
+4,"TYP",0,3
+4,"TYPACT",0,2
+4,"TYPUTI",0,1
+4,"UPDDAT",0,20190225
+4,"UPDDATTIM",0,"2019-02-25T02:19:27Z"
+4,"UPDUSR",0,"DH"
+6,"ACT"
+7,"ACT","YJNLBBENT","Business batch entry"
+8,"Patch HFX :BBJNLLINK on February  27,19 17: 36"
