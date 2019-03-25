@@ -1,0 +1,1092 @@
+1,"Patch HFX :INDEX on March     21,19 14: 23","ENG","1","","X3","3",
+2,"TRT","SPEYSELPCC",""
+#<AdxTL>@(#)0.0.0.0 $Revision$
+######################################################################################################################
+# Script            : SPEYSELPCC                                                                                     #
+# Creation date     : 06/05/2018                                                                                     #
+# Version           : 1.0.0                                                                                          #
+# Authors (Company) : JHM (Leverage)                                                                                 #
+# Module            : PCC dimension selection in lines                                                               #
+# -------------------------------------------------------------------------------------------------------------------#
+# Epics code        :                                                                                                #
+# Description       : PCC customizations                                                                             #
+#--------------------------------------------------------------------------------------------------------------------#
+# Evolutions        : DEWALD - UPDATE DOC to return correct data (08-08-2018)                                                                                               #
+######################################################################################################################
+
+##-DEBUG START - DEW
+
+##Local Integer I
+##Local Char TEXTE(255)(1..500,1..3)
+##Local Char TEX(10)(500)
+##Local Char REQUEST(255)
+##
+##I=0
+##
+##REQUEST = "EXEC DIMACCSEL '001-1' , '1200'"
+##
+##For (Char YFCY, Char YLED(50), Char YDIMTYP, Char YDIM, Char YACC) From "5" Sql REQUEST As [YLNK]
+##  I += 1
+##  Infbox("Site:"-[F:YLNK]YFCY-"; Ledger:"-[F:YLNK]YLED-"; Dim:"-[F:YLNK]YDIM-";")
+##Next
+##NBTEX=I
+##Infbox("Lines:"-num$(I))
+##
+##If I = 0
+##  Infbox(mess(6,6201,1))
+##Endif
+
+##-DEBUG END - DEW
+
+
+#------------------------------------------------------------------------------------#
+#Action
+#------------------------------------------------------------------------------------#
+
+$ACTION
+Case ACTION
+  When Default
+Endcase
+
+Case GACTION
+
+  When 'YSELDIM','YSELACC' :
+    Case ACTION
+      When "SEL_LISTE"    : Gosub SEL_LISTE
+    Endcase
+  When 'YSELDIM1' :
+  Infbox "e"
+    Case ACTION
+      When "SEL_LISTE"    : Gosub SEL_LISTE1
+    Endcase
+
+Endcase
+
+Return
+
+
+#------------------------------------------------------------------------------------#
+#Action identifiers for list selection
+#------------------------------------------------------------------------------------#
+$SEL_LISTE
+
+Case num$(PARAM(2))
+  When "1"
+    Case LISTE
+      When "SELDIM"     : Gosub S_SELPCC
+      When "SELACC"     : Gosub S_SELACC
+    Endcase
+  When "2"
+     Case LISTE
+      When "SELDIM"     : Gosub S_SELPCC
+      When "SELACC"     : Gosub S_SELLED
+    Endcase
+
+Endcase
+Return
+
+$SEL_LISTE1
+  Infbox PARAM(1),PARAM(2),PARAM(3)
+#When "SELDIM1"     : Gosub S_SELCCE
+Return
+
+
+$SEL_TABLE
+
+#Gosub SELCCE_TABLE
+
+Return
+
+######################################################################################
+#Funprog VERIF_DIM_PCC(YFUNCTION,YDIMENSION)
+#Value Char YFUNCTION
+#Value Char YDIMENSION
+#Local Integer YVALID
+#Local Char REQUEST(255)(3)
+#
+#Case YFUNCTION
+#  When 'GESPOH', 'GESGAS', 'GESPIH', 'GESBIS'
+#    #REQUEST(0) = func BUILD_REQ(YFUNCTION)
+#    REQUEST(1) = ""
+#    REQUEST(2) = ""
+#  When 'GESSMO', 'GESSMR'
+#    REQUEST(0) = "SELECT DISTINCT CCE.CCE_0,CCE.DES_0,CCE.DIE_0 "
+#    REQUEST(0) += "FROM CACCE CCE "
+#    REQUEST(0) += "INNER JOIN FACILITY FCY ON CCE.CCE_0 LIKE SUBSTR(FCY.CCE_0,1,INSTR(FCY.CCE_0,'-',1) + INSTR(SUBSTR(FCY.CCE_0,INSTR(FCY.CCE_0,'-',1)+1,5),'-',1) - 1) || '%' "
+#
+#    REQUEST(1) = "INNER JOIN YPCCACC YPCA ON YPCA.YCCE_0 = CCE.CCE_0 AND YPCA.YDIE_0 = CCE.DIE_0 "
+#    REQUEST(1) += "INNER JOIN GACCCODE CAC ON YPCA.YACC_0 = CAC.ACC_10 "
+#    REQUEST(1) += "INNER JOIN ITMCATEG ITG ON CAC.ACCCOD_0 = ITG.ACCCOD_0 "
+#
+#    REQUEST(2) = "INNER JOIN ITMMASTER ITM ON ITM.TCLCOD_0=ITG.TCLCOD_0 "
+#    REQUEST(2) += "WHERE CCE.DIE_0='PCC' AND CCE.ENAFLG_0=2 "
+#
+#    Case YFUNCTION
+#      When 'GESSMO'   # Miscellaneous issue
+#        REQUEST(2) += "AND ((ITG.YREGVAL_0=2 AND FCY.FCY_0='" + [M:SMO0]STOFCY + "' AND ITM.ITMREF_0='" + [M:SMO1]ITMREF(nolign - 1) + "') OR ITG.YREGVAL_0<>2) "
+#      When 'GESSMR'   # Miscellaneous receipt
+#        REQUEST(2) += "AND ((ITG.YREGVAL_0=2 AND FCY.FCY_0='" + [M:SMR0]STOFCY + "' AND ITM.ITMREF_0='" + [M:SMR1]ITMREF(nolign - 1) + "') OR ITG.YREGVAL_0<>2) "
+#    Endcase
+#    REQUEST(2) += "AND CCE.CCE_0='" + YDIMENSION + "' ORDER BY 1"
+#Endcase
+#
+#YVALID = 0
+#
+#For (Char YCCE, Char YDES(50), Char YDIE) From "3" Sql REQUEST As [YLNK]
+#  If [F:YLNK]YCCE = YDIMENSION
+#    YVALID = 1
+#    Break
+#  Endif
+#Next
+#End YVALID
+
+
+#------------------------------------------------------------------------------------#
+#Apply the filter for the selection list
+#------------------------------------------------------------------------------------#
+$S_SELPCC
+Local Integer I
+Local Char TEXTE(255)(1..500,1..3)
+Local Char TEX(10)(500)
+Local Char REQUEST(255)(3)
+
+GPE = 1
+
+I=0
+TIT(1)="Dimension"
+TIT(2)="Title"
+TIT(3)="Dimension type"
+CRITERE = "1=1"
+
+Case PARAM(1)
+  When 'GESGAS', 'GESBIS', 'GESBIC'
+    REQUEST(0) = func BUILD_REQ(PARAM(1),PARAM(2))
+    REQUEST(1) = ""
+    REQUEST(2) = ""
+  When Default
+Endcase
+
+#When 'GESSMO', 'GESSMR'
+#    REQUEST(0) = "SELECT DISTINCT CCE.CCE_0,CCE.DES_0,CCE.DIE_0 "
+#    REQUEST(0) += "FROM CACCE CCE "
+#    REQUEST(0) += "INNER JOIN FACILITY FCY ON CCE.CCE_0 LIKE SUBSTR(FCY.CCE_0,1,INSTR(FCY.CCE_0,'-',1) + INSTR(SUBSTR(FCY.CCE_0,INSTR(FCY.CCE_0,'-',1)+1,5),'-',1) - 1) || '%' "
+#
+#    REQUEST(1) = "INNER JOIN YPCCACC YPCA ON YPCA.YCCE_0 = CCE.CCE_0 AND YPCA.YDIE_0 = CCE.DIE_0 "
+#    REQUEST(1) += "INNER JOIN GACCCODE CAC ON YPCA.YACC_0 = CAC.ACC_10 "
+#    REQUEST(1) += "INNER JOIN ITMCATEG ITG ON CAC.ACCCOD_0 = ITG.ACCCOD_0 "
+#
+#    REQUEST(2) = "INNER JOIN ITMMASTER ITM ON ITM.TCLCOD_0 = ITG.TCLCOD_0 "
+#    REQUEST(2) += "WHERE CCE.DIE_0 = 'PCC' AND CCE.ENAFLG_0 = 2 "
+#
+#    Case PARAM(1)
+#      When 'GESSMO'   # Miscellaneous issue
+#        REQUEST(2) += "AND ((ITG.YREGVAL_0 = 2 AND FCY.FCY_0='" + [M:SMO0]STOFCY + "' AND ITM.ITMREF_0='" + [M:SMO1]ITMREF(nolign - 1) + "') OR ITG.YREGVAL_0<>2) "
+#      When 'GESSMR'   # Miscellaneous receipt
+#        REQUEST(2) += "AND ((ITG.YREGVAL_0 = 2 AND FCY.FCY_0='" + [M:SMR0]STOFCY + "' AND ITM.ITMREF_0='" + [M:SMR1]ITMREF(nolign - 1) + "') OR ITG.YREGVAL_0<>2) "
+#    Endcase
+#    REQUEST(2) += "ORDER BY 1"
+
+
+For (Char YCCE, Char YDES(50), Char YDIE) From "5" Sql REQUEST As [YLNK]
+  I += 1
+
+  TEX(I)     = [F:YLNK]YCCE
+  TEXTE(I,1) = [F:YLNK]YCCE
+  TEXTE(I,2) = [F:YLNK]YDES
+  TEXTE(I,3) = [F:YLNK]YDIE
+Next
+NBTEX=I
+
+If I = 0
+  Call ERRTIT( mess(6,6201,1),"Accounts") From GESECRAN
+Endif
+
+Return
+
+
+#------------------------------------------------------------------------------------#
+#Apply filters for the selection
+#------------------------------------------------------------------------------------#
+Funprog BUILD_REQ(YFUNCTION,YDIMTYPE)
+Value Char YFUNCTION
+Value Char YDIMTYPE
+Local Integer YVALID
+Local Char REQUEST(255)
+
+REQUEST = "SELECT DISTINCT YCCE_0,YDES_0,YDIE_0 FROM YPCCACCV "
+
+# Specific conditions based on the caller function
+Case YFUNCTION   # FONCTION
+    When 'GESBIC'   # Supplier BP invoice
+    REQUEST += "WHERE YACC_0='" + [M:BIC3]ACC1(nolign - 1) + "' AND YDIE_0='" + YDIMTYPE + "' " # AND YFCY_0='" + [M:BIS3]FCYLIN(nolign - 1) + "' "
+    When 'GESBIS'   # Supplier BP invoice
+    REQUEST += "WHERE YACC_0='" + [M:BIS3]ACC1(nolign - 1) + "' AND YDIE_0='" + YDIMTYPE + "' " # AND YFCY_0='" + [M:BIS3]FCYLIN(nolign - 1) + "' "
+    When 'GESGAS'   # Supplier BP invoice
+    REQUEST += "WHERE YACC_0='" + [M:HAE2]ACC1(nolign - 1) + "' AND YDIE_0='" + YDIMTYPE + "' " # AND YFCY_0='" + [M:BIS3]FCYLIN(nolign - 1) + "' "
+Endcase
+
+REQUEST += "ORDER BY 1"
+
+End REQUEST
+
+
+#------------------------------------------------------------------------------------#
+#
+#------------------------------------------------------------------------------------#
+#$SELCCE_TABLE
+#Local Integer PCC_END, I
+#PCC_END = 30000
+#Local Char PCC_LIST(10)(PCC_END)
+#
+#If clalev([M:HAE2]) = 0
+#  Return
+#Endif
+#
+#GPE = 1
+#
+##- Open the required tables
+##REQUEST = func BUILD_REQ('GESGAS')
+#I = 0
+#
+#For (Char YCCE, Char YDES(50), Char YDIE) From "5" Sql REQUEST As [YLNK]
+#  PCC_LIST(I) = [F:YLNK]YCCE
+#  I += 1
+#Next
+#
+#If !clalev ([F:YCCE])      : Local File CACCE [YCCE]     : Endif
+#
+#Filter [F:YCCE] Where find([F:YCCE]CCE,PCC_LIST(0..I))>0
+#
+#Default File [F:YCCE]
+#
+##-Nb of column to display
+#NBCOL=3
+#
+##- Title of the selection window
+#TIT(0)="Selection Dimension"
+#
+##- Title of columns
+#TIT(1)="Dimension"
+#TIT(2)="Title"
+#TIT(3)="Dimension type"
+#
+##- Name of fields for each column
+#COL(1)="CCE"
+#COL(2)="DES"
+#COL(3)="DIE"
+#
+##- Supervisor handles the number of pages
+#DEFPAG=1
+#
+##- Indicates which column contains the value that is going to be assigned to the calling field
+#START="CCE"
+#
+#Return
+
+#------------------------------------------------------------------------------------#
+#Apply filters for account selection
+#------------------------------------------------------------------------------------#
+$S_SELACC
+Local Integer I
+Local Char TEXTE(255)(1..2000,1..3)
+Local Char TEX(10)(2000)
+Local Char REQUEST(255)(3)
+
+#debug message variable
+Local Char YMSG(250)(5)
+
+GPE = 1
+
+I=0
+TIT(1)="Account"
+TIT(2)="Description"
+TIT(3)="Chart Code"
+CRITERE = "1=1"
+
+
+#REQUEST(0) = "SELECT DISTINCT ACC.ACC_0,ACC.DES_0,ACC.COA_0 "
+#REQUEST(0) += "FROM GACCOUNT ACC "
+#REQUEST(1) = "WHERE COA_0 IN (" + func YDFCGENERAL.GETCOA(PARAM(1)) + ")"
+
+REQUEST(0) = "SELECT DISTINCT ACC.ACC_0,ACC.DES_0,ACC.COA_0 "
+REQUEST(0) += "FROM GACCOUNT ACC "
+REQUEST(1) = "WHERE COA_0 = '" + [M:YPCCACC]YCOA(nolign-1) + "'"
+
+
+#debug message
+If val(func AFNC.PARAM("YDBMSG", "")) = 2
+  Raz YMSG
+  YMSG(0) = "Function: S_SELACC"
+  YMSG(1) = "Request: " + REQUEST(0)
+  YMSG(2) = "Request1: " + REQUEST(1)
+  Call YDBMSG(YMSG) From YDFCGENERAL
+Endif
+
+For (Char YACC, Char YDES(50), Char YCOA) From "5" Sql REQUEST As [YLNK]
+  I += 1
+
+  TEX(I)     = [F:YLNK]YACC
+  TEXTE(I,1) = [F:YLNK]YACC
+  TEXTE(I,2) = [F:YLNK]YDES
+  TEXTE(I,3) = [F:YLNK]YCOA
+
+  If I = 2000
+    Call ERRTIT( mess(12,6201,1),"Record limit reached (2000)") From GESECRAN
+    Break
+  Endif
+
+Next
+NBTEX=I
+
+If I = 0
+  Call ERRTIT( mess(6,6201,1),"Accounts") From GESECRAN
+Endif
+
+Return
+
+
+#------------------------------------------------------------------------------------#
+#Apply filters for account selection
+#------------------------------------------------------------------------------------#
+$S_SELLED
+Local Integer I
+Local Char TEXTE(255)(1..2000,1..3)
+Local Char TEX(10)(2000)
+Local Char REQUEST(255)(3)
+Local Char YDIM
+
+
+#debug message variable
+Local Char YMSG(250)(5)
+
+GPE = 1
+
+YDIM = PARAM(1)
+
+I=0
+TIT(1)="Ledger"
+TIT(2)="Description"
+TIT(3)="Chart Code"
+CRITERE = "1=1"
+
+
+REQUEST(0) = "SELECT LED_0, DES_0, COA_0 "
+REQUEST(0) += "From GLED "
+REQUEST(1) += "WHERE DIE_0 = '" + YDIM + "' or DIE_1 = '" + YDIM + "' or DIE_2 = '" + YDIM + "' or DIE_3 = '" + YDIM + "' or DIE_4 = '"
+REQUEST(2) += YDIM + "' or DIE_5 = '" + YDIM + "' or DIE_6 = '" + YDIM + "' or DIE_7 = '" + YDIM + "' or DIE_8 = '" + YDIM + "'"
+
+
+#debug message
+If val(func AFNC.PARAM("YDBMSG", "")) = 2
+  YMSG(0) = "Current Function: GETLED, Dimension: " + YDIM
+  YMSG(1) = "Request: " + REQUEST(0)
+  YMSG(2) = "Request: " + REQUEST(1)
+  YMSG(3) = "Request: " + REQUEST(2)
+  Call YDBMSG(YMSG) From YDFCGENERAL
+Endif
+
+I = 0
+
+#get all of the chart of accounts linked to the dimension.
+For (Char YLED, Char YDES, Char YCOA) From "5" Sql REQUEST As [YLNK]
+
+  I += 1
+  TEX(I)     = [F:YLNK]YLED
+  TEXTE(I,1) = [F:YLNK]YLED
+  TEXTE(I,2) = [F:YLNK]YDES
+  TEXTE(I,3) = [F:YLNK]YCOA
+
+Next
+
+NBTEX=I
+
+#debug message
+If val(func AFNC.PARAM("YDBMSG", "")) = 2
+  Raz YMSG
+  YMSG(0) = "Function: S_SELACC"
+  YMSG(1) = "Request: " + REQUEST(0)
+  YMSG(2) = "Request1: " + REQUEST(1)
+  Call YDBMSG(YMSG) From YDFCGENERAL
+Endif
+
+
+
+If I = 0
+  Call ERRTIT( mess(6,6201,1),"Accounts") From GESECRAN
+Endif
+
+Return
+
+
+#------------------------------------------------------------------------------------#
+#
+#------------------------------------------------------------------------------------#
+$SELCCE_TABLE
+Local Integer PCC_END, I
+PCC_END = 30000
+Local Char COA_LIST(10)(PCC_END)
+
+#- Open the required tables
+#REQUEST = func BUILD_REQ('GESGAS')
+I = 0
+
+For (Char YCCE, Char YDES(50), Char YDIE) From "5" Sql REQUEST As [YLNK]
+  PCC_LIST(I) = [F:YLNK]YCCE
+  I += 1
+Next
+
+If !clalev ([F:YCCE])      : Local File CACCE [YCCE]     : Endif
+
+Filter [F:YCCE] Where find([F:YCCE]CCE,PCC_LIST(0..I))>0
+
+Default File [F:YCCE]
+COA_LIST = func YDFCGENERAL.GETCOA1(PARAM(1))
+
+#Infbox COA_LIST(0),COA_LIST(1),COA_LIST(2)
+
+If !clalev ([F:YYACC])      : Local File GACCOUNT [YYACC]     : Endif
+
+Filter [F:YYACC] Where COA = "A10" #COA_LIST(0)#Where find([F:YGACC]COA,COA_LIST(0..10))>0
+
+Default File [F:YYACC]
+
+#-Nb of column to display
+NBCOL=3
+
+#- Title of the selection window
+TIT(0)="Account Selection"
+
+#- Title of columns
+TIT(1)="Account"
+TIT(2)="Description"
+TIT(3)="Chart Code"
+CRITERE = "1=1"
+
+#- Name of fields for each column
+COL(1)="ACC"
+COL(2)="DES"
+COL(3)="COA"
+#- Supervisor handles the number of pages
+DEFPAG=1
+#- Indicates which column contains the value that is going to be assigned to the calling field
+START="COA"
+
+Return
+
+S_SELCCE
+Return
+
+**********
+7,"TRT","SPEYSELPCC",""
+2,"TRT","SPEYSELPJM",""
+#<AdxTL>@(#)0.0.0.0 $Revision$
+######################################################################################################################
+# Script            : SPEYSELPJM                                                                                     #
+# Creation date     : 20/11/2018                                                                                     #
+# Version           : 1.0.1                                                                                          #
+# Authors (Company) : JR (Leverage)                                                                                  #
+# Module            : Project Selection                                                                              #
+# -------------------------------------------------------------------------------------------------------------------#
+# Epic              :                                                                                                #
+# Description       : DFCX1-153 Project Management  - Transactional Validation                                       #
+#--------------------------------------------------------------------------------------------------------------------#
+# Evolutions        : 1 - Dewald - Index incorrect error fix - select top 999                                                                                               #
+######################################################################################################################
+$ACTION
+Case ACTION
+  When Default
+Endcase
+Case GACTION
+  When "YSELPJM"  :
+    Case ACTION
+      When "SEL_LISTE"    : Gosub SEL_LISTE
+    Endcase
+Endcase
+Return
+
+
+######################################################################################
+$SEL_LISTE
+Case LISTE
+  When "YSELPJM"     : Gosub S_SELPJM
+Endcase
+Return
+
+
+######################################################################################
+$S_SELPJM
+
+Local Integer I
+Local Char TEXTE(255)(1..1000,1..5)
+Local Char TEX(40)(1000)
+Local Char REQUEST(255)(15)
+
+I=0
+TIT(0)="Project list"
+NBCOL = 5
+TIT(1)="Project link"
+TIT(2)="Budget code"
+TIT(3)="Description"
+TIT(4)="Site"
+TIT(5)="Status"
+
+CRITERE = "1=1"
+
+REQUEST(0) = "SELECT top 999 t1.OPPNUM_0, t0.PBUCOD_0, t2.TEXTE_0, t3.LANMES_0, t0.FCY_0, t0.PIMNUM_0, t4.LANMES_0"
+REQUEST(1) -= "FROM PIMPL t0"
+REQUEST(2) -= "JOIN PJMBUD t1 ON t0.OPPNUM_0 = t1.OPPNUM_0 AND t0.PBUCOD_0 = t1.PBUCOD_0"
+REQUEST(3) -= "JOIN ATEXTRA t2 ON t0.OPPNUM_0 = t2.IDENT1_0 AND t2.ZONE_0 = 'PIMDESAXX' AND t2.LANGUE_0 = 'ENG' AND t2.CODFIC_0 = 'PIMPL'"
+REQUEST(4) -= "JOIN APLSTD t3 ON t0.PIMTYP_0 = t3.LANNUM_0 AND t3.LAN_0 = 'ENG' AND t3.LANCHP_0 = 2254"
+REQUEST(5) -= "JOIN APLSTD t4 ON t0.PIMSTA_0 = t4.LANNUM_0 AND t4.LAN_0 = 'ENG' AND t4.LANCHP_0 = 2249"
+REQUEST(6) -= "WHERE"
+
+#Dewald - 18/02/2019 - Ammended as per request from Richard
+#Project Status = Launched or Delivered
+REQUEST(7) -= "t0.OPPSTATE_0 in (2,3)"
+
+#TODO : Revise old code before removing
+#Project Status = Launched
+#REQUEST(7) -= "t0.OPPSTATE_0 = 2"
+
+#Site
+REQUEST(8) -= "AND t0.FCY_0 = '" + PARAM(1) + "'"
+
+#Active = Yes
+REQUEST(9) -= "AND t0.PIMSTA_0 = 2"
+
+#Chargeable = Yes
+REQUEST(10) -= "AND t1.PBUIMP_0 = 2"
+
+#Budget Status = Open
+REQUEST(11) -= "AND t0.PBUSTATE_0 = 2"
+
+#Check if field has current value to filter on
+If VALEUR <> ""
+  REQUEST(12) -= "AND t0.PIMNUM_0 LIKE '%" + VALEUR + "%'"
+Else
+  REQUEST(12) -= ""
+Endif
+
+#Order by
+REQUEST(13) -= "ORDER BY t1.OPPNUM_0, t0.PIMNUM_0"
+
+For (Char OPPNUM(20), Char PBUCOD(15), Char TEXTE(30), Char PIMTYP(123), Char FCY(5), Char PIMNUM(40), Char PIMSTA(123)) From "5" Sql REQUEST As [YPRJLNK]
+
+  I += 1
+  TEX(I)     = [F:YPRJLNK]PIMNUM
+
+  TEXTE(I,1) = [F:YPRJLNK]PIMNUM
+  TEXTE(I,2) = [F:YPRJLNK]PBUCOD
+  TEXTE(I,3) = [F:YPRJLNK]TEXTE
+  TEXTE(I,4) = [F:YPRJLNK]FCY
+  TEXTE(I,5) = [F:YPRJLNK]PIMSTA
+
+Next
+NBTEX = I
+
+If I = 1 : NBTEX += 1 : Endif #DFC wants to display the selection box even if one item is returned
+
+#Dewald - 18/02/2019 - Ammended as per request from Richard
+If I = 0 Then
+  Infbox mess(40,6201,1)
+Endif
+
+Return
+
+**********
+7,"TRT","SPEYSELPJM",""
+2,"TRT","YBBSELBP",""
+#<AdxTL>@(#)0.0.0.0 $Revision$
+#######################################################################################################
+# FILE NAME   : YBBSELBP                                                                               #
+# DESCRIPTION : BP Customer/Supplier Selection                                                                        #
+#######################################################################################################
+# DATE        : 1-11-2018                                                                            #
+# AUTHOR      : DEWALD                                                                                #
+# COMPANY     : Leverage Technologies                                                                 #
+#-----------------------------------------------------------------------------------------------------#
+# Epics Code  : DFCX1-27
+#             : DFCX1-385 - BP simulation account validation
+#-----------------------------------------------------------------------------------------------------#
+#######################################################################################################
+$ACTION
+Case ACTION
+  When Default
+Endcase
+
+Case GACTION
+  When "YBBSELBP"
+    Gosub S_SELBP
+Endcase
+Return
+
+$S_SELBP
+Local Integer I
+Local Char TEXTE(255)(1..600,1..4)
+Local Char TEX(25)(2000)
+Local Char QRY(255)(0..)
+
+I=0
+TIT(1)="BP"
+TIT(2)="Company name"
+TIT(3)="Short description"
+TIT(4)="Category"
+CRITERE = "1=1"
+
+Local Char ACC(10), COA(10)
+Local Integer CLTC, CLTS
+[L]ACC = [M:YBB1]YACC(nolign-1)
+[L]COA = [M:YBB1]YCOA(nolign-1)
+
+If clalev([F:GAC]) = 0  : Local File GACCOUNT [GAC]   : Endif
+Read [F:GAC]GAC0 = [L]COA;[L]ACC
+If [F:GAC]AUZBPR(0) = 2 Then
+  CLTC = 2
+  CLTS = 1
+Elsif [F:GAC]AUZBPR(1) = 2
+  CLTC = 1
+  CLTS = 2
+Else
+  Infbox "No BP for selected account"
+  Return
+Endif
+
+If clalev([F:GAC]) = 0  : Close Local File [F:GAC] : Endif
+
+QRY(0) = "" : QRY(1) = "" : QRY(2) = "" : QRY(3) = "" : QRY(4) = ""
+If CLTC = 1 and CLTS = 2
+  QRY(0) = "SELECT DISTINCT TOP 250 BP.BPSNUM_0, BP.BPSNAM_0, GAC.ACCSHO_0, 'Supplier'"
+  QRY(1) -= "From BPSUPPLIER BP"
+  QRY(2) -= "INNER JOIN GACCCODE GCOD ON BP.ACCCOD_0 = GCOD.ACCCOD_0"
+  QRY(3) -= "INNER JOIN GACCOUNT GAC ON GAC.ACC_0 = GCOD.ACC_0"
+  QRY(4) -= "Where GCOD.ACC_0 = '"+[L]ACC+"' and BP.ENAFLG_0 = 2 and GAC.SAC_0 = 2 and GAC.COA_0 = '"+[L]COA+"'"
+Elsif CLTC = 2 and CLTS = 1
+  QRY(0) -= "SELECT DISTINCT TOP 250 BP.BPCNUM_0, BP.BPCNAM_0, GAC.ACCSHO_0, 'Customer'"
+  QRY(1) -= "From BPCUSTOMER BP"
+  QRY(2) -= "INNER JOIN GACCCODE GCOD ON BP.ACCCOD_0 = GCOD.ACCCOD_0"
+  QRY(3) -= "INNER JOIN GACCOUNT GAC ON GAC.ACC_0 = GCOD.ACC_0"
+  QRY(4) -= "Where GAC.ACC_0 = '"+[L]ACC+"' and BP.BPCSTA_0 = 2 and GAC.SAC_0 = 2 and GAC.COA_0 = '"+[L]COA+"'"
+Endif
+
+For (Char BPCNUM, Char BPCNAM, Char BCGCOD, Char CAT) From "5" Sql QRY As [YLNK]
+  I += 1
+  TEX(I)     = [F:YLNK]BPCNUM
+  TEXTE(I,1) = [F:YLNK]BPCNUM
+  TEXTE(I,2) = [F:YLNK]BPCNAM
+  TEXTE(I,3) = [F:YLNK]BCGCOD
+  TEXTE(I,4) = [F:YLNK]CAT
+Next
+NBTEX=I
+If I <> 0
+  [M:YBB1]YCTRL(nolign-1) = TEXTE(I,3)
+  Affzo [M:YBB1]YCTRL(nolign-1)
+Else
+  Infbox "No selection for BP"
+Endif
+
+Return
+
+Subprog VAL_SELBP(BPR)
+Value Char BPR()
+Local Integer I
+Local Char TEXTE(255)(1..600,1..4)
+Local Char TEX(25)(2000)
+Local Char QRY(255)(0..)
+
+I=0
+
+Local Char ACC(10), COA(10)
+Local Integer CLTC, CLTS
+[L]ACC = [M:YBB1]YACC(nolign-1)
+[L]COA = [M:YBB1]YCOA(nolign-1)
+
+If clalev([F:GAC]) = 0  : Local File GACCOUNT [GAC]   : Endif
+Read [F:GAC]GAC0 = [L]COA;[L]ACC
+If [F:GAC]AUZBPR(0) = 2 Then
+  CLTC = 2
+  CLTS = 1
+Elsif [F:GAC]AUZBPR(1) = 2
+  CLTC = 1
+  CLTS = 2
+Else
+  Infbox "No BP for selected account"
+  Return
+Endif
+
+If clalev([F:GAC]) = 0  : Close Local File [F:GAC] : Endif
+
+QRY(0) = "" : QRY(1) = "" : QRY(2) = "" : QRY(3) = "" : QRY(4) = ""
+If CLTC = 1 and CLTS = 2
+  QRY(0) = "SELECT BP.BPSNUM_0"
+  QRY(1) -= "From BPSUPPLIER BP"
+  QRY(2) -= "INNER JOIN GACCCODE GCOD ON BP.ACCCOD_0 = GCOD.ACCCOD_0"
+  QRY(3) -= "INNER JOIN GACCOUNT GAC ON GAC.ACC_0 = GCOD.ACC_0"
+  QRY(4) -= "Where GCOD.ACC_0 = '"+[L]ACC+"' and BP.BPSNUM_0 = '"+BPR+"' and GAC.COA_0 = '"+[L]COA+"'"
+Elsif CLTC = 2 and CLTS = 1
+  QRY(0) -= "SELECT BP.BPCNUM_0"
+  QRY(1) -= "From BPCUSTOMER BP"
+  QRY(2) -= "INNER JOIN GACCCODE GCOD ON BP.ACCCOD_0 = GCOD.ACCCOD_0"
+  QRY(3) -= "INNER JOIN GACCOUNT GAC ON GAC.ACC_0 = GCOD.ACC_0"
+  QRY(4) -= "Where GAC.ACC_0 = '"+[L]ACC+"' and BP.BPCNUM_0 = '"+BPR+"' and GAC.COA_0 = '"+[L]COA+"'"
+Endif
+
+For (Char BPCNUM) From "5" Sql QRY As [YLNK]
+  I += 1
+Next
+NBTEX=I
+
+If I = 0 Then
+  GMESSAGE = "Invalid BP entered"
+  GERR = 1
+  mkstat = 2
+  zonsui = "[M:YBB1]YBP(nolign-1)"
+Endif
+
+
+End
+
+
+##### ---> Replaced by chagnes that DFC wants -- DO NOT REMOVE AS THIS MIGHT CHANGE AGAIN - DEWAL
+#$S_SELBP
+#Local Integer I
+#Local Char TEXTE(255)(1..600,1..4)
+#Local Char TEX(25)(2000)
+#Local Char QRY(255)(0..)
+#
+#I=0
+#TIT(1)="BP"
+#TIT(2)="Company name"
+#TIT(3)="Short description"
+#TIT(4)="Category"
+#CRITERE = "1=1"
+#
+# QRY(0) = "SELECT DISTINCT TOP 250 BP.BPSNUM_0, BP.BPSNAM_0, GAC.ACCSHO_0, 'Supplier'"
+# QRY(1) -= "From BPSUPPLIER BP"
+# QRY(2) -= "INNER JOIN GACCCODE GCOD ON BP.ACCCOD_0 = GCOD.ACCCOD_0"
+# QRY(3) -= "INNER JOIN GACCOUNT GAC ON GAC.ACC_0 = GCOD.ACC_0"
+# QRY(4) -= "Where GCOD.ACC_0 = '"+[M:YBB1]YACC(nolign-1)+"' and BP.ENAFLG_0 = 2 and GAC.SAC_0 = 2 and GAC.COA_0 = '"+[M:YBB1]YCOA(nolign-1)+"'"
+# QRY(5) -= "UNION ALL"
+# QRY(6) -= "SELECT DISTINCT TOP 250 BP.BPCNUM_0, BP.BPCNAM_0, GAC.ACCSHO_0, 'Customer'"
+# QRY(7) -= "From BPCUSTOMER BP"
+# QRY(8) -= "INNER JOIN GACCCODE GCOD ON BP.ACCCOD_0 = GCOD.ACCCOD_0"
+# QRY(9) -= "INNER JOIN GACCOUNT GAC ON GAC.ACC_0 = GCOD.ACC_0"
+# QRY(10) -= "Where GAC.ACC_0 = '"+[M:YBB1]YACC(nolign-1)+"' and BP.BPCSTA_0 = 2 and GAC.SAC_0 = 2 and GAC.COA_0 = '"+[M:YBB1]YCOA(nolign-1)+"'"
+#
+#For (Char BPCNUM, Char BPCNAM, Char BCGCOD, Char CAT) From "5" Sql QRY As [YLNK]
+#  I += 1
+#  TEX(I)     = [F:YLNK]BPCNUM
+#  TEXTE(I,1) = [F:YLNK]BPCNUM
+#  TEXTE(I,2) = [F:YLNK]BPCNAM
+#  TEXTE(I,3) = [F:YLNK]BCGCOD
+#  TEXTE(I,4) = [F:YLNK]CAT
+#Next
+#NBTEX=I
+#If I <> 0
+#  [M:YBB1]YCTRL(nolign-1) = TEXTE(I,3)
+#  Affzo [M:YBB1]YCTRL(nolign-1)
+#Else
+#  Infbox "No selection for BP"
+#Endif
+#
+#Return
+##### ---> Replaced by chagnes that DFC wants -- DO NOT REMOVE AS THIS MIGHT CHANGE AGAIN - DEWAL
+
+**********
+7,"TRT","YBBSELBP",""
+2,"TRT","YELADIESEL",""
+#<AdxTL>@(#)0.0.0.0 $Revision$
+#######################################################################################################
+# FILE NAME   : YELADIESEL
+# DESCRIPTION : Dimension selection on ELA
+#######################################################################################################
+# DATE        : 22-02-2019
+# AUTHOR      : JR
+# COMPANY     : Leverage Technologies
+# VERSION     : 1.02
+#-----------------------------------------------------------------------------------------------------
+# Epics Code  : DFCX1-25
+#             : Defect raised by Saravanan - Index incorrect on selection with more than 2000 records. - DEWALD
+#-----------------------------------------------------------------------------------------------------
+#######################################################################################################
+$ACTION
+
+Case ACTION
+  When Default
+Endcase
+
+Case GACTION
+  When "YELADIESEL"    : Gosub SEL_LISTE
+Endcase
+
+Return
+
+$SEL_LISTE
+
+Local Integer I
+Local Char TEXTE(255)(1..2000,1..4)
+Local Char TEX(255)(2000)
+Local Char REQUEST(255)(0..)
+
+I=0
+TIT(1)="Dimension Value"
+TIT(2)="Description"
+TIT(3)="Ledger"
+TIT(4)="Dimension Code"
+
+#PARAM(0) = CODFNC
+#PARAM(1) = DIE
+#PARAM(2) = FLDNAM
+#PARAM(3) = COA
+#PARAM(4) = ACC
+
+#REQUEST(0) = "SELECT top 1999 T3.LED_0, T6.DIE_0, T6.CCE_0, T6.DES_0" #Dewald - 19/03
+REQUEST(0) = "SELECT top 1999 T3.LED_0, T6.DIE_0, T6.CCE_0, T6.DES_0"
+REQUEST(1) -= "From GLED T3"
+REQUEST(2) -= "INNER JOIN CACCE T6 ON T6.DIE_0 = T3."+PARAM(2)
+REQUEST(3) -= "LEFT OUTER JOIN YPCCACC T5 ON T5.YLED_0 = T3.LED_0 and T5.YDIE_0 = T6.DIE_0 and T5.YCCE_0 = T6.CCE_0"
+#REQUEST(4) -= "Where T6.DIE_0 = '"+PARAM(1)+"' and ((T5.YACC_0 = '"+[M:YELA1]YACCPRO+"' and T5.YLED_0 = '"+[M:YELA1]YCOAPRO+ "')"
+REQUEST(4) -= "Where T6.DIE_0 = '"+PARAM(1)+"' and ((T5.YACC_0 = '"+PARAM(4)+"' and T5.YCOA_0 = '"+PARAM(3)+ "')"
+REQUEST(5) -= "or (T5.YACC_0 IS null and T5.YLED_0 IS null)) and T6.ENAFLG_0 = 2"
+REQUEST(6) -= "Order By T6.CCE_0 Asc"
+
+  For (Char YLED(50), Char YDIMTYP(50), Char YDIM(50), Char YDES(255)) From "5" Sql REQUEST As [YLNK]
+    I += 1
+    TEX(I)     = [F:YLNK]YDIM
+    TEXTE(I,1) = [F:YLNK]YDIM
+    TEXTE(I,2) = [F:YLNK]YDES
+    TEXTE(I,3) = [F:YLNK]YLED
+    TEXTE(I,4) = [F:YLNK]YDIMTYP
+    If YDIM = "" : I = 0 : End : Endif
+  Next
+  NBTEX=I
+  If I = 1 : NBTEX += 1 : Endif
+
+  If I = 0
+    GMESSAGE = mess(34,6254,1)
+    GERR = 1
+    mkstat = 2
+  Endif
+
+Return
+
+**********
+7,"TRT","YELADIESEL",""
+2,"TRT","YSELACCFCY",""
+#<AdxTL>@(#)0.0.0.0 $Revision$
+######################################################################################################
+# FILE NAME   : YSELACCFCY
+# DESCRIPTION : Select Accounts based on FCY Selection
+######################################################################################################
+# DATE        : 26-11-2018
+# AUTHOR      : Majid
+# COMPANY     : Leverage Technologies
+#-----------------------------------------------------------------------------------------------------
+# Epics Code  : DFCX1-187
+#-----------------------------------------------------------------------------------------------------
+######################################################################################################
+$ACTION
+Case ACTION
+  When Default
+Endcase
+
+Case GACTION
+  When "YSELACCFCY"
+    Gosub S_ACC
+Endcase
+Return
+
+$S_ACC
+Local Integer I
+Local Char TEXTE(255)(1..2000,1..3)
+Local Char TEX(25)(2000)
+Local Char REQUEST(255)(0..3)
+#Local Char SCRCPY(10) : SCRFCY = [M:YBB1]YFCY(nolign-1)
+
+I=0
+TIT(1)="Account Code"
+TIT(2)="Description"
+TIT(3)="Currency"
+
+#CRITERE = "0=0"
+
+# PARAM(1) = Site code
+# PARAM(2) = "0" -> No Bank account
+
+REQUEST(0) = "Select distinct top 1000 a.ACC_0, a.DES_0, a.ACCSHO_0 From FACILITY f Inner join COMPANY c on f.LEGCPY_0=c.CPY_0 Inner join GACM m "
+REQUEST(1) = "on c.ACM_0=m.GCM_0 Inner join GLED l on m.LED_0=l.LED_0 Inner join GACCOUNT a on l.COA_0=a.COA_0 Where a.ENAFLG_0=2 "
+
+If PARAM(1) <> ""
+ REQUEST(2) = " and f.FCY_0='"+PARAM(1)+"' "
+Endif
+
+If PARAM(2) = "0"
+  REQUEST(2) -= " and a.ACC_0 not in (Select TREACC_0 from BANK)"
+Endif
+
+REQUEST(2) -= "order by 1"
+
+
+For (Char ACC(30), Char DES(100), Char ACCSHO) From "5" Sql REQUEST As [YLNK]
+  I += 1
+  TEX(I)     = [F:YLNK]ACC
+  TEXTE(I,1) = [F:YLNK]ACC
+  TEXTE(I,2) = [F:YLNK]DES
+  TEXTE(I,3) = [F:YLNK]ACCSHO
+
+Next
+NBTEX=I
+
+
+If I = 0 Then
+  GMESSAGE = mess(34,6255,1) #  Cannot find Active account which is linked to Site/Comapny and has not link to Bank
+  GERR = 1
+  mkstat = 2
+  #zonsui = ""
+Endif
+
+Return
+
+###############################################################################################################
+#Validate entered bank account against Site
+Subprog C_YACC(YFCY, WITH_BNKACC, YACC)
+Value Char YFCY, WITH_BNKACC, YACC
+
+Local Char REQUEST(255)(0..3)
+
+REQUEST(0) = "Select distinct a.ACC_0, a.DES_0, a.ACCSHO_0 From FACILITY f Inner join COMPANY c on f.LEGCPY_0=c.CPY_0 Inner join GACM m "
+REQUEST(1) = "on c.ACM_0=m.GCM_0 Inner join GLED l on m.LED_0=l.LED_0 Inner join GACCOUNT a on l.COA_0=a.COA_0 Where a.ENAFLG_0=2 "
+
+If YFCY <> ""
+ REQUEST(2) = " and f.FCY_0='"+YFCY+"' "
+Endif
+
+If WITH_BNKACC = "0"
+  REQUEST(2) -= "and a.ACC_0 not in (Select TREACC_0 from BANK)"
+Endif
+
+If YACC <> ""
+  REQUEST(2) -= "and a.ACC_0='" + YACC + "'"
+Endif
+
+Local Integer I : I = 0
+For (Char ACC(30), Char DES(100), Char ACCSHO) From "5" Sql REQUEST As [YLNK]
+  I += 1
+Next
+
+If I = 0
+  GMESSAGE = "Please Select an Active account which is linked to Site/Comapny and has not link to Bank:"
+  GERR=1  : mkstat = 2
+Endif
+
+End
+
+**********
+7,"TRT","YSELACCFCY",""
+2,"TRT","YSELBPC",""
+#<AdxTL>@(#)0.0.0.0 $Revision$
+#######################################################################################################
+# FILE NAME   : YSELBPC                                                                               #
+# DESCRIPTION : BPC Selection                                                                         #
+#######################################################################################################
+# DATE        : 04-07-2018                                                                            #
+# AUTHOR      : DEWALD                                                                                #
+# COMPANY     : Leverage Technologies                                                                 #
+#-----------------------------------------------------------------------------------------------------#
+# Epics Code  : DFCX1-116                                                                             #
+#-----------------------------------------------------------------------------------------------------#
+#######################################################################################################
+$ACTION
+Case ACTION
+  When Default
+Endcase
+
+Case GACTION
+  When "YSELBPC"
+    Gosub S_SELBPC
+Endcase
+Return
+
+$S_SELBPC
+Local Integer I, C : C = 0
+Local Char TEXTE(255)(1..50,1..4)
+Local Char TEX(25)(50)
+Local Char QRY1(255)(0..4)
+Local Char QRY2(255)
+
+I=0
+TIT(1)="BP"
+TIT(2)="Company name"
+TIT(3)="Short description"
+TIT(4)="Business vertical"
+CRITERE = "1=1"
+
+QRY1(0) = "SELECT DISTINCT TOP 49 BP.BPCNUM_0,BP.BPCNAM_0,C.BCGCOD_0,C.YBUSVER_0 FROM BPCCATEG C"
+QRY1(1) -= "INNER JOIN BPCUSTOMER BP ON BP.BCGCOD_0 = C.BCGCOD_0"
+QRY1(2) -= "INNER JOIN AGRPCPY AGC ON AGC.GRP_0 = C.YBUSVER_0 or C.YBUSVER_0 = ''"
+QRY1(3) -= "INNER JOIN FACILITY F ON F.LEGCPY_0 = AGC.CPY_0"
+QRY1(4) -= "WHERE F.FCY_0 = '"+FCY+"' AND BP.BPCSTA_0 = 2"
+
+For (Char BPCNUM(15), Char BPCNAM, Char BCGCOD, Char BUSVER) From "5" Sql QRY1 As [YLNK]
+  I += 1
+  TEX(I)     = [F:YLNK]BPCNUM
+  TEXTE(I,1) = [F:YLNK]BPCNUM
+  TEXTE(I,2) = [F:YLNK]BPCNAM
+  TEXTE(I,3) = [F:YLNK]BCGCOD
+  TEXTE(I,4) = [F:YLNK]BUSVER
+  If BPCNUM <> "" : C = 1 : Endif
+Next
+NBTEX=I
+
+If C <> 1 Then
+  GMESSAGE = mess(34,6201,1)
+  GERR = 1
+  mkstat = 2
+Endif
+
+Return
+
+#------------------------------------------------------------------------------------#
+#Check entered value (DEWAL)
+#------------------------------------------------------------------------------------#
+Subprog C_BPRSEL(VALEUR)
+Variable Char VALEUR()
+Local Integer I, C : C = 0
+Local Char QRY(255)(0..4)
+
+QRY(0) = "SELECT DISTINCT BP.BPCNUM_0 FROM BPCCATEG C"
+QRY(1) -= "INNER JOIN BPCUSTOMER BP ON BP.BCGCOD_0 = C.BCGCOD_0"
+QRY(2) -= "INNER JOIN AGRPCPY AGC ON AGC.GRP_0 = C.YBUSVER_0 or C.YBUSVER_0 = ''"
+QRY(3) -= "INNER JOIN FACILITY F ON F.LEGCPY_0 = AGC.CPY_0"
+QRY(4) -= "WHERE F.FCY_0 = '"+FCY+"'"
+
+# Dewald, FYI. You could add a check for the existing BP in the WHERE clause instead of doing a for loop below.
+#QRY(4) -= "WHERE F.FCY_0 = '"+FCY+"' AND BP.BPCNUM_0 = '" + VALEUR + "'"
+
+I = 0
+
+For (Char BPCNUM) From "5" Sql QRY As [YLNK]
+  I += 1
+  If BPCNUM <> "" Then
+    If BPCNUM = VALEUR Then
+      C = 1
+      End
+    Else
+      C = 0
+    Endif
+  Else
+    C = 0
+  Endif
+Next
+NBTEX = I
+
+If C = 0 Then
+  GMESSAGE = mess(34,6201,1)
+  GERR = 1
+  mkstat = 2
+Endif
+
+End
+
+**********
+7,"TRT","YSELBPC",""
+8,"Patch HFX :INDEX on March     21,19 14: 23"

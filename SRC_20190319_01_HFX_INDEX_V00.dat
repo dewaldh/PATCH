@@ -1,0 +1,197 @@
+1,"Patch HFX :INDEX on March     19,19 12: 00","ENG","1","","X3","3",
+2,"TRT","SPEYSELPJM",""
+#<AdxTL>@(#)0.0.0.0 $Revision$
+######################################################################################################################
+# Script            : SPEYSELPJM                                                                                     #
+# Creation date     : 20/11/2018                                                                                     #
+# Version           : 1.0.1                                                                                          #
+# Authors (Company) : JR (Leverage)                                                                                  #
+# Module            : Project Selection                                                                              #
+# -------------------------------------------------------------------------------------------------------------------#
+# Epic              :                                                                                                #
+# Description       : DFCX1-153 Project Management  - Transactional Validation                                       #
+#--------------------------------------------------------------------------------------------------------------------#
+# Evolutions        : 1 - Dewald - Index incorrect error fix - select top 999                                                                                               #
+######################################################################################################################
+$ACTION
+Case ACTION
+  When Default
+Endcase
+Case GACTION
+  When "YSELPJM"  :
+    Case ACTION
+      When "SEL_LISTE"    : Gosub SEL_LISTE
+    Endcase
+Endcase
+Return
+
+
+######################################################################################
+$SEL_LISTE
+Case LISTE
+  When "YSELPJM"     : Gosub S_SELPJM
+Endcase
+Return
+
+
+######################################################################################
+$S_SELPJM
+
+Local Integer I
+Local Char TEXTE(255)(1..1000,1..5)
+Local Char TEX(40)(1000)
+Local Char REQUEST(255)(15)
+
+I=0
+TIT(0)="Project list"
+NBCOL = 5
+TIT(1)="Project link"
+TIT(2)="Budget code"
+TIT(3)="Description"
+TIT(4)="Site"
+TIT(5)="Status"
+
+CRITERE = "1=1"
+
+REQUEST(0) = "SELECT top 999 t1.OPPNUM_0, t0.PBUCOD_0, t2.TEXTE_0, t3.LANMES_0, t0.FCY_0, t0.PIMNUM_0, t4.LANMES_0"
+REQUEST(1) -= "FROM PIMPL t0"
+REQUEST(2) -= "JOIN PJMBUD t1 ON t0.OPPNUM_0 = t1.OPPNUM_0 AND t0.PBUCOD_0 = t1.PBUCOD_0"
+REQUEST(3) -= "JOIN ATEXTRA t2 ON t0.OPPNUM_0 = t2.IDENT1_0 AND t2.ZONE_0 = 'PIMDESAXX' AND t2.LANGUE_0 = 'ENG' AND t2.CODFIC_0 = 'PIMPL'"
+REQUEST(4) -= "JOIN APLSTD t3 ON t0.PIMTYP_0 = t3.LANNUM_0 AND t3.LAN_0 = 'ENG' AND t3.LANCHP_0 = 2254"
+REQUEST(5) -= "JOIN APLSTD t4 ON t0.PIMSTA_0 = t4.LANNUM_0 AND t4.LAN_0 = 'ENG' AND t4.LANCHP_0 = 2249"
+REQUEST(6) -= "WHERE"
+
+#Dewald - 18/02/2019 - Ammended as per request from Richard
+#Project Status = Launched or Delivered
+REQUEST(7) -= "t0.OPPSTATE_0 in (2,3)"
+
+#TODO : Revise old code before removing
+#Project Status = Launched
+#REQUEST(7) -= "t0.OPPSTATE_0 = 2"
+
+#Site
+REQUEST(8) -= "AND t0.FCY_0 = '" + PARAM(1) + "'"
+
+#Active = Yes
+REQUEST(9) -= "AND t0.PIMSTA_0 = 2"
+
+#Chargeable = Yes
+REQUEST(10) -= "AND t1.PBUIMP_0 = 2"
+
+#Budget Status = Open
+REQUEST(11) -= "AND t0.PBUSTATE_0 = 2"
+
+#Check if field has current value to filter on
+If VALEUR <> ""
+  REQUEST(12) -= "AND t0.PIMNUM_0 LIKE '%" + VALEUR + "%'"
+Else
+  REQUEST(12) -= ""
+Endif
+
+#Order by
+REQUEST(13) -= "ORDER BY t1.OPPNUM_0, t0.PIMNUM_0"
+
+For (Char OPPNUM(20), Char PBUCOD(15), Char TEXTE(30), Char PIMTYP(123), Char FCY(5), Char PIMNUM(40), Char PIMSTA(123)) From "5" Sql REQUEST As [YPRJLNK]
+
+  I += 1
+  TEX(I)     = [F:YPRJLNK]PIMNUM
+
+  TEXTE(I,1) = [F:YPRJLNK]PIMNUM
+  TEXTE(I,2) = [F:YPRJLNK]PBUCOD
+  TEXTE(I,3) = [F:YPRJLNK]TEXTE
+  TEXTE(I,4) = [F:YPRJLNK]FCY
+  TEXTE(I,5) = [F:YPRJLNK]PIMSTA
+
+Next
+NBTEX = I
+
+If I = 1 : NBTEX += 1 : Endif #DFC wants to display the selection box even if one item is returned
+
+#Dewald - 18/02/2019 - Ammended as per request from Richard
+If I = 0 Then
+  Infbox mess(40,6201,1)
+Endif
+
+Return
+
+**********
+7,"TRT","SPEYSELPJM",""
+2,"TRT","YELADIESEL",""
+#<AdxTL>@(#)0.0.0.0 $Revision$
+#######################################################################################################
+# FILE NAME   : YELADIESEL
+# DESCRIPTION : Dimension selection on ELA
+#######################################################################################################
+# DATE        : 22-02-2019
+# AUTHOR      : JR
+# COMPANY     : Leverage Technologies
+# VERSION     : 1.02
+#-----------------------------------------------------------------------------------------------------
+# Epics Code  : DFCX1-25
+#             : Defect raised by Saravanan - Index incorrect on selection with more than 2000 records. - DEWALD
+#-----------------------------------------------------------------------------------------------------
+#######################################################################################################
+$ACTION
+
+Case ACTION
+  When Default
+Endcase
+
+Case GACTION
+  When "YELADIESEL"    : Gosub SEL_LISTE
+Endcase
+
+Return
+
+$SEL_LISTE
+
+Local Integer I
+Local Char TEXTE(255)(1..2000,1..4)
+Local Char TEX(255)(2000)
+Local Char REQUEST(255)(0..)
+
+I=0
+TIT(1)="Dimension Value"
+TIT(2)="Description"
+TIT(3)="Ledger"
+TIT(4)="Dimension Code"
+
+#PARAM(0) = CODFNC
+#PARAM(1) = DIE
+#PARAM(2) = FLDNAM
+#PARAM(3) = COA
+#PARAM(4) = ACC
+
+#REQUEST(0) = "SELECT top 1999 T3.LED_0, T6.DIE_0, T6.CCE_0, T6.DES_0" #Dewald - 19/03
+REQUEST(0) = "SELECT top 1999 T3.LED_0, T6.DIE_0, T6.CCE_0, T6.DES_0"
+REQUEST(1) -= "From GLED T3"
+REQUEST(2) -= "INNER JOIN CACCE T6 ON T6.DIE_0 = T3."+PARAM(2)
+REQUEST(3) -= "LEFT OUTER JOIN YPCCACC T5 ON T5.YLED_0 = T3.LED_0 and T5.YDIE_0 = T6.DIE_0 and T5.YCCE_0 = T6.CCE_0"
+#REQUEST(4) -= "Where T6.DIE_0 = '"+PARAM(1)+"' and ((T5.YACC_0 = '"+[M:YELA1]YACCPRO+"' and T5.YLED_0 = '"+[M:YELA1]YCOAPRO+ "')"
+REQUEST(4) -= "Where T6.DIE_0 = '"+PARAM(1)+"' and ((T5.YACC_0 = '"+PARAM(4)+"' and T5.YCOA_0 = '"+PARAM(3)+ "')"
+REQUEST(5) -= "or (T5.YACC_0 IS null and T5.YLED_0 IS null)) and T6.ENAFLG_0 = 2"
+REQUEST(6) -= "Order By T6.CCE_0 Asc"
+
+  For (Char YLED(50), Char YDIMTYP(50), Char YDIM(50), Char YDES(255)) From "5" Sql REQUEST As [YLNK]
+    I += 1
+    TEX(I)     = [F:YLNK]YDIM
+    TEXTE(I,1) = [F:YLNK]YDIM
+    TEXTE(I,2) = [F:YLNK]YDES
+    TEXTE(I,3) = [F:YLNK]YLED
+    TEXTE(I,4) = [F:YLNK]YDIMTYP
+    If YDIM = "" : I = 0 : End : Endif
+  Next
+  NBTEX=I
+  If I = 1 : NBTEX += 1 : Endif
+
+  If I = 0
+    GMESSAGE = mess(34,6254,1)
+    GERR = 1
+    mkstat = 2
+  Endif
+
+Return
+
+**********
+7,"TRT","YELADIESEL",""
+8,"Patch HFX :INDEX on March     19,19 12: 00"
