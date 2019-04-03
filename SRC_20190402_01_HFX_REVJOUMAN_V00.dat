@@ -1,0 +1,150 @@
+1,"Patch HFX :REVJOUMAN on April     02,19 13: 41","ENG","1","","X3","3",
+2,"TRT","SPEGTE","Document types"
+#<AdxTL>@(#)0.0.0.0 $Revision$
+######################################################################################################
+# FILE NAME   : SPEGTE
+# DESCRIPTION : Document Entry Type customisation
+######################################################################################################
+# DATE        : 11-10-2018
+# AUTHOR      : Dewald Henning
+# COMPANY     : Leverage Technologies
+#-----------------------------------------------------------------------------------------------------
+# Epics Code  : DFCX1-23
+#-----------------------------------------------------------------------------------------------------
+######################################################################################################
+
+$ACTION
+Case ACTION
+  When "OUVRE"   :  Gosub OUVRE
+  When "LIENS"   :  Gosub LIENS
+  When "STYLE"  :   Gosub STYLE
+Endcase
+Return
+
+#If no data exists, LIENS and STYLE will not be invoked
+$OUVRE
+  Call HID_DISP_FIELDS([M:GTE1]YBUSBAT)
+
+Return
+
+#If screen is entered from a "Jump to" action, Style will not be invoked
+$LIENS
+  Call HID_DISP_FIELDS([M:GTE1]YBUSBAT)
+
+Return
+
+$STYLE
+  Call HID_DISP_FIELDS([M:GTE1]YBUSBAT)
+
+Return
+
+Subprog C_YBUSBAT(VALEUR)
+Variable Integer VALEUR
+
+  Call HID_DISP_FIELDS(VALEUR)
+
+End
+
+Subprog AM_DEFJOU(VALEUR)
+Variable Char    VALEUR()
+  #Check if Flag as Business batch, if yes, then check if default journal is also a business batch and has the same business batch type
+  If [M:GTE1]YBUSBAT = 2 Then
+    #Infbox "DEFJOU: "+VALEUR
+    #Call VAL_BBENTJOU([M]DEFJOU, [M]YBUSBATTYP) From YBBSELGTE
+    If clalev([F:JOU]) = 0 : Local File GJOURNAL [JOU] : Endif
+    Read [F:JOU]JOU0 = VALEUR
+    If [F:JOU]YBUSBATTYP <> [M:GTE1]YBUSBATTYP Then
+      GMESSAGE = mess(12,6254,1)
+      GERR = 1
+      mkstat = 2
+      zonsui = "[M:GTE1]DEFJOU"
+    Endif
+    If clalev([F:JOU]) = 0 : Close Local File [F:JOU] : Endif
+
+  Endif
+
+End
+
+Subprog HID_DISP_FIELDS(VALEUR)
+Variable Integer VALEUR
+
+#Infbox num$([M:GTE1]YBUSBAT)
+#Check Business Batch checked
+  If VALEUR = 1 or VALEUR = 0
+    Chgfmt [M:GTE1]YBUSBATTYP With "-LM:6250"
+    #Defect DFCX1-255
+    Actzo [M:GTE1]MANNUM
+    Actzo [M:GTE1]GFY
+    Actzo [M:GTE1]VCRSIM
+    Actzo [M:GTE1]VCROUTBSE
+    Actzo [M:GTE1]COUVATCEE
+    Actzo [M:GTE1]AUZJOU(0)
+    Actzo [M:GTE1]AUZJOU(1)
+    Actzo [M:GTE1]AUZJOU(2)
+    Actzo [M:GTE1]AUZJOU(3)
+    Actzo [M:GTE1]AUZJOU(4)
+    Actzo [M:GTE1]AUZJOU(5)
+    Actzo [M:GTE1]AUZJOU(6)
+    Actzo [M:GTE1]AUZJOU(7)
+    Actzo [M:GTE1]AUZJOU(8)
+    Actzo [M:GTE1]AUZJOU(9)
+#    Actzo [M:GTE1]FUP
+#    Actzo [M:GTE1]FLGEXPCRE
+#    Actzo [M:GTE1]ESDTRK
+#    Actzo [M:GTE1]DAS2
+#    Actzo [M:GTE1]VAT
+#    Actzo [M:GTE1]VATPAI
+#    Actzo [M:GTE1]PREACC
+#    Actzo [M:GTE1]DUDDATFLG
+#    Actzo [M:GTE1]PAM
+#    Actzo [M:GTE1]TYPRAT
+#    Actzo [M:GTE1]RATDAT
+#    Actzo [M:GTE1]DUDTYP
+#    Actzo [M:GTE1]DUDCASFLG
+#    Actzo [M:GTE1]PER
+    #Actzo [M:GTE1]COU #DFCX1-343
+
+  Elsif VALEUR  = 2
+    Chgfmt [M:GTE1]YBUSBATTYP With "+LM:6250"
+    #Defect DFCX1-255
+    Diszo [M:GTE1]MANNUM  : [M:GTE1]MANNUM = 1
+    Diszo [M:GTE1]GFY     : [M:GTE1]GFY = ""
+    Diszo [M:GTE1]VCRSIM  : [M:GTE1]VCRSIM = 1
+    Diszo [M:GTE1]VCROUTBSE : [M:GTE1]VCROUTBSE = 1
+    Diszo [M:GTE1]COUVATCEE : [M:GTE1]COUVATCEE = ""
+    Diszo [M:GTE1]AUZJOU(0) : [M:GTE1]AUZJOU(0) = 1
+    Diszo [M:GTE1]AUZJOU(1) : [M:GTE1]AUZJOU(1) = 1
+    Diszo [M:GTE1]AUZJOU(2) : [M:GTE1]AUZJOU(2) = 1
+    Diszo [M:GTE1]AUZJOU(3) : [M:GTE1]AUZJOU(3) = 1
+    Diszo [M:GTE1]AUZJOU(4) : [M:GTE1]AUZJOU(4) = 1
+    Diszo [M:GTE1]AUZJOU(5) : [M:GTE1]AUZJOU(5) = 1
+    Diszo [M:GTE1]AUZJOU(6) : [M:GTE1]AUZJOU(6) = 1
+    Diszo [M:GTE1]AUZJOU(7) : [M:GTE1]AUZJOU(7) = 1
+    Diszo [M:GTE1]AUZJOU(8) : [M:GTE1]AUZJOU(8) = 1
+    Diszo [M:GTE1]AUZJOU(9) : [M:GTE1]AUZJOU(9) = 2
+    #Diszo [M:GTE1]FUP       : [M:GTE1]FUP = 1
+    #Diszo [M:GTE1]FLGEXPCRE : [M:GTE1]FLGEXPCRE = 1
+    #Diszo [M:GTE1]ESDTRK    : [M:GTE1]ESDTRK = 1
+    #Diszo [M:GTE1]DAS2      : [M:GTE1]DAS2 = 1
+    #Diszo [M:GTE1]VAT       : [M:GTE1]VAT = 1
+    #Diszo [M:GTE1]VATPAI    : [M:GTE1]VATPAI = 1
+    #Diszo [M:GTE1]PREACC    : [M:GTE1]PREACC = 1
+    #Diszo [M:GTE1]DUDDATFLG : [M:GTE1]DUDDATFLG = 1
+    #Diszo [M:GTE1]PAM : [M:GTE1]PAM = ""
+    #Diszo [M:GTE1]TYPRAT
+    #Diszo [M:GTE1]RATDAT
+    #Diszo [M:GTE1]DUDTYP
+    #Diszo [M:GTE1]DUDCASFLG : [M:GTE1]DUDCASFLG = 1
+    #Diszo [M:GTE1]PER : [M:GTE1]PER = 1
+    #Diszo [M:GTE1]COU : [M:GTE1]COU = "" #DFCX1-343
+
+  Endif
+
+  Affzo [M:GTE1]
+
+
+End
+
+**********
+7,"TRT","SPEGTE","Document types"
+8,"Patch HFX :REVJOUMAN on April     02,19 13: 41"
