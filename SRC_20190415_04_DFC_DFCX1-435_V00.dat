@@ -1,0 +1,872 @@
+1,"Patch DFC :DFCX1-435 on April     15,19 16: 54","ENG","1","YLAND","X3","3",
+2,"TRT","SPEYOTIMP","Lot Import"
+#<AdxTL>@(#)0.0.0.0 $Revision$ Lot Import
+######################################################################################################################
+# Script            : SPEYOTIMP                                                                                        #
+# Creation date     : 04 /12/2018                                                                                     #
+# Version           : 1.0.0                                                                                          #
+# Authors (Company) : Michael (Leverage)                                                                                  #
+# Module            : Land Development                                                                               #
+# -------------------------------------------------------------------------------------------------------------------#
+# Epic              : https://jira.leveragetech.com.au/browse/DFCX1-79                                               #
+# Description       : DFCX1-81 Land Development -  Stage                                                            #
+#--------------------------------------------------------------------------------------------------------------------#
+# Evolutions        :                                                                                                #
+#
+######################################################################################################################
+
+$ACTION
+Case ACTION
+  When "EXEC"      :  Gosub EXEC
+  When Default
+Endcase
+Return
+
+$EXEC
+If clalev([F:AOE])=0  : Local File AOBJEXT    [AOE]  : Endif
+
+If    PARAM(1) = "EX"
+Gosub EXPORT
+Else If PARAM(1) = "IM"
+Gosub IMPORT
+Endif
+Endif
+
+Return
+
+$EXPORT
+Local Char NAME(50),LINE1(255), PATH(150) , HEADER(255)
+Local Integer STAT : STAT = 0
+
+If clalev([F:YSTG])=0 : Local File YSTAGE  [YSTG] : Endif
+If clalev([F:YLOT])=0 : Local File YLOT [YLOT]    : Endif
+
+#Infbox num$([M:YSTA]YSTAID)
+
+adxifs = ';' : adxirs= chr$(13)+chr$(10)
+
+Raz LINE1
+
+NAME = "YLOT" + format$("D:YYMMDDhhmmss",date$) + num$([M:YSTA]YSTAID)
+Openo filpath('tmp',NAME,'csv'),0 Using [FIC1]
+
+HEADER = "LotID;Lot Number;Description;Land Type;Intended Use;Status;List Price;Active Flag;Job Code;EstateID;StageID;LandPurchaseID"
+HEADER += "Street No;Street Description;Sale Type;Area;Frontage;Dept;Shape;Volume;Folio;SLHC;Withheld;Review Date;Withheld Comments;"
+HEADER += "Land Price;House Price"
+Wrseq HEADER Using   [FIC1]
+
+For  [F:YLOT] Where [F:YLOT]YSTAID = [M:YSTA]YSTAID
+Raz LINE1
+#LINE1 = "LOT" + ";"                            #LOT
+LINE1 += num$([F:YLOT]YLOTID) + ";"            #LOTID
+LINE1 += num$([F:YLOT]YLOTNBR) + ";"           #LOT NUMBER
+LINE1 += num$([F:YLOT]YLOTDES) + ";"           #DESCRIPTION
+LINE1 += num$([F:YLOT]YLNDTYP) + ";"           #LAND TYPE
+LINE1 += num$([F:YLOT]YINTUSE) + ";"           #INTENDED USED
+LINE1 += num$([F:YLOT]YLOTSTA) + ";"           #LOT STATUS
+LINE1 += num$([F:YLOT]YLSTPRC) + ";"           #LIST PRICE
+LINE1 += num$([F:YLOT]YJOBACTFLG) + ";"        #ACTIVE FLAG
+LINE1 += num$([F:YLOT]YJOBCOD) + ";"           #JOB CODE
+LINE1 += num$([F:YLOT]YESTID) + ";"            #ESTATE
+LINE1 += num$([F:YLOT]YSTAID) + ";"            #STAGE
+LINE1 += num$([F:YLOT]YLNDPURID) + ";"         #LAND PURCHASE ID
+LINE1 += num$([F:YLOT]YLOTSTRNBR) + ";"        #STREET NUMBER
+LINE1 += num$([F:YLOT]YLOTSTRDES) + ";"        #STREET DESCRIPTION
+LINE1 += num$([F:YLOT]YSALTYP) + ";"           #SALE TYPE
+LINE1 += num$([F:YLOT]YARE) + ";"              #AREA
+LINE1 += num$([F:YLOT]YFRT) + ";"              #FRONTAGE
+LINE1 += num$([F:YLOT]YDEP) + ";"              #DEPT
+LINE1 += num$([F:YLOT]YSHP) + ";"              #SHAPE
+LINE1 += num$([F:YLOT]YVOL) + ";"              #VOLUME
+LINE1 += num$([F:YLOT]YFOL) + ";"              #FOLIO
+LINE1 += num$([F:YLOT]YSLHC) + ";"             #SLHC
+LINE1 += num$([F:YLOT]YHLD) + ";"              #WITHHELD
+LINE1 += num$([F:YLOT]YREWDTE) + ";"           #REVIEW DATE
+#LINE1 += "" + ";"           #REVIEW DATE
+LINE1 += num$([F:YLOT]YHLDCMT) + ";"           #WITHHELD COMMENTS
+LINE1 += num$([F:YLOT]YLNDPRC) + ";"           #LAND PRICE
+LINE1 += num$([F:YLOT]YHOUPRC)                 #HOUSE PRICE
+
+Wrseq LINE1 Using   [FIC1]
+Next
+Openo  Using [FIC1]
+#Call C_MODIMP(1)
+PATH = filpath('tmp',NAME,'csv')
+Call COPCLI(PATH,PATH,STAT) From ORDSYS
+If STAT = 0
+Infbox "File Exported"
+Endif
+Return
+
+$IMPORT
+Local Char FICSRV(250),FICCLI(250),MYPATH(250)
+Local Integer ASTATUS
+Local Integer STAT
+
+FICCLI = ""
+
+FICSRV = filpath("tmp","","")
+
+MYPATH= filpath("ATT","","") 　
+
+Call COPSRV(FICCLI,FICSRV,ASTATUS) From ORDSYS
+
+FICSRV=FICSRV+"\"+FICCLI
+
+#If ASTATUS = 0
+#    Call MOVE(FICSRV,MYPATH,STAT) From ORDSYS
+#Endif
+
+Return
+
+**********
+7,"TRT","SPEYOTIMP","Lot Import"
+2,"AOE","YSTGLOT","Lot"
+3,"AOE",YSTGLOT
+4,"ACS",0,""
+4,"AOWSTA",0,1
+4,"CHRNUM",0,0
+4,"CODACT",0,"YLAND"
+4,"CODDBA",0,1
+4,"CREDAT",0,20181206
+4,"CREDATTIM",0,"2018-12-05T17:54:16Z"
+4,"CREUSR",0,"MB"
+4,"ENAFLG",0,2
+4,"ENAWRK",0,1
+4,"EXPORT",0,2
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FIL",1,""
+4,"FIL",2,""
+4,"FIL",3,""
+4,"FIL",4,""
+4,"FIL",5,""
+4,"FIL",6,""
+4,"FIL",7,""
+4,"FIL",8,""
+4,"FIL",9,""
+4,"FIL",10,""
+4,"FIL",11,""
+4,"FIL",12,""
+4,"FIL",13,""
+4,"FIL",14,""
+4,"FIL",15,""
+4,"FIL",16,""
+4,"FIL",17,""
+4,"FIL",18,""
+4,"FIL",19,""
+4,"FILEXT",0,""
+4,"FLDLIM",0,""
+4,"FLGEXP",0,""
+4,"FLGEXP",1,""
+4,"FLGEXP",2,""
+4,"FLGEXP",3,""
+4,"FLGEXP",4,""
+4,"FLGEXP",5,""
+4,"FLGEXP",6,""
+4,"FLGEXP",7,""
+4,"FLGEXP",8,""
+4,"FLGEXP",9,""
+4,"FLGEXP",10,""
+4,"FLGEXP",11,""
+4,"FLGEXP",12,""
+4,"FLGEXP",13,""
+4,"FLGEXP",14,""
+4,"FLGEXP",15,""
+4,"FLGEXP",16,""
+4,"FLGEXP",17,""
+4,"FLGEXP",18,""
+4,"FLGEXP",19,""
+4,"FLGFIL",0,"YLOT"
+4,"FLGFIL",1,""
+4,"FLGFIL",2,""
+4,"FLGFIL",3,""
+4,"FLGFIL",4,""
+4,"FLGFIL",5,""
+4,"FLGFIL",6,""
+4,"FLGFIL",7,""
+4,"FLGKEY",0,"YLOT0"
+4,"FLGKEY",1,""
+4,"FLGKEY",2,""
+4,"FLGKEY",3,""
+4,"FLGKEY",4,""
+4,"FLGKEY",5,""
+4,"FLGKEY",6,""
+4,"FLGKEY",7,""
+4,"FLGLEV",0,1
+4,"FLGLEV",1,0
+4,"FLGLEV",2,0
+4,"FLGLEV",3,0
+4,"FLGLEV",4,0
+4,"FLGLEV",5,0
+4,"FLGLEV",6,0
+4,"FLGLEV",7,0
+4,"FLGLNK",0,""
+4,"FLGLNK",1,""
+4,"FLGLNK",2,""
+4,"FLGLNK",3,""
+4,"FLGLNK",4,""
+4,"FLGLNK",5,""
+4,"FLGLNK",6,""
+4,"FLGLNK",7,""
+4,"FLGREC",0,"LOT"
+4,"FLGREC",1,""
+4,"FLGREC",2,""
+4,"FLGREC",3,""
+4,"FLGREC",4,""
+4,"FLGREC",5,""
+4,"FLGREC",6,""
+4,"FLGREC",7,""
+4,"FONCTION",0,"GESYLOT"
+4,"IMPORT",0,2
+4,"MODULE",0,1
+4,"NBRFLG",0,1
+4,"NBRLIG",0,28
+4,"OBJ",0,""
+4,"OPTCHA",0,1
+4,"OPTDAT",0,2
+4,"OPTMNL",0,0
+4,"OPTSPE",0,1
+4,"OPTUPD",0,2
+4,"RECLEN",0,0
+4,"RECLEN",1,0
+4,"RECLEN",2,0
+4,"RECLEN",3,0
+4,"RECLEN",4,0
+4,"RECLEN",5,0
+4,"RECLEN",6,0
+4,"RECLEN",7,0
+4,"REPFIN",0,""
+4,"SEPDEC",0,"."
+4,"SEPFLD",0,";"
+4,"SEPREC",0,"\013\010"
+4,"SPEIMP",0,"SPEYSTGLOT"
+4,"TRTIMP",0,""
+4,"TYPEXP",0,1
+4,"TYPFIL",0,2
+4,"UPDDAT",0,20190415
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+9,"INTIT",0,"Lot","ENG","YSTGLOT",""
+9,"INTIT",0,"","***"
+6,"AOE"
+3,"AOD",1
+4,"BAL",0,""
+4,"COM",0,""
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"/"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,1
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+9,"INTFLD",0,"","ENG","YSTGLOT","YLOT/"
+9,"INTFLD",0,"","***"
+6,"AOD"
+3,"AOD",2
+4,"BAL",0,""
+4,"COM",0,"Lot ID"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YLOTID"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,2
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",3
+4,"BAL",0,""
+4,"COM",0,"Lot Number"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YLOTNBR"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,3
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",4
+4,"BAL",0,""
+4,"COM",0,"Description"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YLOTDES"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,4
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",5
+4,"BAL",0,""
+4,"COM",0,"Land Type"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YLNDTYP"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,5
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",6
+4,"BAL",0,""
+4,"COM",0,"Intended Use"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YINTUSE"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,6
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",7
+4,"BAL",0,""
+4,"COM",0,"Lot Status"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YLOTSTA"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,7
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",8
+4,"BAL",0,""
+4,"COM",0,"List Price"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YLSTPRC"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,8
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",9
+4,"BAL",0,""
+4,"COM",0,"Job Active Flag"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YJOBACTFLG"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,9
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",10
+4,"BAL",0,""
+4,"COM",0,"Job code"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YJOBCOD"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,10
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",11
+4,"BAL",0,""
+4,"COM",0,"Estate"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YESTID"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,11
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",12
+4,"BAL",0,""
+4,"COM",0,"Stage"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YSTAID"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,12
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",13
+4,"BAL",0,""
+4,"COM",0,"Land purchase ID"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YLNDPURID"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,13
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",14
+4,"BAL",0,""
+4,"COM",0,"Street Number"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YLOTSTRNBR"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,14
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",15
+4,"BAL",0,""
+4,"COM",0,"Street Description"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YLOTSTRDES"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,15
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",16
+4,"BAL",0,""
+4,"COM",0,"Sale Type"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YSALTYP"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,16
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",17
+4,"BAL",0,""
+4,"COM",0,"Area (sqm)"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YARE"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,17
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",18
+4,"BAL",0,""
+4,"COM",0,"Frontage (metres)"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YFRT"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,18
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",19
+4,"BAL",0,""
+4,"COM",0,"Depth (metres)"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YDEP"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,19
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",20
+4,"BAL",0,""
+4,"COM",0,"Shape"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YSHP"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,20
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",21
+4,"BAL",0,""
+4,"COM",0,"Volume"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YVOL"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,21
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",22
+4,"BAL",0,""
+4,"COM",0,"Folio"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YFOL"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,22
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",23
+4,"BAL",0,""
+4,"COM",0,"SLHC"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YSLHC"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,23
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",24
+4,"BAL",0,""
+4,"COM",0,"Withheld"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YHLD"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,24
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",25
+4,"BAL",0,""
+4,"COM",0,"Review Date"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YREWDTE"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,25
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",26
+4,"BAL",0,""
+4,"COM",0,"Withheld Comments"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YHLDCMT"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,26
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",27
+4,"BAL",0,""
+4,"COM",0,"Land Price"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YLNDPRC"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,27
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+3,"AOD",28
+4,"BAL",0,""
+4,"COM",0,"House Price"
+4,"CREDATTIM",0,"2019-04-15T06:44:51Z"
+4,"CREUSR",0,"MAJID"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YHOUPRC"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,28
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-04-15T06:44:51Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOD"
+7,"AOE","YSTGLOT","Lot"
+8,"Patch DFC :DFCX1-435 on April     15,19 16: 54"
