@@ -1,0 +1,5562 @@
+1,"Patch DFC :DFCX1-440 on April     26,19 15: 21","ENG","1","YICBS","X3","3",
+2,"TRT","SPEYBBVAL",""
+#<AdxTL>@(#)0.0.0.0 $Revision$ 
+######################################################################################################
+# FILE NAME   : SPEYBBVAL
+# DESCRIPTION : Business Batch Validation
+######################################################################################################
+# DATE        : 11-09-2018
+# AUTHOR      : Dewald Henning
+# COMPANY     : Leverage Technologies
+# VERSION     : 4.15
+#-----------------------------------------------------------------------------------------------------
+# Epics Code  : DFCX1-27
+#-----------------------------------------------------------------------------------------------------
+#Chages per Mail /Mark/Richard
+# 26/02 - Changes as per Mark - RRL/DH - Remove functions from IE
+######################################################################################################
+
+$ACTION
+  Case ACTION
+    When "YBBVAL"  :  Gosub VALIDATE
+  Endcase
+Return
+
+$VALIDATE
+
+  Local Char MESSAGE(255) : MESSAGE = "Validate business batch "-[M:YBB0]YBATNBR+"?"
+  Call OUINON(MESSAGE,OK)  From GESECRAN
+  Case OK
+    When 2 : Call VAL_BUSBAT([M:YBB0]YBATNBR)
+      #Obsolete record error fix
+      Gosub RELIT From GOBJSUB
+  Endcase
+
+Return
+
+Subprog VAL_BUSBAT(YBATNBR)
+Variable Char YBATNBR()
+
+  # DELETE ALL RECORDS IN THE SIMULATION TABLE, ERRORS TABLE and TEMP TABLE
+  If clalev([F:YBBS]) = 0 : Local File YBBSIM [YBBS]        : Endif
+  If clalev([F:YBBE]) = 0 : Local File YBBERR [YBBE]        : Endif
+  If clalev([F:YBDT]) = 0 : Local File YBBDETAILTEM [YBDT]  : Endif
+  Delete [F:YBBS]YBBS1 = YBATNBR
+  Delete [F:YBBE]YBBE1 = YBATNBR
+  Delete [F:YBDT]YBDT0 = YBATNBR
+  If clalev([F:YBBS]) = 0 : Close Local File [F:YBBS] : Endif
+  If clalev([F:YBBE]) = 0 : Close Local File [F:YBBE] : Endif
+  If clalev([F:YBDT]) = 0 : Close Local File [F:YBDT] : Endif
+
+  #Imports require additional validations
+  #Check to see required data
+  Call EXE_IMPORT_MISSDATA(YBATNBR)
+
+  #Add Lines to Temp Table
+  Call ADD_DETAILTEMP()
+
+#===============
+# Validations of All DETAIL in TEMP table before posting
+#===============
+
+  #Balance Checks
+  Call EXE_BALANCE_VAL(YBATNBR)
+
+  #GST Calculations
+  Call EXE_GSTCALC(YBATNBR)
+
+  #Journal & Entry Type per Transaction
+  Call EXE_TRAJNL_VAL(YBATNBR)
+
+  #Site Checks
+  Call EXE_FCY_VAL(YBATNBR)
+
+  #DFCX1-309/DFCX1-352 - Dimension Active Validations
+  Call EXE_DIE_VAL(YBATNBR)
+
+  #DFCX1-351 - Open Financial Periods
+  Call EXE_PERIOD_VALID(YBATNBR)
+
+  #DFCX1-386 - Restrictions
+  Call EXE_REST_VAL(YBATNBR)
+
+  #After Validations
+  # -- Journals
+  Call BT_JOURNAL(YBATNBR)
+  # -- IE
+  Call BT_IE(YBATNBR)
+  # -- Cash
+  Call BT_CASH(YBATNBR)
+
+#===============
+# Validations of All DETAIL in SIMULATION table before posting
+#===============
+
+  #DFCX1-358 - Validate Simulation Lines
+  Call VALIDATE_LINES(YBATNBR)
+
+  Call EXE_FCY_RESTRICTION(YBATNBR)
+
+  # -- Balance check for Simulation lines
+  Call SIM_BALANCE_CHECK(YBATNBR)
+
+  #Update Line Numbers after line insertion for indexes
+  #Due to the lines being written and added, the YLIG will sometimes be out, this is to assure that all the indexes match
+  #Open Tables
+  If clalev([F:YBBS]) = 0 : Local File YBBSIM [YBBS] : Endif
+  If clalev([F:YBBE]) = 0 : Local File YBBERR [YBBE] : Endif
+  Local Integer I : I = 0
+  #Simulation
+  For [F:YBBS]YBBS1 Where [F:YBBS]YBATNBR =  [M:YBB0]YBATNBR
+    I += 1
+    [F:YBBS]YLIG = I
+    [M:YBB2]YBATNBR = [F:YBBS]YBATNBR
+    Rewrite [F:YBBS]
+    Affzo [M:YBB2]YBATNBR
+  Next
+  #Error
+  I = 0
+  For [F:YBBE]YBBE1 Where [F:YBBE]YBATNBR =  [M:YBB0]YBATNBR
+    I += 1
+    [F:YBBE]YLIG = I
+    [M:YBB3]YBATNBR = [F:YBBS]YBATNBR
+    Rewrite [F:YBBE]
+    Affzo [M:YBB3]YBATNBR
+  Next
+  If clalev([F:YBBS]) = 0 : Close Local File [F:YBBS] : Endif
+  If clalev([F:YBBE]) = 0 : Close Local File [F:YBBE] : Endif
+
+  #Update Status
+  If clalev([F:YBBH]) = 0 : Local File YBBHEADER [YBBH]  : Endif
+  If clalev([F:YBBE]) = 0 : Local File YBBERR [YBBE]     : Endif
+
+  Read [F:YBBH]YBBH0 = YBATNBR
+  # Get count of errors and update the status
+  Local Integer RET : RET = 0
+  For [F:YBBE] Where [F:YBBE]YBATNBR = YBATNBR
+    If [F:YBBE]YBATNBR = YBATNBR : RET += 1 : Endif
+  Next
+  If RET > 0
+    #SET THE BATCH status To “BATCH ERROR”
+    [F:YBBH]YBATSTA = 3
+    Call ADDMESSWARN(mess(1,6259,1)-num$(RET)) From AWEB
+  Else
+     #SET THE BATCH status To “VALIATED”
+    [F:YBBH]YBATSTA = 2
+    Call ADDMESSINF(mess(2,6259,1)) From AWEB
+  Endif
+  If fstat = 0 Then
+    Rewrite [F:YBBH]
+    [M:YBB0]YBATSTA = [F:YBBH]YBATSTA
+    Affzo [M:YBB0]
+  Else
+    Call ADDMESSERR(mess(18,6254,1)-[V]CST_AERROR) From AWEB
+    Rollback
+    End
+  Endif
+
+  If clalev([F:YBBE]) = 0 : Close Local File [F:YBBE] : Endif
+  If clalev([F:YBBH]) = 0 : Close Local File [F:YBBH]  : Endif
+
+End
+
+#---------------------------------------------------------------------------------
+# Missing Data from Import
+#---------------------------------------------------------------------------------
+Subprog EXE_IMPORT_MISSDATA(BATNBR)
+Variable Char BATNBR()
+
+  #Open Tables
+  If clalev([F:GTE])  = 0 : Local File GTYPACCENT [GTE]  : Endif
+  If clalev([F:YBBD]) = 0 : Local File YBBDETAIL  [YBBD] : Endif
+  If clalev([F:CPY])  = 0 : Local File COMPANY    [CPY]  : Endif
+  If clalev([F:GCM])  = 0 : Local File GACM       [GCM]  : Endif
+  If clalev([F:LED])  = 0 : Local File GLED       [LED]  : Endif
+
+  Local Char QRY(250)(0..)
+  QRY(0) = "SELECT YDETLIG_0, YENTTYP_0, YCPY_0, YDETDES_0 FROM YBBDETAIL"
+  QRY(1) -= "WHERE YBATTYP_0 = 0 AND YBATNBR_0 = '"+BATNBR+"'"
+
+  For (Integer DETLIG, Char ENTTYP, Char CPY, Char LIGDES) From "5" Sql QRY As [YLNK]
+    Read [F:YBBD]YBBD0 = BATNBR;DETLIG
+    #Batch Type
+    Read [F:GTE]GTE0 = [F:YLNK]ENTTYP
+    #Account Core Model
+    Read [F:CPY]CPY0 = [F:YLNK]CPY
+    #Ledger
+    Read [F:GCM]GCM0 = [F:CPY]ACM
+    Read [F:LED]LED0 = [F:GCM]LED
+    [F:YBBD]YACM = [F:CPY]ACM
+    [F:YBBD]YLED1 = [F:LED]LED
+    #[F:YBBD]YLIGDES = [F:YLNK]LIGDES
+    [F:YBBD]YBATTYP = [F:GTE]YBUSBATTYP
+    Rewrite [F:YBBD]
+  Next
+
+  If clalev([F:GTE])  = 0 : Close Local File [GTE]  : Endif
+  If clalev([F:YBBD]) = 0 : Close Local File [YBBD] : Endif
+  If clalev([F:CPY])  = 0 : Close Local File [CPY]  : Endif
+  If clalev([F:GCM])  = 0 : Close Local File [GLED] : Endif
+  If clalev([F:LED])  = 0 : Close Local File [LED]  : Endif
+
+End
+#---------------------------------------------------------------------------------
+# Entry Type / Journal Checks
+#---------------------------------------------------------------------------------
+Subprog EXE_TRAJNL_VAL(BATNBR)
+Variable Char BATNBR()
+
+  If clalev([F:YBBE]) = 0 : Local File YBBERR [YBBE]        : Endif
+  If clalev([F:YBDT]) = 0 : Local File YBBDETAILTEM [YBDT]  : Endif
+
+  Local Integer I : I = 0
+  Local Char QUERY(255)
+  Local Char EXECSP(255)
+  Local Char YMSG(255)
+  Local Char YSRC(50)
+  Local Integer YNBRLIG
+  Local Integer YTRNNBR
+
+  [L]EXECSP = "EXEC [BB_ENTRY_VALIDATIONS] '"+BATNBR+"'"
+  Execsql From "5" Sql EXECSP
+
+  QUERY = "SELECT YDETLIG_0, YRESVAL_0, YTRANSNBR_0 FROM YBBDETAILTEM WHERE YBATNBR_0 = '"+BATNBR+"'"
+  For (Integer DETLIG, Char RESULT, Integer YTRANSNO) From "5" Sql QUERY As [YLNK]
+    Read [F:YBDT]YBDT1 = BATNBR;[F:YLNK]DETLIG
+    YNBRLIG = [F:YLNK]DETLIG
+    YTRNNBR = [F:YLNK]YTRANSNO
+    If [F:YLNK]RESULT = "ENTVAL_ERR" Then #Error
+      YMSG = mess(28,6259,1)-num$([F:YLNK]YTRANSNO)
+      YSRC =  BATNBR+"-"+num$([F:YLNK]DETLIG)
+      Call ADDLIG_ERR(BATNBR,YTRNNBR,YSRC,[F:YLNK]DETLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+    Endif
+  Next
+
+  If clalev([F:YBBE]) = 0 : Close Local File [F:YBBE] : Endif
+  If clalev([F:YBDT]) = 0 : Close Local File [F:YBDT] : Endif
+
+End
+
+#---------------------------------------------------------------------------------
+# Balance Checks
+#---------------------------------------------------------------------------------
+Subprog EXE_BALANCE_VAL(BATNBR)
+Variable Char BATNBR()
+
+  If clalev([F:YBBE]) = 0 : Local File YBBERR [YBBE]        : Endif
+  If clalev([F:YBDT]) = 0 : Local File YBBDETAILTEM [YBDT]  : Endif
+
+  Local Integer I : I = 0
+  Local Char QUERY(255)
+  Local Char EXECSP(255)
+  Local Char YMSG(255)
+  Local Char YSRC(50)
+  Local Integer YNBRLIG
+
+  [L]EXECSP = "EXEC [BB_BALANCE_VALIDATION] '"+BATNBR+"'"
+  Execsql From "5" Sql EXECSP
+
+  QUERY = "SELECT YDETLIG_0, YRESVAL_0, YTRANSNBR_0 FROM YBBDETAILTEM WHERE YBATNBR_0 = '"+BATNBR+"'"
+  For (Integer DETLIG, Char RESULT, Integer YTRANSNO) From "5" Sql QUERY As [YLNK]
+    Read [F:YBDT]YBDT1 = BATNBR;[F:YLNK]DETLIG
+    YNBRLIG = [F:YLNK]DETLIG
+    YTRNNBR = [F:YLNK]YTRANSNO
+    If [F:YLNK]RESULT = "BAL1" Then #Error
+      YMSG = mess(6,6259,1)-num$([F:YLNK]YTRANSNO)
+      YSRC =  BATNBR+"-"+num$([F:YLNK]DETLIG)
+      Call ADDLIG_ERR(BATNBR,YTRNNBR,YSRC,YNBRLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+    Endif
+  Next
+
+  If clalev([F:YBBE]) = 0 : Close Local File [F:YBBE] : Endif
+  If clalev([F:YBDT]) = 0 : Close Local File [F:YBDT] : Endif
+
+End
+
+#---------------------------------------------------------------------------------
+# GST Calculations
+#---------------------------------------------------------------------------------
+Subprog EXE_GSTCALC(BATNBR)
+Variable Char BATNBR()
+
+  If clalev([F:TAX])    = 0 : Local File TABRATVAT    [TAX]     : Endif
+  If clalev([F:GAC])    = 0 : Local File GACCOUNT     [GAC]     : Endif
+  If clalev([F:TVT])    = 0 : Local File TABVAT       [TVT]     : Endif
+  If clalev([F:TRA])    = 0 : Local File TABRATVAT    [TRA]     : Endif
+  If clalev([F:YELA])   = 0 : Local File YENTLOAAGR   [YELA]    : Endif
+  If clalev([F:YBDT])   = 0 : Local File YBBDETAILTEM [YBDT]    : Endif
+  If clalev([F:YBDT2])  = 0 : Local File YBBDETAILTEM [YBDT2]   : Endif
+
+  # DFCX1-27 - Update - DEWALD (22/01/2019)
+  # Update Details Table for GST and Tax Inc amounts
+  If clalev([F:YBBD])  = 0 : Local File YBBDETAIL [YBBD]   : Endif
+
+  Local Char TAX_OVERRIDE(5), TAX_RULE(5)
+  Local Decimal NEW_GST, NEW_VATRAT, NEW_AMT
+  Local Integer I : I = 0
+  # -- IE Declarations
+  Local Char CPY1(5), CPY2(5)
+  Local Integer YMINTRN, YMAXTRN, YCURTRN
+  Local Integer YIEMINTRN
+  Local Char IEQRY(250)(0..)
+  Local Char QUERY(250)(0..)
+  Local Char GSTQRY(250)(0..)
+  Local Char YIEGSTGRP(20)(0..)
+  Local Char PARAM(5)
+  Local Integer PRM
+
+
+  # -- IE Calculations --
+  Filter [F:YBDT] Where [F:YBDT]YBATNBR = BATNBR and [F:YBDT]YBATTYP = 1
+  For [F:YBDT]
+   #Get Current Transaction Number(s) and run query to get distinct IE sites
+   YIEGSTGRP(0) = ""
+   YIEGSTGRP(1) = ""
+   If YIEMINTRN = 0 : YIEMINTRN = [F:YBDT]YTRANSNBR : Endif
+   IEQRY(0) = "" :  IEQRY(1) = "" #Clear Values
+   IEQRY(0) = "SELECT distinct top 1 YCPY_0 FROM YBBDETAILTEM"
+   IEQRY(1) -= "WHERE YTRANSNBR_0 = "+num$(YIEMINTRN)+" AND YBATNBR_0 = '"+BATNBR+"'"
+   For (Char YCPY1) From "5" Sql IEQRY As [SQL1]
+    CPY1 = [F:SQL1]YCPY1
+   Next
+   IEQRY(1) = ""
+   IEQRY(1) -= "WHERE YTRANSNBR_0 = "+num$(YIEMINTRN)+" AND YBATNBR_0 =  '"+BATNBR+"' AND YCPY_0 <> '"+CPY1+"'"
+   For (Char YCPY2) From "5" Sql IEQRY As [SQL2]
+    CPY2 = [F:SQL2]YCPY2
+   Next
+   #Assign Transaction number
+   YIEMINTRN = [F:YBDT]YTRANSNBR
+   GSTQRY(0) = "" : GSTQRY(1) = ""
+   GSTQRY(0) = "select distinct CODGSTGRP_0 from GSTGRPD Where CPY_0 = '"+CPY1+"'"
+
+   For (Char YGSTGRP) From "5" Sql GSTQRY(0) As [SQL3]
+    YIEGSTGRP(0) = [F:SQL3]YGSTGRP
+   Next
+
+   GSTQRY(1) = "select distinct CODGSTGRP_0 from GSTGRPD Where CPY_0 = '"+CPY2+"'"
+   For (Char YGSTGRP) From "5" Sql GSTQRY(1) As [SQL4]
+    YIEGSTGRP(1) = [F:SQL4]YGSTGRP
+   Next
+
+   # THE BUSINESS TRANSACTION ARE MEMBERS OF THE SAME GST GROUP
+  If YIEGSTGRP(0) = YIEGSTGRP(1) and (YIEGSTGRP(0) <> "" and YIEGSTGRP(1) <> "") Then
+    QUERY(0) = "" : QUERY(1) = "" : QUERY(2) = ""
+    [L]TAX_OVERRIDE = func AFNC.PARAM("YIEVAT","")
+    QUERY(0) = "Update YBBDETAILTEM"
+    QUERY(1) -= "Set YTAX_0 = '"+[L]TAX_OVERRIDE+"'"
+    QUERY(2) -= "Where YBATNBR_0 = '"+BATNBR+"' and YBATTYP_0 = 1 and YTRANSNBR_0 = '"+num$(YIEMINTRN)+"'"
+    Execsql From "5" Sql QUERY
+
+    QUERY(0) = "" : QUERY(1) = "" : QUERY(2) = ""
+    # DFCX1-27 - Update - DEWALD (22/01/2019)
+    QUERY(0) = "Update YBBDETAIL"
+    QUERY(1) -= "Set YTAXOVER_0 = '"+[L]TAX_OVERRIDE+"', YTAXOVERFLG_0 = 2"
+    QUERY(2) -= "Where YBATNBR_0 = '"+BATNBR+"' and YBATTYP_0 = 1 and YTRANSNBR_0 = '"+num$(YIEMINTRN)+"'"
+    Execsql From "5" Sql QUERY
+  Else
+  #01/03/2019 - Remove else statement as per mail
+  #18/03/2019 - Return else statement as per mail
+    QUERY(0) = "" : QUERY(1) = "" : QUERY(2) = ""
+    QUERY(0) = "Update YBBDETAILTEM"
+    QUERY(1) -= "Set YTAX_0 = '"+[F:YBDT]YTAX+"'"
+    QUERY(2) -= "Where YBATNBR_0 = '"+BATNBR+"' and YBATTYP_0 = 1 and YTRANSNBR_0 = '"+num$(YIEMINTRN)+"' and YDETLIG_0 = "+num$([F:YBDT]YDETLIG)
+    Execsql From "5" Sql QUERY
+
+    QUERY(0) = "" : QUERY(1) = "" : QUERY(2) = ""
+    QUERY(0) = "Update YBBDETAIL"
+    QUERY(1) -= "Set YTAXOVER_0 = '"+[F:YBDT]YTAX+"', YTAXOVERFLG_0 = 1"
+    QUERY(2) -= "Where YBATNBR_0 = '"+BATNBR+"' and YBATTYP_0 = 1 and YTRANSNBR_0 = '"+num$(YIEMINTRN)+"' and YDETLIG_0 = "+num$([F:YBDT]YDETLIG)
+    Execsql From "5" Sql QUERY
+  Endif
+  Next
+  Filter [F:YBDT]
+
+  Local Char VATRATQRY(250)(0..)
+  Local Integer VATI
+
+  # -- Tax Calculations
+  For [F:YBDT] Where YBATNBR = BATNBR
+    #Check GST Inc Tick
+    If YMINTRN = 0 : YMINTRN = [F:YBDT]YTRANSNBR : Endif
+    YMAXTRN = [F:YBDT]YTRANSNBR
+    #Read new instance for update
+    Read [F:YBDT2]YBDT1 = BATNBR;[F:YBDT]YDETLIG
+#    #Get Vat Rates
+    Read [F:TVT]TVT1 = [F:YBDT2]YTAX
+#    #20-02 Request from Richard - Get correct tax vat rate
+    VATRATQRY(0) = "" : VATRATQRY(1) = "" : VATRATQRY(2) = "" : VATRATQRY(3) = "" :
+    VATRATQRY(0) = "SELECT TOP 1 VATRAT_0"
+    VATRATQRY(1) -= "From TABRATVAT"
+    VATRATQRY(2) -= "Where STRDAT_0 <= '"+[M:YBB0]YBATDAT+"' and VAT_0 = '"+[F:YBDT2]YTAX+"'"
+    VATRATQRY(3) -= "ORDER BY STRDAT_0 DESC"
+
+    For (Decimal VATRAT) From "5" Sql VATRATQRY As [YVRT]
+      VATI += 1
+      [L]NEW_VATRAT = [F:YVRT]VATRAT
+    Next
+    If VATI = 0 Then
+      [L]NEW_VATRAT = 0
+      #Change as per email from Richard - 25-02-2019
+    Endif
+
+    #[L]NEW_VATRAT = [F:TVT]VATRAT
+    [L]TAX_RULE = [F:TVT]VATVAC
+    #Check ACCOUNT IS DEFINED As SUBJECTED
+    Read [F:GAC]GAC0 = [F:YBDT2]YCOA;[F:YBDT2]YACC
+    If [F:GAC]FLGVAT = 2 Then #Subjected
+      #SET TAX To null
+      [L]TAX_OVERRIDE  = ""
+      [L]TAX_RULE = ""
+    Endif
+
+    If [L]TAX_OVERRIDE = "" and [F:YBDT]YTAX <> "" #and [F:YBDT]YGSTAMT <> 0
+      #CALCULATE THE GST and AMOUNT + TAX (As PER SECTION 6.1.17 GST CALCULATIONS)
+      If [F:YBDT2]YDEB <> 0 : [L]NEW_AMT = [F:YBDT2]YDEB : Endif
+      If [F:YBDT2]YCDT <> 0 : [L]NEW_AMT = [F:YBDT2]YCDT : Endif
+      If [F:YBDT2]YGSTINC = 2 Then #GST Inc
+        #GST Amount = Amount - Round(Amount/(1+(Rate/100)))
+        [L]NEW_GST = [L]NEW_AMT  - ([L]NEW_AMT / (1+([L]NEW_VATRAT/100)))
+        [F:YBDT2]YAMTTAX = [L]NEW_AMT
+        If [F:YBDT2]YDEB <> 0 : [F:YBDT2]YDEB = [F:YBDT2]YDEB - arr([L]NEW_GST,0.01) : Endif
+        If [F:YBDT2]YCDT <> 0 : [F:YBDT2]YCDT = [F:YBDT2]YCDT - arr([L]NEW_GST,0.01) : Endif
+      Else
+      # Changes made as per mail 19/02/2019
+        [L]NEW_GST = [L]NEW_AMT * ([L]NEW_VATRAT/100)
+        [F:YBDT2]YAMTTAX = [L]NEW_AMT + [L]NEW_GST
+      Endif
+    Else
+      If [F:YBDT2]YDEB <> 0 : [L]NEW_AMT = [F:YBDT2]YDEB : Endif
+      If [F:YBDT2]YCDT <> 0 : [L]NEW_AMT = [F:YBDT2]YCDT : Endif
+      [L]NEW_GST = 0
+      [F:YBDT2]YAMTTAX = [L]NEW_AMT
+    Endif
+    # DFCX1-27 - Update - DEWALD (22/01/2019)
+    Read [F:YBBD]YBBD0 = [F:YBDT2]YBATNBR;[F:YBDT2]YDETLIG
+    If fstat = 0
+      [F:YBDT2]YGSTAMT = arr([L]NEW_GST,0.01)
+      Rewrite [F:YBDT2]
+      # DFCX1-27 - Update - DEWALD (22/01/2019)
+      [F:YBBD]YGSTAMT = arr([L]NEW_GST,0.01)
+      [F:YBBD]YAMTTAX = [F:YBDT2]YAMTTAX
+      Rewrite [F:YBBD]
+    Else
+      Call ADDMESSERR(mess(7,6259,1)-[V]CST_AERROR) From AWEB
+      Rollback
+      End
+    Endif
+
+  Next
+
+  For YCURTRN = YMINTRN To YMAXTRN
+    Local Char TAXQRY(250)(0..)
+    Local Char YSRC(250), YMESS(250),PARAM(25)
+    Local Integer PRM
+    TAXQRY(0) = "SELECT count(distinct(YGSTINC_0)) FROM YBBDETAILTEM"
+    TAXQRY(1) -= "WHERE YBATNBR_0 = '"+BATNBR+"' and YTRANSNBR_0 = "+num$(YCURTRN)
+    For (Integer DISTGST) From "5" Sql TAXQRY As [YSQL]
+      If DISTGST <> 1
+        YSRC = "Transaction number:"-num$(YCURTRN)
+        YMESS = mess(30,6259,1)
+        Call ADDLIG_ERR(BATNBR,YCURTRN,YSRC,PRM,PARAM,PARAM,PARAM,PARAM,PARAM,PARAM,YMESS)
+      Endif
+    Next
+  Next
+
+  If clalev([F:YELA]) = 0  : Close Local File [F:YELA] : Endif
+  If clalev([F:YBDT]) = 0  : Close Local File [F:YBDT] : Endif
+  If clalev([F:TAX])  = 0  : Close Local File [F:TAX]  : Endif
+  If clalev([F:GAC])  = 0  : Close Local File [F:GAC]  : Endif
+  If clalev([F:TVT])  = 0  : Close Local File [F:TVT]  : Endif
+  If clalev([F:TRA])  = 0  : Close Local File [F:TRA]  : Endif
+  # DFCX1-27 - Update - DEWALD (22/01/2019)
+  If clalev([F:YBBD])  = 0  : Close Local File [F:YBBD]  : Endif
+
+
+End
+
+#---------------------------------------------------------------------------------
+# Site Calculations
+#---------------------------------------------------------------------------------
+Subprog EXE_FCY_VAL(BATNBR)
+Variable Char BATNBR()
+
+  #ADDLIG_ERR(YBATNBR,YSRC,YDETLIG,YFCY,YENTTYP,YJOU,YDETDES,YACC,YLIGDES,YMESS)
+
+  If clalev([F:YBBE]) = 0 : Local File YBBERR [YBBE]        : Endif
+  If clalev([F:YBDT]) = 0 : Local File YBBDETAILTEM [YBDT]  : Endif
+
+  Local Integer I : I = 0
+  Local Char QUERY(255)(0..)
+  Local Char EXECSP(255)
+  Local Char YMSG(255)
+  Local Char YSRC(50)
+  Local Char MNFCYQRY(250)(0..)
+  Local Integer YNBRLIG
+
+  EXECSP = "EXEC [BB_SITE_VALIDATION] '"+BATNBR+"'"
+  Execsql From "5" Sql EXECSP
+
+  QUERY(0) = "SELECT YTRANSNBR_0, YBATNBR_0 +'-'+CAST(YDETLIG_0 + 1 AS VARCHAR(10)),YDETLIG_0,YFCY_0,YENTTYP_0,YJOU_0,YDETDES_0,YACC_0,YLIGDES_0, YRESVAL_0"
+  QUERY(1) -= "From YBBDETAILTEM"
+  QUERY(2) -= "WHERE YBATNBR_0 = '"+BATNBR+"'"
+  For (Integer YTRANSNO, Char YSRC, Integer YDETLIG, Char YFCY, Char YENTTYP, Char YJOU, Char YDETDES, Char YACC, Char YLIGDES, Char RESULT) From "5" Sql QUERY As [YLNK]
+    Read [F:YBDT]YBDT1 = BATNBR;YDETLIG
+    If [F:YLNK]RESULT = "FCY1" Then #IE
+      YMSG = mess(8,6259,1)-num$([F:YLNK]YTRANSNO)
+      Call ADDLIG_ERR(BATNBR,[F:YLNK]YTRANSNO,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+      Break
+    Elsif [F:YLNK]RESULT = "FCY3" Then #Journal
+      YMSG = mess(9,6259,1)-num$([F:YLNK]YTRANSNO)
+      Call ADDLIG_ERR(BATNBR,[F:YLNK]YTRANSNO,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+    Endif
+  Next
+
+  If clalev([F:YBBE]) = 0 : Close Local File [YBBE]  : Endif
+  If clalev([F:YBDT]) = 0 : Close Local File [YBDT]  : Endif
+
+End
+
+#---------------------------------------------------------------------------------
+# Journal
+#---------------------------------------------------------------------------------
+Subprog BT_JOURNAL(BATNBR)
+Variable Char BATNBR()
+
+#Open Tables
+If clalev([F:YBDT]) = 0 : Local File YBBDETAILTEM [YBDT]  : Endif
+If clalev([F:GAC]) = 0 : Local File GACCOUNT [GAC]  : Endif
+If clalev([F:GTE]) = 0 : Local File GTYPACCENT [GTE]  : Endif
+If clalev([F:OPP]) = 0 : Local File OPPOR [OPP]  : Endif
+
+#Variables
+Local Integer YDETLIG
+Local Integer YBATTYP
+Local Decimal YNEWAMT
+Local Char YDETDES(250), YSRC(250), YMSG(250)
+Local Char YREV(1) : YREV = "N"
+Local Integer YTRNNBR
+
+For [F:YBDT] Where [F:YBDT]YBATNBR = BATNBR
+  If [F:YBDT]YRESVAL = "Validating" and [F:YBDT]YBATTYP = 3 Then
+    [L]YDETLIG = [F:YBDT]YDETLIG
+    [L]YTRNNBR = [F:YBDT]YTRANSNBR
+    YERR = 0
+    #DFCX1-330 - Check Entry Type Validity Dates - Start
+    Read [F:GTE]GTE0 = [F:YBDT]YENTTYP
+    If num$([F:GTE]VLYSTR) <> "00/00/0000" and [M:YBB0]YBATDAT <= [F:GTE]VLYSTR
+      YSRC = BATNBR-num$([L]YDETLIG)
+      YMSG =  mess(31,6259,1) #"Entry type validity start date not in range of Batch date"
+      Call ADDLIG_ERR(BATNBR,[L]YTRNNBR,YSRC,[L]YDETLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+    Endif
+    If num$([F:GTE]VLYEND) <> "00/00/0000" and [M:YBB0]YBATDAT >= [F:GTE]VLYEND
+      YSRC = BATNBR-num$([L]YDETLIG)
+      YMSG = mess(32,6259,1) #"Entry type validity end date not in range of Batch date"
+      Call ADDLIG_ERR(BATNBR,[L]YTRNNBR,YSRC,[L]YDETLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+    Endif
+    If [F:GTE]ENAFLG <> 2
+      YSRC = BATNBR-num$([F:YBDT]YDETLIG)
+      YMSG = mess(33,6259,1) #"Document entry type not active"
+      Call ADDLIG_ERR(BATNBR,[L]YTRNNBR,YSRC,YDETLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+    Endif
+    #DFCX1-330 - Check Entry Type Validity Dates - End
+    #DFCX1-318 - Project Validation Link Check - START
+    If [F:YBDT]YPJT <> "" Then
+      Read [F:OPP]OPP0 = [F:YBDT]YPJT
+      If [F:OPP]OPPCLO = 2 Then
+        YSRC = BATNBR-num$([L]YDETLIG)
+        YMSG = "Associated project is marked as closed"
+        Call ADDLIG_ERR(BATNBR,[L]YTRNNBR,YSRC,[L]YDETLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+      Endif
+    Endif
+    #DFCX1-318 - Project Validation Link Check - END
+    Call ADDLIG_SIM([F:YBDT]YBATNBR,[L]YDETLIG, [F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&               [F:YBDT]YDETDES,[F:YBDT]YFCY,[F:YBDT]YCOA,[F:YBDT]YACC,[F:YBDT]YLIGDES,[F:YBDT]YCTRL,
+&               [F:YBDT]YBP,[F:YBDT]YDEB,[F:YBDT]YCDT,[F:YBDT]YTAX,[F:YBDT]YREF,[F:YBDT]YFREF,[F:YBDT]YPJT,[F:YBDT]YCCE0,
+&               [F:YBDT]YCCE1,[F:YBDT]YCCE2,[F:YBDT]YCCE3,[F:YBDT]YCCE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN,
+&               [F:YBDT]YDIE0,[F:YBDT]YDIE1,[F:YBDT]YDIE2,[F:YBDT]YDIE3,[F:YBDT]YDIE4)
+      Call TAX_LINE_ADD(BATNBR, [L]YDETLIG, YREV)
+  Endif
+Next
+
+#Close Tables
+If clalev([F:YBDT]) = 0 : Close Local File [F:YBDT] : Endif
+If clalev([F:GAC]) = 0 : Close Local File [F:GAC] : Endif
+If clalev([F:GTE]) = 0 : Close Local File [F:GTE] : Endif
+If clalev([F:OPP]) = 0 : Close Local File [F:OPP] : Endif
+
+
+End
+
+#---------------------------------------------------------------------------------
+# Inter Company/Entity
+#---------------------------------------------------------------------------------
+Subprog BT_IE(BATNBR)
+Variable Char BATNBR()
+
+  Local Char YMSG(255)
+
+  If clalev([F:YBDT]) = 0  : Local File YBBDETAILTEM [YBDT]  : Endif
+  If clalev([F:YBBD]) = 0  : Local File YBBDETAIL    [YBBD]  : Endif
+  If clalev([F:YELA]) = 0  : Local File YENTLOAAGR   [YELA]  : Endif
+  If clalev([F:GTE]) = 0   : Local File GTYPACCENT   [GTE]   : Endif
+  If clalev([F:OPP]) = 0   : Local File OPPOR [OPP]  : Endif
+  If clalev([F:GAC]) = 0 : Local File GACCOUNT [GAC]  : Endif
+
+  Local Char QUERY(255)(0..)
+  Local Char ELAQRY(255)(0..)
+  Local Char EXECSP(255)
+  Local Char YMSG(255)
+  Local Char YSRC(50)
+  Local Integer YLIG, YDETLIG
+  Local Decimal YDEBT, YCRED
+  Local Char ELADES(255)
+  Local Char PREFCY(50) : PREFCY = ""
+  Local Char YREV(1) : YREV = "N"
+  Local Integer EXECNO
+  Local Integer YTRNNBR
+
+  #DFCX1-330 - Check Entry Type Validity Dates - Start
+  For [F:YBDT] Where [F:YBDT]YBATNBR = BATNBR
+    If [F:YBDT]YRESVAL = "Validating" and [F:YBDT]YBATTYP = 1 Then
+      [L]YDETLIG = [F:YBDT]YDETLIG
+      [L]YTRNNBR = [F:YBDT]YTRANSNBR
+      Read [F:GTE]GTE0 = [F:YBDT]YENTTYP
+      If num$([F:GTE]VLYSTR) <> "00/00/0000" and [M:YBB0]YBATDAT <= [F:GTE]VLYSTR
+        YSRC = BATNBR-num$([F:YBDT]YDETLIG)
+        YMSG = "Entry type validity start date not in range of Batch date"
+        Call ADDLIG_ERR(BATNBR,[L]YTRNNBR ,YSRC,YDETLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+      Endif
+      If num$([F:GTE]VLYEND) <> "00/00/0000" and [M:YBB0]YBATDAT >= [F:GTE]VLYEND
+        YSRC = BATNBR-num$([F:YBDT]YDETLIG)
+        YMSG = "Entry type validity end date not in range of Batch date"
+        Call ADDLIG_ERR(BATNBR,[L]YTRNNBR ,YSRC,YDETLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+      Endif
+      If [F:GTE]ENAFLG <> 2
+        YSRC = BATNBR-num$([F:YBDT]YDETLIG)
+        YMSG = "Document entry type not active"
+        Call ADDLIG_ERR(BATNBR,[L]YTRNNBR ,YSRC,YDETLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+      Endif
+    Endif
+    #DFCX1-318 - Project Validation Link Check - START
+    If [F:YBDT]YPJT <> "" Then
+      Read [F:OPP]OPP0 = [F:YBDT]YPJT
+      If [F:OPP]OPPCLO = 2 Then
+        YSRC = BATNBR-num$([L]YDETLIG)
+        YMSG = "Associated project is marked as closed"
+        Call ADDLIG_ERR(BATNBR,[L]YTRNNBR ,YSRC,[L]YDETLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+      Endif
+    Endif
+    #DFCX1-318 - Project Validation Link Check - END
+    #DFCX1-320 – ELA Post Validation Rule - START
+    If [F:YBDT]YELA <> "" Then
+      Read [F:YELA]YELA0 = [F:YBDT]YELA
+      If [F:YELA]YENAFLG <> 2 Then
+        YSRC = BATNBR-num$([L]YDETLIG)
+        YMSG = "ELA not marked as active"
+        Call ADDLIG_ERR(BATNBR,[L]YTRNNBR,YSRC,[L]YDETLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+      Endif
+    Endif
+    #DFCX1-320 – ELA Post Validation Rule - END
+  Next
+  #DFCX1-330 - Check Entry Type Validity Dates - End
+
+  EXECSP = "EXEC [BB_IE_TRANSACTION_VALIDATION] '"+BATNBR+"'"
+  Execsql From "5" Sql EXECSP
+
+  QUERY(0) = "SELECT YTRANSNBR_0, YBATNBR_0 +'-'+CAST(YDETLIG_0 AS VARCHAR(10)),YDETLIG_0,YFCY_0,YENTTYP_0,YJOU_0,YDETDES_0,YACC_0,YLIGDES_0, YRESVAL_0"
+  QUERY(1) -= "From YBBDETAILTEM"
+  QUERY(2) -= "WHERE YBATNBR_0 = '"+BATNBR+"' and YBATTYP_0 = 1"
+
+  For (Integer YTRANSNO, Char YSRC, Integer YDETLIG, Char YFCY, Char YENTTYP, Char YJOU, Char YDETDES, Char YACC, Char YLIGDES, Char RESULT) From "5" Sql QUERY As [YLNK]
+    Read [F:YBDT]YBDT1 = BATNBR;[F:YLNK]YDETLIG
+    Read [F:YBBD]YBBD0 = BATNBR;[F:YLNK]YDETLIG
+    # Error Handling --- Start
+    If [F:YLNK]RESULT = "FCY1BAL0"
+      YMSG = func AFNC.MES2(mess(37,6259,1),[F:YLNK]YFCY,num$([F:YLNK]YTRANSNO))#"Site ("+[F:YLNK]YFCY+") balance within business transaction " + num$([F:YLNK]YTRANSNO)+ " equates to zero"
+      Call ADDLIG_ERR(BATNBR,[F:YLNK]YTRANSNO,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+    Elsif [F:YLNK]RESULT = "FCY2BAL0"
+      YMSG = func AFNC.MES2(mess(37,6259,1),[F:YLNK]YFCY,num$([F:YLNK]YTRANSNO))#"Site ("+[F:YLNK]YFCY+") balance  within business transaction " + num$([F:YLNK]YTRANSNO)+ " equates to zero"
+      Call ADDLIG_ERR(BATNBR,[F:YLNK]YTRANSNO,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+    Elsif [F:YLNK]RESULT = "ELAMIS"
+      YMSG = mess(20,6259,1) #"Distinct ELA to Site numbers does not match"
+      Call ADDLIG_ERR(BATNBR,[F:YLNK]YTRANSNO,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+    Elsif [F:YLNK]RESULT = "FCYMIS"
+      YMSG = mess(38,6259,1) #Distinct Site numbers does not match IE type
+      Call ADDLIG_ERR(BATNBR,[F:YLNK]YTRANSNO,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+      Break
+    Elsif [F:YLNK]RESULT = "PROV1"
+      YMSG = func AFNC.MES1(mess(12,6259,1),[F:YLNK]YFCY)#"Provider site not found for site 1"
+      Call ADDLIG_ERR(BATNBR,[F:YLNK]YTRANSNO,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+    Elsif [F:YLNK]RESULT = "PROV2"
+      YMSG = func AFNC.MES1(mess(12,6259,1),[F:YLNK]YFCY)
+      Call ADDLIG_ERR(BATNBR,[F:YLNK]YTRANSNO,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+    # Error Handling --- END
+    Else #Validation Passed - Write to Simulation Line based on every ELA in the RESULT
+      Call ADDLIG_SIM(BATNBR,[F:YLNK]YDETLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&             [F:YBDT]YDETDES,[F:YBDT]YFCY,[F:YBDT]YCOA,[F:YBDT]YACC,[F:YBDT]YLIGDES,[F:YBDT]YCTRL,
+&             [F:YBDT]YBP,[F:YBDT]YDEB,[F:YBDT]YCDT,[F:YBDT]YTAX,[F:YBDT]YREF,[F:YBDT]YFREF,[F:YBDT]YPJT,[F:YBDT]YCCE0,
+&             [F:YBDT]YCCE1,[F:YBDT]YCCE2,[F:YBDT]YCCE3,[F:YBDT]YCCE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN,
+&             [F:YBDT]YDIE0,[F:YBDT]YDIE1,[F:YBDT]YDIE2,[F:YBDT]YDIE3,[F:YBDT]YDIE4)
+      YREV = "N"
+      Call TAX_LINE_ADD(BATNBR, [F:YLNK]YDETLIG,YREV)
+      ELAQRY(0) = "SELECT value FROM YICELA"
+      ELAQRY(1) -= "CROSS APPLY STRING_SPLIT(YELAPATH_0,',')"
+      ELAQRY(2) -= "WHERE YELASTR_0 = '"+[F:YBDT]YELA+"'"
+      For (Char YVAL(255)) From "5" Sql ELAQRY As [YLNK2]
+      #Using THE CURRENT ELA
+        Read [F:YELA]YELA0 = [F:YLNK2]YVAL
+        #DFCX1-320 - Check ELA Active - Start
+        If [F:YELA]YENAFLG = 1 Then
+          YMSG = mess(5,6254,1)-"for site"-[F:YLNK]YFCY
+          Call ADDLIG_ERR(BATNBR,[F:YLNK]YTRANSNO,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+        Endif
+        #DFCX1-320 - Check ELA Active - End
+        YLIG = [F:YLNK]YDETLIG + 1
+        If [F:YLNK2]YVAL <> "" Then
+          ELADES = mess(13,6259,1)-[F:YLNK2]YVAL
+          If [F:YBDT]YCDT = 0 : YDEBT = [F:YBBD]YDEB : YCRED = 0 : Endif
+          If [F:YBDT]YDEB = 0 : YCRED = [F:YBBD]YCDT : YDEBT = 0 : Endif
+          #Changes as per GST changes - Richard/Dewald 25-02-2019
+          If [F:YBDT]YTAX <> "" and [F:YBDT]YGSTINC = 1 Then
+            If [F:YBDT]YCDT = 0 : YDEBT = [F:YBBD]YDEB + [F:YBDT]YGSTAMT  : YCRED = 0 : Endif
+            If [F:YBDT]YDEB = 0 : YCRED = [F:YBBD]YCDT + [F:YBDT]YGSTAMT : YDEBT = 0 : Endif
+          Endif
+          Local Char BLNKBPR(5) # -- Replace [F:YBDT]YBP
+          Local Char BLNKPJT(5) # -- Replace [F:YBDT]YPJT
+          Local Char BLNKRT(5) # -- Replace [F:YBDT]YFREF and TAX
+          #CREATE SIMULATION LINE For THE ELA RECIPIENT COMPANY (DR/CR OPPOSITE To THE BALANCE For THE S1 SITE) IN THE S1SLL
+          Call ADDLIG_SIM(BATNBR,YLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&                 [F:YBDT]YDETDES,[F:YELA]YFCYREC,[F:YELA]YCOAREC,[F:YELA]YACCREC,ELADES,BLNKBPR,
+&                 BLNKBPR,YCRED,YDEBT,BLNKRT,[F:YBDT]YREF,BLNKRT,BLNKPJT,[F:YELA]YRCCE0,
+&                 [F:YELA]YRCCE1,[F:YELA]YRCCE2,[F:YELA]YRCCE3,[F:YELA]YRCCE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN,
+&                 [F:YELA]YRDIE0,[F:YELA]YRDIE1,[F:YELA]YRDIE2,[F:YELA]YRDIE3,[F:YELA]YRDIE4)
+          #CREATE SIMULATION LINE For THE ELA PROVIDER COMPANY (DR/CR SAME As THE BALANCE For THE S1 SITE) IN THE S1SLL
+          YLIG = YLIG + 1
+          ELADES = mess(14,6259,1)-[F:YLNK2]YVAL
+          Call ADDLIG_SIM(BATNBR,YLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&                 [F:YBDT]YDETDES,[F:YELA]YFCYPRO,[F:YELA]YCOAPRO,[F:YELA]YACCPRO,ELADES,BLNKBPR,
+&                 BLNKBPR,YDEBT,YCRED,BLNKRT,[F:YBDT]YREF,BLNKRT,BLNKPJT,[F:YELA]YPCCE0,
+&                 [F:YELA]YPCCE1,[F:YELA]YPCCE2,[F:YELA]YPCCE3,[F:YELA]YPCCE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN,
+&                 [F:YELA]YPDIE0,[F:YELA]YPDIE1,[F:YELA]YPDIE2,[F:YELA]YPDIE3,[F:YELA]YPDIE4)
+          Endif
+        Next
+        ELAQRY(0) = "" : ELAQRY(1) = "" : ELAQRY(2) = ""
+    Endif
+  Next
+
+  #Update From and To Site
+  If clalev([F:YBBS]) = 0 : Local File YBBSIM [YBBS]  : Endif
+  Local Char FCYQRY(250)(0..)
+  FCYQRY(0) = "SELECT YTRANSNBR_0, YFRMFCY_0, YTOFCY_0"
+  FCYQRY(1) -= "FROM YBBDETAILTEM"
+  FCYQRY(2) -= "WHERE YBATNBR_0 = '"+BATNBR+"'and YBATTYP_0 = 1"
+  For (Integer TRANSNO, Char FROMSITE, Char TOSITE) From "5" Sql FCYQRY As [YSQL]
+    For [F:YBBS] Where [F:YBBS]YBATNBR = BATNBR and [F:YBBS]YTRANSNBR = [F:YSQL]TRANSNO
+      [F:YBBS]YFRMFCY = [F:YSQL]FROMSITE
+      [F:YBBS]YTOFCY = [F:YSQL]TOSITE
+      Rewrite [F:YBBS]
+    Next
+  Next
+
+  If clalev([F:YBBS]) = 0 : Close Local File [F:YBBS] : Endif
+  If clalev([F:YBDT]) = 0 : Close Local File [F:YBDT]  : Endif
+  If clalev([F:YELA]) = 0 : Close Local File [F:YELA]  : Endif
+  If clalev([F:YBBD]) = 0 : Close Local File [F:YBBD]  : Endif
+  If clalev([F:GTE])  = 0 : Close Local File [F:GTE]   : Endif
+  If clalev([F:OPP])  = 0 : Close Local File [F:OPP]   : Endif
+  If clalev([F:GAC])  = 0 : Close Local File [F:GAC]   : Endif
+
+End
+
+Subprog BT_CASH(BATNBR)
+Variable Char BATNBR()
+
+  If clalev([F:YBDT]) = 0 : Local File YBBDETAILTEM [YBDT]  : Endif
+  If clalev([F:YBBD]) = 0 : Local File YBBDETAIL    [YBBD]  : Endif
+  If clalev([F:YELA]) = 0 : Local File YENTLOAAGR   [YELA]  : Endif
+  If clalev([F:GTE]) = 0  : Local File GTYPACCENT   [GTE]   : Endif
+  If clalev([F:OPP]) = 0  : Local File OPPOR        [OPP]   : Endif
+  If clalev([F:GAC]) = 0  : Local File GACCOUNT     [GAC]   : Endif
+  If clalev([F:BAN]) = 0  : Local File BANK         [BAN]   : Endif
+
+  Local Integer I : I = 0
+  Local Char QUERY(255)(0..)
+  Local Char EXECSP(255)
+  Local Char EXELSP(255)
+  Local Char YMSG(255)
+  Local Char YSRC(50)
+  Local Integer YLIG, YDETLIG
+  Local Decimal YDEBT, YCRED
+  Local Char ELAQRY(255)(0..)
+  Local Char LSTELA(50)
+  Local Char ELADES(250)
+  Local Char YREV(1) : YREV = "N"
+  Local Char BLNKBPR(5) # -- Replace [F:YBDT]YBP / [F:YBDT]YCTRL
+  Local Integer YTRNNBR
+  #DFCX1-330 - Check Entry Type Validity Dates - Start
+  For [F:YBDT] Where [F:YBDT]YBATNBR = BATNBR
+    If [F:YBDT]YRESVAL = "Validating" and [F:YBDT]YBATTYP = 2 Then
+      [L]YDETLIG = [F:YBDT]YDETLIG
+      [L]YTRNNBR = [F:YBDT]YTRANSNBR
+
+      Read [F:GTE]GTE0 = [F:YBDT]YENTTYP
+      If num$([F:GTE]VLYSTR) <> "00/00/0000" and [M:YBB0]YBATDAT <= [F:GTE]VLYSTR
+        YSRC = BATNBR-num$([F:YBDT]YDETLIG)
+        YMSG = mess(39,6259,1)#"Entry type validity start date not in range of Batch date"
+        Call ADDLIG_ERR(BATNBR,[L]YTRNNBR,YSRC,YDETLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+      Endif
+      If num$([F:GTE]VLYEND) <> "00/00/0000" and [M:YBB0]YBATDAT >= [F:GTE]VLYEND
+        YSRC = BATNBR-num$([F:YBDT]YDETLIG)
+        YMSG = mess(40,6259,1) #"Entry type validity end date not in range of Batch date"
+        Call ADDLIG_ERR(BATNBR,[L]YTRNNBR,[F:YBDT]YTRANSNBR,YSRC,YDETLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+      Endif
+      If [F:GTE]ENAFLG <> 2
+        YSRC = BATNBR-num$([F:YBDT]YDETLIG)
+        YMSG = mess(41,6259,1)#"Document entry type not active"
+        Call ADDLIG_ERR(BATNBR,[L]YTRNNBR,YSRC,YDETLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+      Endif
+    Endif
+    #DFCX1-318 - Project Validation Link Check - START
+    If [F:YBDT]YPJT <> "" Then
+      Read [F:OPP]OPP0 = [F:YBDT]YPJT
+      If [F:OPP]OPPCLO = 2 Then
+        YSRC = BATNBR-num$([L]YDETLIG)
+        YMSG =  mess(42,6259,1) #"Associated project is marked as closed"
+        Call ADDLIG_ERR(BATNBR,[L]YTRNNBR,YSRC,[L]YDETLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+      Endif
+    Endif
+    #DFCX1-318 - Project Validation Link Check - END
+  Next
+  #DFCX1-330 - Check Entry Type Validity Dates - End
+
+  EXECSP = "EXEC [BB_CASH_TRANSACTION_VALIDATION] '"+BATNBR+"'"
+  Execsql From "5" Sql EXECSP
+
+  QUERY(0) = "SELECT YTRANSNBR_0, YBATNBR_0 +'-'+CAST(YDETLIG_0 + 1 AS VARCHAR(10)),YDETLIG_0,YFCY_0,YENTTYP_0,YJOU_0,YDETDES_0,YACC_0,YLIGDES_0, YRESVAL_0, YBAN_0"
+  QUERY(1) -= "From YBBDETAILTEM"
+  QUERY(2) -= "WHERE YBATNBR_0 = '"+BATNBR+"' and YBATTYP_0 = 2"
+  #QUERY(3) -= "and YRESVAL_0 in ('BCNT1','BREQ1','BACT1','BPASSPRI')"
+
+  For (Integer YTRANSNO, Char YSRC, Integer YDETLIG, Char YFCY, Char YENTTYP, Char YJOU, Char YDETDES, Char YACC, Char YLIGDES, Char RESULT, Char YBAN) From "5" Sql QUERY As [YLNK]
+    Read [F:YBDT]YBDT1 = BATNBR;[F:YLNK]YDETLIG
+    Read [F:YBBD]YBBD0 = BATNBR;[F:YLNK]YDETLIG
+    If [F:YLNK]RESULT = "FCYREQ" Then #Distinct number of site exceeds 1
+        YMSG = mess(15,6259,1)
+        Call ADDLIG_ERR(BATNBR,[F:YLNK]YTRANSNO,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+        Break
+    Elsif [F:YLNK]RESULT = "BANEMP" Then #Invalid number of bank accounts
+      YMSG = mess(29,6259,1)
+      Call ADDLIG_ERR(BATNBR,[F:YLNK]YTRANSNO,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+      Break
+    Elsif [F:YLNK]RESULT = "TRANLIG" Then #Invalid transaction lines
+      YMSG = mess(16,6259,1)
+      Call ADDLIG_ERR(BATNBR,[F:YLNK]YTRANSNO,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+    Elsif [F:YLNK]RESULT = "BACT1" Then #Selected Bank is not active
+      YMSG = func AFNC.MES1(mess(17,6259,1),[F:YLNK]YBAN)
+      Call ADDLIG_ERR(BATNBR,[F:YLNK]YTRANSNO,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+    Elsif [F:YLNK]RESULT = "BANELA" Then #ELA in bank account is not setup correctly
+      YMSG = mess(18,6259,1)
+      Call ADDLIG_ERR(BATNBR,[F:YLNK]YTRANSNO,[F:YLNK]YSRC,[F:YLNK]YDETLIG,[F:YLNK]YFCY,[F:YLNK]YENTTYP,[F:YLNK]YJOU,[F:YLNK]YDETDES,[F:YLNK]YACC,[F:YLNK]YLIGDES,YMSG)
+    Elsif [F:YLNK]RESULT = "Validating"
+      Call ADDLIG_SIM(BATNBR,[F:YLNK]YDETLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&             [F:YBDT]YDETDES,[F:YBDT]YFCY,[F:YBDT]YCOA,[F:YBDT]YACC,[F:YBDT]YLIGDES,[F:YBDT]YCTRL,
+&             [F:YBDT]YBP,[F:YBDT]YDEB,[F:YBDT]YCDT,[F:YBDT]YTAX,[F:YBDT]YREF,[F:YBDT]YFREF,[F:YBDT]YPJT,[F:YBDT]YCCE0,
+&             [F:YBDT]YCCE1,[F:YBDT]YCCE2,[F:YBDT]YCCE3,[F:YBDT]YCCE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN,
+&             [F:YBDT]YDIE0,[F:YBDT]YDIE1,[F:YBDT]YDIE2,[F:YBDT]YDIE3,[F:YBDT]YDIE4)
+     YREV = "N"
+     Call TAX_LINE_ADD(BATNBR, [F:YLNK]YDETLIG,YREV)
+    Elsif [F:YLNK]RESULT = "BPASSPRI"
+      Local Char BLNKPRIBAN(5)
+      Local Char BLNKPJT(5)
+      #DFCX1-367 - Add blanks
+      Call ADDLIG_SIM(BATNBR,[F:YLNK]YDETLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&             [F:YBDT]YDETDES,[F:YBDT]YFCY,[F:YBDT]YCOA,[F:YBDT]YACC,[F:YBDT]YLIGDES,BLNKPRIBAN,
+&             [F:YBDT]YBP,[F:YBDT]YDEB,[F:YBDT]YCDT,BLNKPRIBAN,[F:YBDT]YREF,[F:YBDT]YFREF,BLNKPJT,BLNKPRIBAN,
+&             BLNKPRIBAN,BLNKPRIBAN,BLNKPRIBAN,BLNKPRIBAN,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN,
+&             BLNKPRIBAN,BLNKPRIBAN,BLNKPRIBAN,BLNKPRIBAN,BLNKPRIBAN)
+      YREV = "N"
+      Call TAX_LINE_ADD(BATNBR, [F:YLNK]YDETLIG,YREV)
+    Elsif [F:YLNK]RESULT = "BPASSELA"
+      Call ADDLIG_SIM(BATNBR,[F:YLNK]YDETLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&             [F:YBDT]YDETDES,[F:YBDT]YFCY,[F:YBDT]YCOA,[F:YBDT]YACC,[F:YBDT]YLIGDES,BLNKBPR,
+&             BLNKBPR,[F:YBDT]YDEB,[F:YBDT]YCDT,[F:YBDT]YTAX,[F:YBDT]YREF,[F:YBDT]YFREF,BLNKBPR,[F:YBDT]YCCE0,
+&             [F:YBDT]YCCE1,[F:YBDT]YCCE2,[F:YBDT]YCCE3,[F:YBDT]YCCE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN,
+&             [F:YBDT]YDIE0,[F:YBDT]YDIE1,[F:YBDT]YDIE2,[F:YBDT]YDIE3,[F:YBDT]YDIE4)
+      YREV = "N"
+      Call TAX_LINE_ADD(BATNBR, [F:YLNK]YDETLIG,YREV)
+# opposite dr/cr
+      Call ADDLIG_SIM(BATNBR,[F:YLNK]YDETLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&             [F:YBDT]YDETDES,[F:YBDT]YFCY,[F:YBDT]YCOA,[F:YBDT]YACC,[F:YBDT]YLIGDES,BLNKBPR,
+&             BLNKBPR,[F:YBDT]YCDT,[F:YBDT]YDEB,[F:YBDT]YTAX,[F:YBDT]YREF,[F:YBDT]YFREF,BLNKBPR,[F:YBDT]YCCE0,
+&             [F:YBDT]YCCE1,[F:YBDT]YCCE2,[F:YBDT]YCCE3,[F:YBDT]YCCE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN,
+&             [F:YBDT]YDIE0,[F:YBDT]YDIE1,[F:YBDT]YDIE2,[F:YBDT]YDIE3,[F:YBDT]YDIE4)
+      YREV = "Y"
+      Call TAX_LINE_ADD(BATNBR, [F:YLNK]YDETLIG,YREV)
+
+      ELAQRY(0) = "" : ELAQRY(1) = "" : ELAQRY(2) = ""
+      ELAQRY(0) = "SELECT value FROM YICELA"
+      ELAQRY(1) -= "CROSS APPLY STRING_SPLIT(YELAPATH_0,',')"
+      ELAQRY(2) -= "WHERE YELASTR_0 = '"+[F:YBDT]YELA+"'"
+
+      For (Char YVAL(255)) From "5" Sql ELAQRY As [YLNK2]
+        #Using THE CURRENT ELA
+        Read [F:YELA]YELA0 = [F:YLNK2]YVAL
+        #Check that ELA Bank is active
+        Local Char BANQRY(250)(0..)
+        BANQRY = "select BAN_0, YSTA_0 from BANK Where YELA_0 = '"+[F:YLNK2]YVAL+"' and BAN_0 = '"+[F:YBDT]YBAN+"'"
+        For (Char YBAN, Integer YSTA) From "5" Sql BANQRY As [YBANLNK]
+          If [F:YBANLNK]YSTA <> 2 Then
+            YMSG = func AFNC.MES1(mess(17,6259,1),[F:YBANLNK]YBAN) #"Bank"-[F:YBANLNK]YBAN-"not active" #mess(17,6259,1)
+            Local Char YSOURCE(100) : YSOURCE = "Cash transaction validation"
+            Local Char BLNKINS(5)
+            Call ADDLIG_ERR(BATNBR,[F:YLNK]YTRANSNO,YSOURCE,[F:YLNK]YDETLIG,BLNKINS,BLNKINS,BLNKINS,BLNKINS,BLNKINS,BLNKINS,YMSG)
+          Endif
+        Next
+        YLIG = [F:YLNK]YDETLIG + 1
+        If [F:YBDT]YCDT = 0 : YDEBT = [F:YBBD]YDEB : YCRED = 0 : Endif
+        If [F:YBDT]YDEB = 0 : YCRED = [F:YBBD]YCDT : YDEBT = 0 Endif
+        ELADES = mess(13,6259,1)-[F:YLNK2]YVAL
+        Local Char BLNKRT(5) # -- Replace [F:YBDT]YFREF and TAX
+        #CREATE SIMULATION LINE For THE ELA RECIPIENT COMPANY (DR/CR OPPOSITE To THE BALANCE For THE S1 SITE)
+        Call ADDLIG_SIM(BATNBR,YLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&             [F:YBDT]YDETDES,[F:YELA]YFCYREC,[F:YELA]YCOAREC,[F:YELA]YACCREC,ELADES,BLNKBPR,
+&             BLNKBPR,YDEBT,YCRED,BLNKRT,[F:YBDT]YREF,BLNKRT,BLNKBPR,[F:YELA]YRCCE0,
+&             [F:YELA]YRCCE1,[F:YELA]YRCCE2,[F:YELA]YRCCE3,[F:YELA]YRCCE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN,
+&             [F:YBDT]YDIE0,[F:YBDT]YDIE1,[F:YBDT]YDIE2,[F:YBDT]YDIE3,[F:YBDT]YDIE4)
+        #CREATE SIMULATION LINE For THE ELA PROVIDER COMPANY (DR/CR SAME As THE BALANCE For THE S1 SITE)
+        YLIG = YLIG + 1
+        ELADES = mess(14,6259,1)-[F:YLNK2]YVAL
+        Call ADDLIG_SIM(BATNBR,YLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&             [F:YBDT]YDETDES,[F:YELA]YFCYPRO,[F:YELA]YCOAPRO,[F:YELA]YACCPRO,ELADES,BLNKBPR,
+&             BLNKBPR,[F:YBDT]YCDT,[F:YBDT]YDEB,BLNKRT,[F:YBDT]YREF,BLNKRT,BLNKBPR,[F:YELA]YPCCE0,
+&             [F:YELA]YPCCE1,[F:YELA]YPCCE2,[F:YELA]YPCCE3,[F:YELA]YPCCE4,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN,
+&             [F:YBDT]YDIE0,[F:YBDT]YDIE1,[F:YBDT]YDIE2,[F:YBDT]YDIE3,[F:YBDT]YDIE4)
+        #Set last ELA
+        If [F:YELA]YSRCLONAGR = "" :  LSTELA = [F:YELA]YLONAGR : Endif
+      Next
+
+      #Create Share Bank from ELA
+      #Check for transfer between banks - 2 disitinct bank accounts and only 2 lines
+      Local Char BNKTRFRY(250)(0..)
+      Local Integer FI
+      Local Char ISBNKTRF(5)
+      ISBNKTRF = "No"
+      BNKTRFRY(0) = "SELECT DISTINCT YBAN_0, YTRANSNBR_0"
+      BNKTRFRY(1) -= "From YBBDETAILTEM"
+      BNKTRFRY(2) -= "WHERE YBATNBR_0 = '"+BATNBR+"' AND YBATTYP_0 = 2 AND YBAN_0 <> '' and YTRANSNBR_0 = "+num$([F:YBDT]YTRANSNBR)
+      For (Char YBAN, Integer YTRNNO) From "5" Sql BNKTRFRY As [YLNK4]
+        FI += 1
+        If FI = 1 : PRETRN = [F:YLNK4]YTRNNO : PREBAN = [F:YLNK4]YBAN : Endif
+        If PRETRN <> 0 and PREBAN <> "" Then
+          If PRETRN = [F:YLNK4]YTRNNO and PREBAN <> [F:YLNK4]YBAN Then
+            ISBNKTRF = "Yes"
+          Endif
+        Endif
+      Next
+
+#TODO: Review and test
+      #Pricipal Bank account insert
+      Local Char YSRC(250)
+      #-- Loop Variables
+      Local Integer ISPRI : ISPRI = 0
+      Local Char VIEW_BAN(10) : VIEW_BAN  = ""
+      Local Char VIEW_ACC(10) : VIEW_ACC  = ""
+      Local Integer YTRANNO
+
+        #Get Prinicipal Bank
+        VIEW_BAN = [F:YBDT]YBAN #[F:YLNK3]NBAN
+        While ISPRI <> 2
+          Read [F:BAN]BAN0 = VIEW_BAN
+          #Is Principal
+          If [F:BAN]YBANPRNSTA = 2 Then
+            ISPRI = [F:BAN]YBANPRNSTA
+            VIEW_BAN = [F:BAN]BAN
+            VIEW_ACC = [F:BAN]TREACC
+          Elsif [F:BAN]YBANPRNSTA = 1 and [F:BAN]YELA = "" and [F:BAN]YELABAN = ""
+            YMSG = mess(23,6259,1)
+            YSRC = mess(22,6259,1)
+            YTRANNO = [F:YBDT]YTRANSNBR
+            Call ADDLIG_ERR(BATNBR,YTRANNO,YSRC,YLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+            ISPRI = 2
+            VIEW_BAN = "ERR"
+          Else
+            VIEW_BAN = [F:BAN]YELABAN
+          Endif
+        Wend
+        #Fail safe
+        If VIEW_BAN = "ERR" : Break : Endif
+
+        #Active Bank
+        Read [F:BAN]BAN0 = VIEW_BAN
+        If fstat = 0
+          If [F:BAN]YSTA <> 2
+            YMSG = mess(19,6259,1) #"Principal bank not active"
+            YSRC = mess(22,6259,1)
+            Call ADDLIG_ERR(BATNBR,YTRANNO,YSRC,YLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,VIEW_ACC,[F:YBDT]YLIGDES,YMSG)
+            Break
+          Endif
+        Endif
+
+        #Write Values
+        If ISBNKTRF = "Yes" and FI = 2 Then
+          YLIG = YLIG + 1
+          Read [F:YELA]YELA0 = LSTELA
+          If [F:YBDT]YCDT = 0 : YDEBT = [F:YBBD]YDEB : YCRED = 0 : Endif
+          If [F:YBDT]YDEB = 0 : YCRED = [F:YBBD]YCDT : YDEBT = 0 Endif
+
+          Call ADDLIG_SIM(BATNBR,YLIG,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&                  [F:YBDT]YDETDES,[F:YELA]YFCYPRO,[F:YELA]YCOAPRO,VIEW_ACC,[F:YBDT]YLIGDES,BLNKBPR,
+&                  BLNKBPR,YDEBT,YCRED,BLNKBPR,[F:YBDT]YREF,[F:YBDT]YFREF,BLNKBPR,BLNKBPR,
+&                  BLNKBPR,BLNKBPR,BLNKBPR,BLNKBPR,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,VIEW_BAN,
+&                  BLNKBPR,BLNKBPR,BLNKBPR,BLNKBPR,BLNKBPR)
+        Else
+          YMSG = mess(45,6259,1)
+          YSRC = mess(22,6259,1)
+          Call ADDLIG_ERR(BATNBR,YTRANNO,YSRC,YLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+        Endif
+    Endif
+
+  Next
+
+  If clalev([F:YBDT1]) = 0  : Close Local File  [F:YBDT]  : Endif
+  If clalev([F:YELA])  = 0  : Close Local File  [F:YELA] : Endif
+  If clalev([F:YBBD]) = 0 : Close Local File [F:YBBD]  : Endif
+  If clalev([F:GTE]) = 0  : Close Local File  [F:GTE]  : Endif
+  If clalev([F:OPP])  = 0 : Close Local File [F:OPP]   : Endif
+  If clalev([F:GAC])  = 0 : Close Local File [F:GAC]   : Endif
+
+
+End
+
+#---------------------------------------------------------------------------------
+# Additional Tax Line Add
+#---------------------------------------------------------------------------------
+Subprog TAX_LINE_ADD(BATNBR, LIGNO, REV)
+Variable Char BATNBR()
+Variable Integer LIGNO()
+Variable Char REV()
+
+If clalev([F:YBDT]) = 0  : Local File YBBDETAILTEM [YBDT]  : Endif
+If clalev([F:GAC]) = 0   : Local File GACCOUNT [GAC]  : Endif
+
+  Local Char VATQRY(250)(0..)
+  Local Char BLNKBPR(5)
+  Local Char YTAXACC(6)
+  Local Integer YDETLIG : [L]YDETLIG = LIGNO + 1
+  Local Decimal YDEB, YCDT
+  Local Char BLNKDIM(5), BLNKPJM(5)
+
+  Read [F:YBDT]YBDT1 = BATNBR;LIGNO
+  #Changes as per Richard 25/02/2019 - GST Changes
+  If [F:YBDT]YTAX <> "" and [F:YBDT]YAMTTAX > 0 and [F:YBDT]YGSTAMT <> 0
+    Read [F:GAC]GAC0 = [F:YBDT]YCOA;[F:YBDT]YACC
+    # Calculate Purchase or Sales
+    VATQRY(0) = "select G.ACC_0, G.ACC_1"
+    VATQRY(1) -= "From TABVAT V"
+    VATQRY(2) -= "INNER JOIN GACCCODE G on V.ACCCOD_0 = G.ACCCOD_0"
+    VATQRY(3) -= "where TYP_0 = 10"
+    VATQRY(4) -= "and V.LEG_0 = 'AUS' and G.COA_0 = '"+[F:YBDT]YCOA+"' and V.VAT_0 = '"+[F:YBDT]YTAX+"'"
+
+    For (Char SALACC, Char PURACC) From "5" Sql VATQRY As [YSQL]
+      If find([F:GAC]VATIPT,3,4,5) # Purchase
+        YTAXACC = [F:YSQL]PURACC
+      Else # Sales
+        YTAXACC = [F:YSQL]SALACC
+      Endif
+    Next
+    YDETDES = [F:YBDT]YDETDES #"Transaction line (GST) created from account"-[F:YBDT]YACC - Change as per Request RRL
+    YDEB = 0 : YCDT = 0
+    If [F:YBDT]YDEB = 0
+      YCDT = [F:YBDT]YGSTAMT
+    Elsif [F:YBDT]YCDT = 0
+      YDEB = [F:YBDT]YGSTAMT
+    Endif
+    If REV = "Y" # DR/CR Opposite
+    Call ADDLIG_SIM([F:YBDT]YBATNBR,[L]YDETLIG, [F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&                   YDETDES,[F:YBDT]YFCY,[F:YBDT]YCOA,YTAXACC,[F:YBDT]YLIGDES,BLNKBPR,
+&                   BLNKBPR,YCDT,YDEB,[F:YBDT]YTAX,[F:YBDT]YREF,BLNKDIM,BLNKPJM,BLNKDIM,
+&                   BLNKDIM,BLNKDIM,BLNKDIM,BLNKDIM,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN,
+&                   BLNKDIM,BLNKDIM,BLNKDIM,BLNKDIM,BLNKDIM)
+    Else
+    Call ADDLIG_SIM([F:YBDT]YBATNBR,[L]YDETLIG, [F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YTRANSNBR,
+&                   YDETDES,[F:YBDT]YFCY,[F:YBDT]YCOA,YTAXACC,[F:YBDT]YLIGDES,BLNKBPR,
+&                   BLNKBPR,YDEB,YCDT,[F:YBDT]YTAX,[F:YBDT]YREF,BLNKDIM,BLNKPJM,BLNKDIM,
+&                   BLNKDIM,BLNKDIM,BLNKDIM,BLNKDIM,[F:YBDT]YGSTAMT,[F:YBDT]YAMTTAX,[F:YBDT]YBAN,
+&                   BLNKDIM,BLNKDIM,BLNKDIM,BLNKDIM,BLNKDIM)
+  Endif
+
+    If clalev([F:YBBS]) = 0 : Close Local File [F:YBBS]  : Endif
+
+  Endif
+
+If clalev([F:YBDT]) = 0 : Close Local File [F:YBDT] : Endif
+If clalev([F:GAC]) = 0 : Close Local File [F:GAC] : Endif
+
+End
+
+#---------------------------------------------------------------------------------
+# Simulation Balance Check
+#---------------------------------------------------------------------------------
+Subprog SIM_BALANCE_CHECK(BATNBR)
+Variable Char BATNBR()
+
+  If clalev([F:YBBS])   = 0 : Local File YBBSIM [YBBS]    : Endif
+  Local Integer YMINTRN, YMAXTRN, YCURTRN
+
+  For [F:YBBS] Where YBATNBR = BATNBR
+    If YMINTRN = 0 : YMINTRN = [F:YBBS]YTRANSNBR : Endif
+    YMAXTRN = [F:YBBS]YTRANSNBR
+  Next
+
+  For YCURTRN = YMINTRN To YMAXTRN
+    Local Char QRY(250)(0..)
+    Local Char YSRC(250), YMESS(250),PARAM(25)
+    Local Integer PRM
+    QRY(0) = "SELECT YFCY_0, SUM(YDEB_0), SUM(YCDT_0) FROM YBBSIM"
+    QRY(1) -= "WHERE YBATNBR_0 = '"+BATNBR+"' and YTRANSNBR_0 = "+num$(YCURTRN)
+    QRY(2) -= "Group by YFCY_0"
+    For (Char TOTFCY, Decimal TOTDEB, Decimal TOTCDT) From "5" Sql QRY As [YSQL]
+      If [F:YSQL]TOTDEB <> [F:YSQL]TOTCDT
+        YSRC = "Generated from Simulation"
+        YMESS = "Balance does not match for site"-num$([F:YSQL]TOTFCY)-"in transaction"-num$(YCURTRN)
+        Call ADDLIG_ERR(BATNBR,YCURTRN,YSRC,PRM,PARAM,PARAM,PARAM,PARAM,PARAM,PARAM,YMESS)
+      Endif
+    Next
+  Next
+  If clalev([F:YBBS])   = 0 : Close Local File [F:YBBS]    : Endif
+End
+
+#---------------------------------------------------------------------------------
+# DFCX1-309 - Dimension Validations
+#---------------------------------------------------------------------------------
+Subprog EXE_DIE_VAL(BATNBR)
+Variable Char BATNBR()
+
+If clalev([F:YBDT]) = 0  : Local File YBBDETAILTEM [YBDT]  : Endif
+
+  Local Char QRY(250)(0..)
+  Local Integer I, YDLIG, YTRANNO
+  I = 0
+  Local Char DIE(10)(0..4)
+  Local Char CCE(10)(0..4)
+  Local Char COA(10), ACC(10)
+  Local Char YMSG(250), YSRC(250)
+
+  For [F:YBDT] Where YBATNBR = BATNBR
+    DIE(0) = [F:YBDT]YDIE0
+    DIE(1) = [F:YBDT]YDIE1
+    DIE(2) = [F:YBDT]YDIE2
+    DIE(3) = [F:YBDT]YDIE3
+    DIE(4) = [F:YBDT]YDIE4
+    CCE(0) = [F:YBDT]YCCE0
+    CCE(1) = [F:YBDT]YCCE1
+    CCE(2) = [F:YBDT]YCCE2
+    CCE(3) = [F:YBDT]YCCE3
+    CCE(4) = [F:YBDT]YCCE4
+    I = 0
+    YDLIG = [F:YBDT]YDETLIG
+    YTRANNO = [F:YBDT]YTRANSNBR
+    For I = 0 To 4
+      If CCE(I) <> ""
+        QRY(0) = "select ENAFLG_0,VLYSTR_0,VLYEND_0 from CACCE Where DIE_0 = '"+DIE(I)+"' and CCE_0 = '"+CCE(I)+"'"
+        For (Integer ENAFLG, Date VLYSTR ,Date VLYEND) From "5" Sql QRY As [YLNK]
+          #DFCX1-352 # Active Dimensions
+          If [F:YLNK]ENAFLG <> 2
+            YMSG = mess(37,6254,1)-"-"-CCE(I)
+            YSRC =  BATNBR+"-"+num$([F:YBDT]YDETLIG)
+            Call ADDLIG_ERR(BATNBR,YTRANNO,YSRC,YDLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+          Endif
+          #DFCX1-352 # Valid Date
+          If (num$([F:YLNK]VLYSTR) <> "00/00/0000" and [M:YBB0]YBATDAT < [F:YLNK]VLYSTR) or num$([F:YLNK]VLYEND) <> "00/00/0000" and [M:YBB0]YBATDAT > [F:YLNK]VLYEND Then
+            YMSG = mess(38,6254,1)-"-"-CCE(I)
+            YSRC =  BATNBR+"-"+num$([F:YBDT]YDETLIG)
+            Call ADDLIG_ERR(BATNBR,YTRANNO,YSRC,YDLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+          Endif
+        Next
+      Endif
+    Next
+  Next
+
+If clalev([F:YBDT]) = 0 : Close Local File [F:YBDT] : Endif
+
+End
+
+#---------------------------------------------------------------------------------
+# DFCX1-351 - Open Period Dates
+#---------------------------------------------------------------------------------
+Subprog EXE_PERIOD_VALID(BATNBR)
+Value Char BATNBR
+
+  Local Char YSRC(250), YMSG(250),PARAM(25), SQLQRY(250)(0..), FISYEAR(2)
+  Local Integer YDETLIG, I, YTRANNO
+  YSRC = "Generated from Simulation"
+  FISYEAR = num$(format$("D:YY",date$))
+  If clalev([F:YBBD]) = 0 : Local File YBBDETAIL [YBBD]  : Endif
+
+  For [F:YBDT] Where YBATNBR = BATNBR
+    YDETLIG = [F:YBDT]YDETLIG
+    YTRANNO = [F:YBDT]YTRANSNBR
+    SQLQRY(0) = "" : SQLQRY(1) = ""
+    SQLQRY(0)  = "select top 1 PERSTA_0 from PERIOD"
+    SQLQRY(1) -= "Where CPY_0 = '"+[F:YBDT]YCPY+"' and ('"+format$("D:YYYY[-]MM[-]DD",[M:YBB0]YBATDAT)+"' between PERSTR_0 and PEREND_0) and FIYNUM_0 = "+FISYEAR+" and LEDTYP_0 in (1,4)"
+    For (Integer PERSTA) From "5" Sql SQLQRY As [YLNK]
+      I += 1
+      If PERSTA = 1 Then
+        YMSG = "Business Batch Period is not open"
+        Call ADDLIG_ERR(BATNBR,YTRANNO,YSRC,YDETLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+      Elsif PERSTA = 3
+        YMSG = "Business Batch Period is closed"
+        Call ADDLIG_ERR(BATNBR,YTRANNO,YSRC,YDETLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+      Endif
+    Next
+    If I = 0 Then
+      YMSG = "GL Period does not exist"
+      Local Integer BLNKLIG
+      Local Char BLNKPRM(5)
+      Call ADDLIG_ERR(BATNBR,YTRANNO,YSRC,BLNKLIG,BLNKPRM,BLNKPRM,BLNKPRM,BLNKPRM,BLNKPRM,BLNKPRM,YMSG)
+      Break
+    Endif
+    SQLQRY(0) = "" : SQLQRY(1) = ""
+    SQLQRY(0)  = "select top 1 CPY_0 from PERIOD "
+    SQLQRY(1) -= "Where CPY_0 = '"+[F:YBDT]YCPY+"' and ('"+format$("D:YYYY[-]MM[-]DD",[M:YBB0]YBATDAT)+"' between PERSTR_0 and PEREND_0) and FIYNUM_0 = "+FISYEAR+" and LEDTYP_0 in (1,4)"
+    For (Char CPY) From "5" Sql SQLQRY As [YLNK]
+      If CPY = "" Then
+        YMSG = "Period not valid for company"-[F:YBDT]YCPY
+        Call ADDLIG_ERR(BATNBR,YTRANNO,YSRC,YDETLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+      Endif
+    Next
+  Next
+
+  If clalev([F:YBBD]) = 0 : Close Local File [F:YBBD] : Endif
+
+End
+
+#---------------------------------------------------------------------------------
+# DFCX1-358 - Restrictions
+#---------------------------------------------------------------------------------
+Subprog EXE_REST_VAL(BATNBR)
+Variable Char BATNBR()
+
+If clalev([F:YBBD]) = 0 : Local File YBBDETAIL [YBBD]  : Endif
+If clalev([F:GAC]) = 0 : Local File GACCOUNT  [GAC]  : Endif
+
+Local Char ACCQRY(250)(0..)
+Local Char CCEQRY(250)(0..)
+Local Char YSRC(250) : YSRC = "Generated on validation"
+Local Char YMSG(250)
+Local Integer CNT, DIECNT, I
+ACCCNT = 0
+DIECNT = 0
+Local Char DIE(10)(0..4)
+Local Char CCE(10)(0..4)
+Local Integer YDETLIG
+Local Integer YTRANNO
+
+For [F:YBDT] Where YBATNBR = BATNBR
+  YDETLIG = [F:YBDT]YDETLIG
+  YTRANNO = [F:YBDT]YTRANSNBR
+
+  #DFCX1-329 - Account Restrictions - START
+  Read [F:GAC]GAC0 = [F:YBDT]YCOA;[F:YBDT]YACC
+  Local Char ARQUERY(250)
+  Local Integer CNT : CNT = 0
+  If [F:GAC]FCY <> ""
+    If pat([F:GAC]FCY,"###") Then #Company 3 Numbers
+      ARQUERY = "select FCY_0 FROM FACGROUP Where CPY_0 = '"+[F:GAC]FCY+"'"
+    Elsif pat([F:GAC]FCY,"!*") Then #Group start with Char
+      ARQUERY = "select FCY_0 FROM FACGROUP Where CPY_0 = '"+[F:GAC]FCY+"'"
+    Elsif seg$([F:GAC]FCY,4,4) = "-" #and #Site pattern match
+      ARQUERY = "select FCY_0 FROM FACGROUP Where FCY_0 = '"+[F:GAC]FCY+"' and CPY_0 = '"+[M:YBB1]YCPY(nolign-1)+"'"
+    Endif
+    For (Char GACFCY) From "5" Sql ARQUERY As [YLNK2]
+      CNT += 1
+      If [F:YBDT]YFCY = [F:YLNK2]GACFCY Then
+        CNT += 1
+        Break
+      Else
+        CNT = -1
+      Endif
+    Next
+    If CNT = -1 or CNT = 0
+        YSRC = BATNBR-num$([L]YDETLIG)
+        YMSG = "Account is not available for selected site"
+        Call ADDLIG_ERR(BATNBR,YTRANNO,YSRC,[L]YDETLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+    Endif
+  Endif
+  #DFCX1-329 - Account - END
+
+  #Dimension Restrictions
+  DIE(0) = [F:YBDT]YDIE0
+  DIE(1) = [F:YBDT]YDIE1
+  DIE(2) = [F:YBDT]YDIE2
+  DIE(3) = [F:YBDT]YDIE3
+  DIE(4) = [F:YBDT]YDIE4
+  CCE(0) = [F:YBDT]YCCE0
+  CCE(1) = [F:YBDT]YCCE1
+  CCE(2) = [F:YBDT]YCCE2
+  CCE(3) = [F:YBDT]YCCE3
+  CCE(4) = [F:YBDT]YCCE4
+  I = 0
+  For I = 0 To 4
+    If CCE(I) <> ""
+      CCEQRY(0) = "" : CCEQRY(1) = "" : CCEQRY(2) = "" : CCEQRY(3) = "" : DIECNT = 0
+      CCEQRY(0) = "select C.FCY_0, F.FCY_0"
+      CCEQRY(1) -= "FROM CACCE C"
+      CCEQRY(2) -= "LEFT OUTER JOIN FACGROUP F ON C.FCY_0 = F.CPY_0"
+      CCEQRY(3) -= "WHERE C.CCE_0 = '"+CCE(I)+"' AND C.DIE_0 = '"+DIE(I)+"'"
+      For (Char FCYA, Char FCYB) From "5" Sql CCEQRY As [YCCQ]
+        If [F:YCCQ]FCYA = "" or [F:YCCQ]FCYB = [F:YBDT]YFCY or [F:YCCQ]FCYA = [F:YBDT]YFCY
+          DIECNT += 1
+        Endif
+      Next
+      If DIECNT = 0
+        YMSG = "Dimension"-DIE(I)+"("+CCE(I)+") restricted"
+        Call ADDLIG_ERR(BATNBR,YTRANNO,YSRC,YDETLIG,[F:YBDT]YFCY,[F:YBDT]YENTTYP,[F:YBDT]YJOU,[F:YBDT]YDETDES,[F:YBDT]YACC,[F:YBDT]YLIGDES,YMSG)
+        Break
+      Endif
+    Endif
+  Next
+
+Next
+
+If clalev([F:YBBD]) = 0 : Close Local File [F:YBBD] : Endif
+If clalev([F:GAC])  = 0 : Close Local File [F:GAC]  : Endif
+
+End
+
+
+#---------------------------------------------------------------------------------
+# DFCX1-358 - Simulation Lines Validtions
+#---------------------------------------------------------------------------------
+Subprog VALIDATE_LINES(BATNBR)
+Value Char BATNBR
+
+Local Char YSRC(250), YMSG(250)
+Local Integer YDETLIG, YTRANNO
+YSRC = mess(34,6259,1)
+
+If clalev([F:YBBS]) = 0 : Local File YBBSIM [YBBS]  : Endif
+If clalev([F:GAC]) = 0  : Local File GACCOUNT [GAC]   : Endif
+If clalev([F:GTE]) = 0  : Local File GTYPACCENT [GTE] : Endif
+If clalev([F:CPY]) = 0  : Local File COMPANY [CPY] : Endif
+If clalev([F:FCY]) = 0  : Local File FACILITY [FCY] : Endif
+If clalev([F:JOU]) = 0  : Local File GJOURNAL [JOU] : Endif
+If clalev([F:JST]) = 0  : Local File GAJOUSTA [JST] : Endif
+If clalev([F:CCE]) = 0  : Local File CACCE [CCE] : Endif
+
+Filter [F:YBBS] Where [F:YBBS]YBATNBR = BATNBR
+For [F:YBBS]
+  YDETLIG = [F:YBBS]YDETLIG
+  YTRANNO = [F:YBBS]YTRANSNBR
+  #GET COMPANY and SITE
+  Read [F:FCY]FCY0 = [F:YBBS]YFCY
+  Read [F:CPY]CPY0 = [F:FCY]LEGCPY
+
+  # JOURNAL TYPE MUST BE ACTIVE and BE A BUSINESS BATCH AND IN OPEN PERIOD
+  Read [F:JOU]JOU0 = [F:YBBS]YJOU
+  If [F:JOU]YBUSBAT <> 2 or [F:JOU]ENAFLG <> 2
+    If [F:JOU]YBUSBAT <> 2 : YMSG = mess(35,6259,1) : Endif #"Journal not flagged as Business Batch"
+    If [F:JOU]ENAFLG <> 2 : YMSG =  mess(36,6259,1) : Endif #"Journal not active"
+    Call ADDLIG_ERR(BATNBR,YTRANNO,YSRC,YDETLIG,[F:YBBS]YFCY,[F:YBBS]YENTTYP,[F:YBBS]YJOU,[F:YBBS]YDETDES,[F:YBBS]YACC,[F:YBBS]YLIGDES,YMSG)
+  Endif
+  Read [F:JST]JST0 = [F:FCY]LEGCPY;[F:YBBS]YJOU
+  If (num$([F:JST]OPGSTRDAT) <> "00/00/0000" and [M:YBB0]YBATDAT <= [F:JST]OPGSTRDAT) or (num$([F:JST]OPGENDDAT) <> "00/00/0000" and [M:YBB0]YBATDAT >= [F:JST]OPGENDDAT)
+    YMSG = mess(43,6259,1)
+    Call ADDLIG_ERR(BATNBR,YTRANNO,YSRC,YDETLIG,[F:YBBS]YFCY,[F:YBBS]YENTTYP,[F:YBBS]YJOU,[F:YBBS]YDETDES,[F:YBBS]YACC,[F:YBBS]YLIGDES,YMSG)
+  Endif
+
+  # THE ACCOUNT USED MUST BE A CONTROL ACCOUNT
+  Read [F:GAC]GAC0 = [F:YBBS]YCOA;[F:YBBS]YACC
+  If [F:GAC]ENAFLG <> 2 Then
+    # Write Error
+    YMSG = "The Account generated is not active"
+    Call ADDLIG_ERR(BATNBR,YTRANNO,YSRC,YDETLIG,[F:YBBS]YFCY,[F:YBBS]YENTTYP,[F:YBBS]YJOU,[F:YBBS]YDETDES,[F:YBBS]YACC,[F:YBBS]YLIGDES,YMSG)
+  Endif
+
+  # CTRL Field - THE ACCOUNT USED MUST BE A CONTROL ACCOUNT
+  If [F:YBBS]YCTRL <> "" Then
+    Read [F:GAC]GAC0 = [F:YBBS]YCOA;[F:YBBS]YACC
+    If [F:GAC]SAC <> 2 Then
+      # Write Error
+      YMSG = "The Control Account generated does not match the Account"
+      Call ADDLIG_ERR(BATNBR,YTRANNO,YSRC,YDETLIG,[F:YBBS]YFCY,[F:YBBS]YENTTYP,[F:YBBS]YJOU,[F:YBBS]YDETDES,[F:YBBS]YACC,[F:YBBS]YLIGDES,YMSG)
+    Endif
+  Endif
+
+  # BP Field - THE ACCOUNT USED MUST BE A CONTROL ACCOUNT
+  If [F:YBBS]YBP <> "" Then
+    Read [F:GAC]GAC0 = [F:YBBS]YCOA;[F:YBBS]YACC
+    If [F:GAC]SAC <> 2 Then
+      YMSG = "The BP generated does not match the Account"
+      Call ADDLIG_ERR(BATNBR,YTRANNO,YSRC,YDETLIG,[F:YBBS]YFCY,[F:YBBS]YENTTYP,[F:YBBS]YJOU,[F:YBBS]YDETDES,[F:YBBS]YACC,[F:YBBS]YLIGDES,YMSG)
+    Endif
+  Endif
+
+  # PROJECT Field - MUST USE A PROJECT ACCOUNT
+  If [F:YBBS]YPJT <> "" Then
+    Read [F:GAC]GAC0 = [F:YBBS]YCOA;[F:YBBS]YACC
+    If [F:GAC]YPJM <> 2 Then
+      YMSG = "The Project generated does not match the Account"
+      Call ADDLIG_ERR(BATNBR,YTRANNO,YSRC,YDETLIG,[F:YBBS]YFCY,[F:YBBS]YENTTYP,[F:YBBS]YJOU,[F:YBBS]YDETDES,[F:YBBS]YACC,[F:YBBS]YLIGDES,YMSG)
+    Endif
+    #Project must be open
+    If clalev([F:PIM]) = 0 : Local File PIMPL [PIM] : Endif
+      Read [F:PIM]PIM0 = [F:YBBS]YPJT
+      If [F:PIM]PBUSTATE <> 2
+        YMSG = mess(46,6254,1)
+      Call ADDLIG_ERR(BATNBR,YTRANNO,YSRC,YDETLIG,[F:YBBS]YFCY,[F:YBBS]YENTTYP,[F:YBBS]YJOU,[F:YBBS]YDETDES,[F:YBBS]YACC,[F:YBBS]YLIGDES,YMSG)
+      Endif
+    If clalev([F:PIM]) = 0 : Close Local File [F:PIM] : Endif
+  Endif
+
+  # ACCOUNT DATES
+  Read [F:GAC]GAC0 = [F:YBBS]YCOA;[F:YBBS]YACC
+    If (num$([F:GAC]VLYSTR) <> "00/00/0000" and [M:YBB0]YBATDAT <= [F:GAC]VLYSTR) or (num$([F:GAC]VLYEND) <> "00/00/0000" and [M:YBB0]YBATDAT >= [F:GTE]VLYEND)
+    YMSG = "Account validity dates not valid"
+    Call ADDLIG_ERR(BATNBR,YTRANNO,YSRC,YDETLIG,[F:YBBS]YFCY,[F:YBBS]YENTTYP,[F:YBBS]YJOU,[F:YBBS]YDETDES,[F:YBBS]YACC,[F:YBBS]YLIGDES,YMSG)
+  Endif
+
+  # COMPANY MUST BE ACTIVE
+  If [F:CPY]YCPYACT <> 2
+    YMSG = "Company not active"
+    Call ADDLIG_ERR(BATNBR,YTRANNO,YSRC,YDETLIG,[F:YBBS]YFCY,[F:YBBS]YENTTYP,[F:YBBS]YJOU,[F:YBBS]YDETDES,[F:YBBS]YACC,[F:YBBS]YLIGDES,YMSG)
+  Endif
+
+  # ACCOUNT MUST BE ACTIVE
+  Read [F:GAC]GAC0 = [F:YBBS]YCOA;[F:YBBS]YACC
+  If [F:GAC]ENAFLG <> 2
+    YMSG = "Account not active"
+    Call ADDLIG_ERR(BATNBR,YTRANNO,YSRC,YDETLIG,[F:YBBS]YFCY,[F:YBBS]YENTTYP,[F:YBBS]YJOU,[F:YBBS]YDETDES,[F:YBBS]YACC,[F:YBBS]YLIGDES,YMSG)
+  Endif
+Next
+Filter [F:YBBS]
+
+If clalev([F:YBBS]) = 0 : Close Local File [F:YBBS]  : Endif
+If clalev([F:GAC]) = 0  : Close Local File [F:GAC] : Endif
+If clalev([F:GTE]) = 0  : Close Local File [F:GTE] : Endif
+If clalev([F:CPY]) = 0  : Close Local File [F:CPY] : Endif
+If clalev([F:FCY]) = 0  : Close Local File [F:FCY] : Endif
+If clalev([F:JOU]) = 0  : Close Local File [F:JOU] : Endif
+If clalev([F:JST]) = 0  : Close Local File [F:JST] : Endif
+If clalev([F:CCE]) = 0  : Close Local File [F:CCE] : Endif
+
+End
+
+Subprog EXE_FCY_RESTRICTION(BATNBR)
+Variable Char BATNBR()
+
+  If clalev([F:YBBE]) = 0 : Local File YBBERR  [F:YBBE] : Endif
+  Local Integer I : I = 0
+  Local Integer N : N = 0
+  Local Char REQUEST(250)(0..)
+  Local Char YFNDFCY(10)(1..)
+  Local Char BLNK(5), SOURCE(50)
+  Local Integer YBLNKLIG : YBLNKLIG = 0
+  Local Char FCYQRY(250)(0..)
+
+  #Get the distinct number of sites for the batch
+  FCYQRY(0) = "Select distinct YFCY_0 from YBBSIM where YBATNBR_0 = '"+BATNBR+"'"
+  For (Char FCYVAL) From "5" Sql FCYQRY As [YFLNK]
+    I += 1
+    YFNDFCY(I) = [F:YFLNK]FCYVAL
+  Next
+  #Get the Auth Profile codes if they exist
+  REQUEST(0) = "SELECT G.FCY_0,F.FCYGRU_0"
+  REQUEST(1) -= "FROM AUTILIS U"
+  REQUEST(2) -= "LEFT OUTER JOIN AMETUTI X ON U.CODMET_0 = X.CODMET_0"
+  REQUEST(3) -= "LEFT OUTER JOIN AFCTPRF F ON U.PRFFCT_0 = F.PRFCOD_0 or X.PRFFCT_0 = F.PRFCOD_0"
+  REQUEST(4) -= "LEFT OUTER JOIN FACGROUP G ON F.FCYGRU_0 = G.CPY_0"
+  REQUEST(5) -= "LEFT OUTER JOIN FACILITY FC ON FC.FCY_0 = G.FCY_0"
+  REQUEST(6) -= "LEFT OUTER JOIN COMPANY C ON C.CPY_0 = FC.LEGCPY_0"
+  REQUEST(7) -= "WHERE U.USR_0 = '"+GUSER+"' AND F.FNC_0 = 'GESYBB' and  F.ACS_0 = 2"
+  #Check if user has auth profile linked
+  For (Char FCY, Char GRP) From "5" Sql REQUEST As [YAULNK]
+    N += 1
+  Next
+  #If Auth profile found, then check that the Sites are in the profile
+  If N <> 0
+    For Y = 1 To I
+      Local Integer FND : FND = 0
+      REQUEST(8) = ""
+      REQUEST(8) -= "and (G.FCY_0 = '"+YFNDFCY(Y)+"' or F.FCYGRU_0 = '"+YFNDFCY(Y)+"')"
+      For (Char FCY, Char GRP) From "5" Sql REQUEST As [YLNK]
+        FND = 1
+      Next
+      If FND = 0 Then
+        YMSG = "Site is not authorized for the current user"
+        SOURCE = "Site Restriction on Simulation"
+        Call ADDLIG_ERR(BATNBR,YBLNKLIG,SOURCE,YBLNKLIG,YFNDFCY(Y),BLNK,BLNK,BLNK,BLNK,BLNK,YMSG)
+      Endif
+    Next
+  Endif
+
+  If clalev([F:YBBE]) = 0 : Close Local File [F:YBBE] : Endif
+
+End
+
+#---------------------------------------------------------------------------------
+# Add Detail Temp Line for Current Batch number
+#---------------------------------------------------------------------------------
+Subprog ADD_DETAILTEMP()
+If clalev([F:YBDT]) = 0  : Local File YBBDETAILTEM [YBDT]  : Endif
+  For I = 0 To [M:YBB1]NBLIG - 1
+    nolign = I
+    [F:YBDT] = [M:YBB1]
+    [F:YBDT]YBATNBR = [M:YBB0]YBATNBR
+    [F:YBDT]YFCY = [M:YBB1]YFCY(I)
+    [F:YBDT]YENTTYP = [M:YBB1]YENTTYP(I)
+    [F:YBDT]YTRANSNBR = [M:YBB1]YTRANSNBR(I)
+    [F:YBDT]YJOU = [M:YBB1]YJOU(I)
+    [F:YBDT]YCPY = [M:YBB1]YCPY(I)
+    [F:YBDT]YACM = [M:YBB1]YACM(I)
+    [F:YBDT]YLED1 = [M:YBB1]YLED1(I)
+    [F:YBDT]YELA = [M:YBB1]YELA(I)
+    [F:YBDT]YCOA = [M:YBB1]YCOA(I)
+    [F:YBDT]YELA = [M:YBB1]YELA(I)
+    [F:YBDT]YBAN = [M:YBB1]YBAN(I)
+    [F:YBDT]YACC = [M:YBB1]YACC(I)
+    [F:YBDT]YLIGDES = [M:YBB1]YLIGDES(I)
+    [F:YBDT]YDETDES = [M:YBB1]YDETDES(I)
+    [F:YBDT]YCTRL = [M:YBB1]YCTRL(I)
+    [F:YBDT]YBP = [M:YBB1]YBP(I)
+    [F:YBDT]YDEB = [M:YBB1]YDEB(I)
+    [F:YBDT]YCDT = [M:YBB1]YCDT(I)
+    [F:YBDT]YTAX = [M:YBB1]YTAX(I)
+    [F:YBDT]YGSTAMT = [M:YBB1]YGSTAMT(I)
+    [F:YBDT]YAMTTAX = [M:YBB1]YAMTTAX(I)
+    [F:YBDT]YREF = [M:YBB1]YREF(I)
+    [F:YBDT]YFREF = [M:YBB1]YFREF(I)
+    [F:YBDT]YPJT = [M:YBB1]YPJT(I)
+    [F:YBDT]YDIE0 = [M:YBB1]YDIE0(I)
+    [F:YBDT]YCCE0 = [M:YBB1]YCCE0(I)
+    [F:YBDT]YDIE1 = [M:YBB1]YDIE1(I)
+    [F:YBDT]YCCE1 = [M:YBB1]YCCE1(I)
+    [F:YBDT]YDIE2 = [M:YBB1]YDIE2(I)
+    [F:YBDT]YCCE2 = [M:YBB1]YCCE2(I)
+    [F:YBDT]YDIE3 = [M:YBB1]YDIE3(I)
+    [F:YBDT]YCCE3 = [M:YBB1]YCCE3(I)
+    [F:YBDT]YDIE4 = [M:YBB1]YDIE4(I)
+    [F:YBDT]YCCE4 = [M:YBB1]YCCE4(I)
+    [F:YBDT]YBATTYP = [M:YBB1]YBATTYP(I)
+    [F:YBDT]YGSTINC = [M:YBB1]YGSTINC(I)
+    [F:YBDT]YDETLIG = [M:YBB1]YDETLIG(I)
+    [F:YBDT]YRESVAL = "Validating"
+     Write [F:YBDT]
+  Next
+  Close Local File [YBDT]
+End
+
+#---------------------------------------------------------------------------------
+# Simulation Line Write
+#---------------------------------------------------------------------------------
+Subprog ADDLIG_SIM(YBATNBR,YDETLIG, YENTTYP,YJOU,YTRANSNBR,YDETDES,YFCY,YCOA,YACC,YLIGDES,YCTRL,YBP,YDEB,YCDT,
+&                  YTAX,YREF,YFREF,YPJT,YCCE0,YCCE1,YCCE2,YCCE3,YCCE4,YGSTAMT,YAMTTAX,YBAN,YDIE0,YDIE1,YDIE2,YDIE3,YDIE4)
+Variable Char YBATNBR()
+Variable Integer YDETLIG()
+Variable Char YENTTYP()
+Variable Char YJOU()
+Variable Integer YTRANSNBR()
+Variable Char YDETDES()
+Variable Char YFCY()
+Variable Char YCOA()
+Variable Char YACC()
+Variable Char YLIGDES()
+Variable Char YCTRL()
+Variable Char YBP()
+Variable Decimal YDEB()
+Variable Decimal YCDT()
+Variable Char YTAX()
+Variable Char YREF()
+Variable Char YFREF()
+Variable Char YPJT()
+Variable Char YCCE0()
+Variable Char YCCE1()
+Variable Char YCCE2()
+Variable Char YCCE3()
+Variable Char YCCE4()
+Variable Decimal YGSTAMT
+Variable Decimal YAMTTAX
+Variable Char YBAN()
+Variable Char YDIE0()
+Variable Char YDIE1()
+Variable Char YDIE2()
+Variable Char YDIE3()
+Variable Char YDIE4()
+
+Local Integer YLIG : YLIG = YDETLIG
+
+  If clalev([F:YBBS]) = 0 : Local File YBBSIM [YBBS]  : Endif
+  Raz [F:YBBS]
+  [F:YBBS]YBATNBR = YBATNBR
+  [F:YBBS]YDETLIG = YDETLIG
+  [F:YBBS]YENTTYP = YENTTYP
+  [F:YBBS]YJOU = YJOU
+  [F:YBBS]YTRANSNBR = YTRANSNBR
+  [F:YBBS]YDETDES = YDETDES
+  [F:YBBS]YFCY = YFCY
+  [F:YBBS]YCOA = YCOA
+  [F:YBBS]YACC = YACC
+  [F:YBBS]YLIGDES = YLIGDES
+  [F:YBBS]YCTRL = YCTRL
+  [F:YBBS]YBP = YBP
+  [F:YBBS]YDEB = YDEB
+  [F:YBBS]YCDT = YCDT
+  [F:YBBS]YTAX = YTAX
+  [F:YBBS]YREF = YREF
+  [F:YBBS]YFREF = YFREF
+  [F:YBBS]YPJT = YPJT
+  [F:YBBS]YCCE0 = YCCE0
+  [F:YBBS]YCCE1 = YCCE1
+  [F:YBBS]YCCE2 = YCCE2
+  [F:YBBS]YCCE3 = YCCE3
+  [F:YBBS]YCCE4 = YCCE4
+  [F:YBBS]YGSTAMT = YGSTAMT
+  [F:YBBS]YAMTTAX = YAMTTAX
+  [F:YBBS]YLIG = YLIG
+  [F:YBBS]YBAN = YBAN
+  [F:YBBS]YDIE0 = YDIE0
+  [F:YBBS]YDIE1 = YDIE1
+  [F:YBBS]YDIE2 = YDIE2
+  [F:YBBS]YDIE3 = YDIE3
+  [F:YBBS]YDIE4 = YDIE4
+  Write [F:YBBS]
+  Close Local File [YBBS]
+
+End
+
+#---------------------------------------------------------------------------------
+# Error Line Write
+#---------------------------------------------------------------------------------
+Subprog ADDLIG_ERR(YBATNBR,YTRANSNBR,YSRC,YDETLIG,YFCY,YENTTYP,YJOU,YDETDES,YACC,YLIGDES,YMESS)
+Variable Char YBATNBR()
+Variable Integer YTRANSNBR()
+Variable Char YSRC()
+Variable Integer YDETLIG()
+Variable Char YFCY()
+Variable Char YENTTYP()
+Variable Char YJOU()
+Variable Char YDETDES()
+Variable Char YACC()
+Variable Char YLIGDES()
+Variable Char YMESS()
+Local Integer YLIG : YLIG = YDETLIG
+
+  If clalev([F:YBBE]) = 0 : Local File YBBERR [YBBE]  : Endif
+  Raz [F:YBBE]
+  [F:YBBE]YBATNBR = YBATNBR
+  [F:YBBE]YTRANSNBR = YTRANSNBR
+  [F:YBBE]YSRC = YSRC
+  [F:YBBE]YDETLIG = YDETLIG
+  [F:YBBE]YFCY = YFCY
+  [F:YBBE]YENTTYP = YENTTYP
+  [F:YBBE]YJOU = YJOU
+  [F:YBBE]YDETDES = YDETDES
+  [F:YBBE]YACC = YACC
+  [F:YBBE]YLIGDES = YLIGDES
+  [F:YBBE]YMESS = YMESS
+  [F:YBBE]YLIG = YLIG
+  Write [F:YBBE]
+  Close Local File [YBBE]
+
+End
+
+**********
+7,"TRT","SPEYBBVAL",""
+2,"ATB","YBBERR",""
+3,"ATB",YBBERR
+4,"ABRFIC",0,"YBBE"
+4,"ASDCLE",0,""
+4,"AUDBI",0,1
+4,"AUDCLE",0,""
+4,"AUDCRE",0,1
+4,"AUDDEL",0,1
+4,"AUDSDA",0,1
+4,"AUDUPD",0,1
+4,"AUDWRK",0,1
+4,"CODACT",0,"YICBS"
+4,"CODFIC",0,"YBBERR"
+4,"COLDEC",0,""
+4,"COLFMT",0,""
+4,"COLLNG",0,""
+4,"CRE",0,1
+4,"CREDAT",0,20180828
+4,"CREDATTIM",0,"2018-08-28T03:03:00Z"
+4,"CREUSR",0,"DH"
+4,"FLG130",0,1
+4,"FLGLEG",0,0
+4,"GENTRA",0,1
+4,"INTIT",0,""
+4,"INTITC",0,""
+5,"INTITFIC",0,"Business batch errors","ENG",100735,""
+5,"INTITFIC",0,"","***"
+4,"MODULE",0,9
+4,"NBENREG",0,0
+4,"OPT",0,0
+4,"SECURE",0,1
+4,"STA",0,0
+4,"SYMBOL",0,""
+4,"TYPDBA",0,3
+4,"TYPDLV",0,1
+4,"TYPFIC",0,1
+4,"UPDDAT",0,20190426
+4,"UPDDATTIM",0,"2019-04-26T03:00:49Z"
+4,"UPDFLG",0,0
+4,"UPDUSR",0,"DH"
+4,"ZERO",0,1
+6,"ATB"
+3,"ATZ",AUUID
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YBBERR"
+4,"CODTYP",0,"AUUID"
+4,"CODZONE",0,"AUUID"
+4,"CREDATTIM",0,"2019-04-26T03:00:49Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,0
+5,"NOABREG",0,"Single identifier","ENG",42348,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Single identifier","ENG",42348,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Single identifier","ENG",42348,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,14
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-04-26T03:00:49Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",CREDATTIM
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YBBERR"
+4,"CODTYP",0,"ADATIM"
+4,"CODZONE",0,"CREDATTIM"
+4,"CREDATTIM",0,"2019-04-26T03:00:49Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,0
+5,"NOABREG",0,"Date time","ENG",48732,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Date time","ENG",48732,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Date time","ENG",48732,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,12
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-04-26T03:00:49Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",CREUSR
+4,"ANNUL",0,4
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YBBERR"
+4,"CODTYP",0,"AUS"
+4,"CODZONE",0,"CREUSR"
+4,"CREDATTIM",0,"2019-04-26T03:00:49Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"AUTILIS"
+4,"LONG",0,0
+5,"NOABREG",0,"User","ENG",250,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"User","ENG",250,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"User","ENG",250,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,15
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-04-26T03:00:49Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,1
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",UPDDATTIM
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YBBERR"
+4,"CODTYP",0,"ADATIM"
+4,"CODZONE",0,"UPDDATTIM"
+4,"CREDATTIM",0,"2019-04-26T03:00:49Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,0
+5,"NOABREG",0,"Date time","ENG",48732,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Date time","ENG",48732,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Date time","ENG",48732,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,13
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-04-26T03:00:49Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",UPDUSR
+4,"ANNUL",0,4
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YBBERR"
+4,"CODTYP",0,"AUS"
+4,"CODZONE",0,"UPDUSR"
+4,"CREDATTIM",0,"2019-04-26T03:00:49Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"AUTILIS"
+4,"LONG",0,0
+5,"NOABREG",0,"User","ENG",250,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"User","ENG",250,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"User","ENG",250,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,16
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-04-26T03:00:49Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,1
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YACC
+4,"ANNUL",0,1
+4,"CHPLEG",0,1
+4,"CODACT",0,""
+4,"CODFIC",0,"YBBERR"
+4,"CODTYP",0,"GAC"
+4,"CODZONE",0,"YACC"
+4,"CREDATTIM",0,"2019-04-26T03:00:49Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,"YCOA;YACC"
+4,"LIEN",0,"GACCOUNT"
+4,"LONG",0,0
+5,"NOABREG",0,"Acc.","ENG",100730,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Account","ENG",3956,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"GL account","ENG",34884,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,8
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-04-26T03:00:49Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,1
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YBATNBR
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YBBERR"
+4,"CODTYP",0,"YBBN"
+4,"CODZONE",0,"YBATNBR"
+4,"CREDATTIM",0,"2019-04-26T03:00:49Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,0
+5,"NOABREG",0,"Business Batch number","ENG",100724,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Business Batch number","ENG",100724,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Business Batch number","ENG",100724,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,1
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-04-26T03:00:49Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YDETDES
+4,"ANNUL",0,1
+4,"CHPLEG",0,1
+4,"CODACT",0,""
+4,"CODFIC",0,"YBBERR"
+4,"CODTYP",0,"A"
+4,"CODZONE",0,"YDETDES"
+4,"CREDATTIM",0,"2019-04-26T03:00:49Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,100
+5,"NOABREG",0,"Description","ENG",12402,"Descriptive text"
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Description","ENG",12402,"Descriptive text"
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Description","ENG",12402,"Descriptive text"
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,7
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-04-26T03:00:49Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YDETLIG
+4,"ANNUL",0,1
+4,"CHPLEG",0,1
+4,"CODACT",0,""
+4,"CODFIC",0,"YBBERR"
+4,"CODTYP",0,"ABS"
+4,"CODZONE",0,"YDETLIG"
+4,"CREDATTIM",0,"2019-04-26T03:00:49Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,0
+5,"NOABREG",0,"Line number","ENG",28682,"Invalid text - Do not use"
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Line number","ENG",28682,"Invalid text - Do not use"
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Line number","ENG",28682,"Invalid text - Do not use"
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,3
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-04-26T03:00:49Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YENTTYP
+4,"ANNUL",0,1
+4,"CHPLEG",0,1
+4,"CODACT",0,""
+4,"CODFIC",0,"YBBERR"
+4,"CODTYP",0,"GTE"
+4,"CODZONE",0,"YENTTYP"
+4,"CREDATTIM",0,"2019-04-26T03:00:49Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,"YENTTYP;[V]GSUPCLE"
+4,"LIEN",0,"GTYPACCENT"
+4,"LONG",0,0
+5,"NOABREG",0,"Entry type","ENG",4969,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Entry type","ENG",4969,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Entry type","ENG",4969,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,5
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-04-26T03:00:49Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YFCY
+4,"ANNUL",0,1
+4,"CHPLEG",0,1
+4,"CODACT",0,""
+4,"CODFIC",0,"YBBERR"
+4,"CODTYP",0,"FCY"
+4,"CODZONE",0,"YFCY"
+4,"CREDATTIM",0,"2019-04-26T03:00:49Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"FACILITY"
+4,"LONG",0,0
+5,"NOABREG",0,"Site","ENG",1344,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Site","ENG",1344,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Site","ENG",1344,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,4
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-04-26T03:00:49Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YJOU
+4,"ANNUL",0,1
+4,"CHPLEG",0,1
+4,"CODACT",0,""
+4,"CODFIC",0,"YBBERR"
+4,"CODTYP",0,"JOU"
+4,"CODZONE",0,"YJOU"
+4,"CREDATTIM",0,"2019-04-26T03:00:49Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,"YJOU;[V]GSUPCLE"
+4,"LIEN",0,"GJOURNAL"
+4,"LONG",0,0
+5,"NOABREG",0,"Journal","ENG",4314,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Journal","ENG",4314,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Journal","ENG",4314,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,6
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-04-26T03:00:49Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YLIG
+4,"ANNUL",0,1
+4,"CHPLEG",0,1
+4,"CODACT",0,""
+4,"CODFIC",0,"YBBERR"
+4,"CODTYP",0,"ABS"
+4,"CODZONE",0,"YLIG"
+4,"CREDATTIM",0,"2019-04-26T03:00:49Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,0
+5,"NOABREG",0,"","ENG",0,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"","ENG",0,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"","ENG",0,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,11
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-04-26T03:00:49Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YLIGDES
+4,"ANNUL",0,1
+4,"CHPLEG",0,1
+4,"CODACT",0,""
+4,"CODFIC",0,"YBBERR"
+4,"CODTYP",0,"A"
+4,"CODZONE",0,"YLIGDES"
+4,"CREDATTIM",0,"2019-04-26T03:00:49Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,100
+5,"NOABREG",0,"Line des.","ENG",100731,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Line description","ENG",7474,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Line description","ENG",7474,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,9
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-04-26T03:00:49Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YMESS
+4,"ANNUL",0,1
+4,"CHPLEG",0,1
+4,"CODACT",0,""
+4,"CODFIC",0,"YBBERR"
+4,"CODTYP",0,"A"
+4,"CODZONE",0,"YMESS"
+4,"CREDATTIM",0,"2019-04-26T03:00:49Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,250
+5,"NOABREG",0,"Message","ENG",15545,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Message","ENG",15545,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Message","ENG",15545,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,10
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-04-26T03:00:49Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YSRC
+4,"ANNUL",0,1
+4,"CHPLEG",0,1
+4,"CODACT",0,""
+4,"CODFIC",0,"YBBERR"
+4,"CODTYP",0,"A"
+4,"CODZONE",0,"YSRC"
+4,"CREDATTIM",0,"2019-04-26T03:00:49Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,50
+5,"NOABREG",0,"Source","ENG",169,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Source","ENG",169,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Source","ENG",169,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,2
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-04-26T03:00:49Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YTRANSNBR
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YBBERR"
+4,"CODTYP",0,"L"
+4,"CODZONE",0,"YTRANSNBR"
+4,"CREDATTIM",0,"2019-04-26T03:00:49Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,4
+5,"NOABREG",0,"","ENG",0,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Transaction number","ENG",33822,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Transaction number","ENG",33822,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,17
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-04-26T03:00:49Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATI",YBBE0
+4,"CODACT",0,""
+4,"CODFIC",0,"YBBERR"
+4,"CODIND",0,"YBBE0"
+4,"CREDATTIM",0,"2019-04-26T03:00:49Z"
+4,"CREUSR",0,"DH"
+4,"DESCRIPT",0,"YBATNBR+YLIG"
+4,"HOMONYM",0,2
+4,"NIVDEC",0,0
+4,"NUMLIG",0,1
+4,"ORDIND",0,1
+4,"UPDDATTIM",0,"2019-04-26T03:00:49Z"
+4,"UPDUSR",0,"DH"
+6,"ATI"
+3,"ATI",YBBE1
+4,"CODACT",0,""
+4,"CODFIC",0,"YBBERR"
+4,"CODIND",0,"YBBE1"
+4,"CREDATTIM",0,"2019-04-26T03:00:49Z"
+4,"CREUSR",0,"DH"
+4,"DESCRIPT",0,"YBATNBR"
+4,"HOMONYM",0,2
+4,"NIVDEC",0,0
+4,"NUMLIG",0,2
+4,"ORDIND",0,1
+4,"UPDDATTIM",0,"2019-04-26T03:00:49Z"
+4,"UPDUSR",0,"DH"
+6,"ATI"
+7,"ATB","YBBERR",""
+2,"AMK","YBUSBAT3",""
+3,"AMK",YBUSBAT3
+4,"ABRMSK",0,"YBB3"
+4,"ACTBLOC",0,""
+4,"ACTBLOC",1,""
+4,"ACTBLOC",2,""
+4,"ACTBLOC",3,""
+4,"ACTBLOC",4,""
+4,"ACTBLOC",5,""
+4,"ACTBLOC",6,""
+4,"ACTBLOC",7,""
+4,"ACTBLOC",8,""
+4,"ACTBLOC",9,""
+4,"ACTBLOC",10,""
+4,"ACTBLOC",11,""
+4,"ACTBLOC",12,""
+4,"ACTBLOC",13,""
+4,"ACTBLOC",14,""
+4,"BASPAG",0,"YLIG"
+4,"BASPAG",1,""
+4,"BASPAG",2,""
+4,"BASPAG",3,""
+4,"BASPAG",4,""
+4,"BASPAG",5,""
+4,"BASPAG",6,""
+4,"BASPAG",7,""
+4,"BASPAG",8,""
+4,"BASPAG",9,""
+4,"BASPAG",10,""
+4,"BASPAG",11,""
+4,"BASPAG",12,""
+4,"BASPAG",13,""
+4,"BASPAG",14,""
+4,"BLOCACT1",0,""
+4,"BLOCACT1",1,""
+4,"BLOCACT1",2,""
+4,"BLOCACT1",3,""
+4,"BLOCACT1",4,""
+4,"BLOCACT1",5,""
+4,"BLOCACT1",6,""
+4,"BLOCACT1",7,""
+4,"BLOCACT1",8,""
+4,"BLOCACT1",9,""
+4,"BLOCACT1",10,""
+4,"BLOCACT1",11,""
+4,"BLOCACT1",12,""
+4,"BLOCACT1",13,""
+4,"BLOCACT1",14,""
+4,"BLOCAFFD",0,1
+4,"BLOCAFFD",1,0
+4,"BLOCAFFD",2,0
+4,"BLOCAFFD",3,0
+4,"BLOCAFFD",4,0
+4,"BLOCAFFD",5,0
+4,"BLOCAFFD",6,0
+4,"BLOCAFFD",7,0
+4,"BLOCAFFD",8,0
+4,"BLOCAFFD",9,0
+4,"BLOCAFFD",10,0
+4,"BLOCAFFD",11,0
+4,"BLOCAFFD",12,0
+4,"BLOCAFFD",13,0
+4,"BLOCAFFD",14,0
+4,"BLOCGDEF",0,1
+4,"BLOCGDEF",1,0
+4,"BLOCGDEF",2,0
+4,"BLOCGDEF",3,0
+4,"BLOCGDEF",4,0
+4,"BLOCGDEF",5,0
+4,"BLOCGDEF",6,0
+4,"BLOCGDEF",7,0
+4,"BLOCGDEF",8,0
+4,"BLOCGDEF",9,0
+4,"BLOCGDEF",10,0
+4,"BLOCGDEF",11,0
+4,"BLOCGDEF",12,0
+4,"BLOCGDEF",13,0
+4,"BLOCGDEF",14,0
+4,"BLOCLIEN1",0,""
+4,"BLOCLIEN1",1,""
+4,"BLOCLIEN1",2,""
+4,"BLOCLIEN1",3,""
+4,"BLOCLIEN1",4,""
+4,"BLOCLIEN1",5,""
+4,"BLOCLIEN1",6,""
+4,"BLOCLIEN1",7,""
+4,"BLOCLIEN1",8,""
+4,"BLOCLIEN1",9,""
+4,"BLOCLIEN1",10,""
+4,"BLOCLIEN1",11,""
+4,"BLOCLIEN1",12,""
+4,"BLOCLIEN1",13,""
+4,"BLOCLIEN1",14,""
+4,"BLOCLIEN2",0,""
+4,"BLOCLIEN2",1,""
+4,"BLOCLIEN2",2,""
+4,"BLOCLIEN2",3,""
+4,"BLOCLIEN2",4,""
+4,"BLOCLIEN2",5,""
+4,"BLOCLIEN2",6,""
+4,"BLOCLIEN2",7,""
+4,"BLOCLIEN2",8,""
+4,"BLOCLIEN2",9,""
+4,"BLOCLIEN2",10,""
+4,"BLOCLIEN2",11,""
+4,"BLOCLIEN2",12,""
+4,"BLOCLIEN2",13,""
+4,"BLOCLIEN2",14,""
+4,"BLOCLIEN3",0,""
+4,"BLOCLIEN3",1,""
+4,"BLOCLIEN3",2,""
+4,"BLOCLIEN3",3,""
+4,"BLOCLIEN3",4,""
+4,"BLOCLIEN3",5,""
+4,"BLOCLIEN3",6,""
+4,"BLOCLIEN3",7,""
+4,"BLOCLIEN3",8,""
+4,"BLOCLIEN3",9,""
+4,"BLOCLIEN3",10,""
+4,"BLOCLIEN3",11,""
+4,"BLOCLIEN3",12,""
+4,"BLOCLIEN3",13,""
+4,"BLOCLIEN3",14,""
+4,"BLOCPAR1",0,""
+4,"BLOCPAR1",1,""
+4,"BLOCPAR1",2,""
+4,"BLOCPAR1",3,""
+4,"BLOCPAR1",4,""
+4,"BLOCPAR1",5,""
+4,"BLOCPAR1",6,""
+4,"BLOCPAR1",7,""
+4,"BLOCPAR1",8,""
+4,"BLOCPAR1",9,""
+4,"BLOCPAR1",10,""
+4,"BLOCPAR1",11,""
+4,"BLOCPAR1",12,""
+4,"BLOCPAR1",13,""
+4,"BLOCPAR1",14,""
+4,"BLOCPAR2",0,""
+4,"BLOCPAR2",1,""
+4,"BLOCPAR2",2,""
+4,"BLOCPAR2",3,""
+4,"BLOCPAR2",4,""
+4,"BLOCPAR2",5,""
+4,"BLOCPAR2",6,""
+4,"BLOCPAR2",7,""
+4,"BLOCPAR2",8,""
+4,"BLOCPAR2",9,""
+4,"BLOCPAR2",10,""
+4,"BLOCPAR2",11,""
+4,"BLOCPAR2",12,""
+4,"BLOCPAR2",13,""
+4,"BLOCPAR2",14,""
+4,"BLOCPOSG",0,1
+4,"BLOCPOSG",1,0
+4,"BLOCPOSG",2,0
+4,"BLOCPOSG",3,0
+4,"BLOCPOSG",4,0
+4,"BLOCPOSG",5,0
+4,"BLOCPOSG",6,0
+4,"BLOCPOSG",7,0
+4,"BLOCPOSG",8,0
+4,"BLOCPOSG",9,0
+4,"BLOCPOSG",10,0
+4,"BLOCPOSG",11,0
+4,"BLOCPOSG",12,0
+4,"BLOCPOSG",13,0
+4,"BLOCPOSG",14,0
+4,"BLOCREPD",0,1
+4,"BLOCREPD",1,0
+4,"BLOCREPD",2,0
+4,"BLOCREPD",3,0
+4,"BLOCREPD",4,0
+4,"BLOCREPD",5,0
+4,"BLOCREPD",6,0
+4,"BLOCREPD",7,0
+4,"BLOCREPD",8,0
+4,"BLOCREPD",9,0
+4,"BLOCREPD",10,0
+4,"BLOCREPD",11,0
+4,"BLOCREPD",12,0
+4,"BLOCREPD",13,0
+4,"BLOCREPD",14,0
+4,"BLOCTYPG",0,1
+4,"BLOCTYPG",1,0
+4,"BLOCTYPG",2,0
+4,"BLOCTYPG",3,0
+4,"BLOCTYPG",4,0
+4,"BLOCTYPG",5,0
+4,"BLOCTYPG",6,0
+4,"BLOCTYPG",7,0
+4,"BLOCTYPG",8,0
+4,"BLOCTYPG",9,0
+4,"BLOCTYPG",10,0
+4,"BLOCTYPG",11,0
+4,"BLOCTYPG",12,0
+4,"BLOCTYPG",13,0
+4,"BLOCTYPG",14,0
+4,"BLOCTYPT",0,1
+4,"BLOCTYPT",1,0
+4,"BLOCTYPT",2,0
+4,"BLOCTYPT",3,0
+4,"BLOCTYPT",4,0
+4,"BLOCTYPT",5,0
+4,"BLOCTYPT",6,0
+4,"BLOCTYPT",7,0
+4,"BLOCTYPT",8,0
+4,"BLOCTYPT",9,0
+4,"BLOCTYPT",10,0
+4,"BLOCTYPT",11,0
+4,"BLOCTYPT",12,0
+4,"BLOCTYPT",13,0
+4,"BLOCTYPT",14,0
+4,"BLOCVIEW",0,""
+4,"BLOCVIEW",1,""
+4,"BLOCVIEW",2,""
+4,"BLOCVIEW",3,""
+4,"BLOCVIEW",4,""
+4,"BLOCVIEW",5,""
+4,"BLOCVIEW",6,""
+4,"BLOCVIEW",7,""
+4,"BLOCVIEW",8,""
+4,"BLOCVIEW",9,""
+4,"BLOCVIEW",10,""
+4,"BLOCVIEW",11,""
+4,"BLOCVIEW",12,""
+4,"BLOCVIEW",13,""
+4,"BLOCVIEW",14,""
+4,"CODACT",0,"YICBS"
+4,"CODMSK",0,"YBUSBAT3"
+4,"COLBLOC",0,1
+4,"COLBLOC",1,0
+4,"COLBLOC",2,0
+4,"COLBLOC",3,0
+4,"COLBLOC",4,0
+4,"COLBLOC",5,0
+4,"COLBLOC",6,0
+4,"COLBLOC",7,0
+4,"COLBLOC",8,0
+4,"COLBLOC",9,0
+4,"COLBLOC",10,0
+4,"COLBLOC",11,0
+4,"COLBLOC",12,0
+4,"COLBLOC",13,0
+4,"COLBLOC",14,0
+4,"CREDAT",0,20180828
+4,"CREDATTIM",0,"2018-08-28T03:57:27Z"
+4,"CREUSR",0,"DH"
+4,"DETBLC",0,0
+4,"DETBLC",1,0
+4,"DETBLC",2,0
+4,"DETBLC",3,0
+4,"DETBLC",4,0
+4,"DETBLC",5,0
+4,"DETBLC",6,0
+4,"DETBLC",7,0
+4,"DETBLC",8,0
+4,"DETBLC",9,0
+4,"DETBLC",10,0
+4,"DETBLC",11,0
+4,"DETBLC",12,0
+4,"DETBLC",13,0
+4,"DETBLC",14,0
+4,"FICREF",0,"YBBERR"
+4,"FICREF",1,""
+4,"FICREF",2,""
+4,"FICREF",3,""
+4,"FICREF",4,""
+4,"HTBLOC",0,0
+4,"HTBLOC",1,0
+4,"HTBLOC",2,0
+4,"HTBLOC",3,0
+4,"HTBLOC",4,0
+4,"HTBLOC",5,0
+4,"HTBLOC",6,0
+4,"HTBLOC",7,0
+4,"HTBLOC",8,0
+4,"HTBLOC",9,0
+4,"HTBLOC",10,0
+4,"HTBLOC",11,0
+4,"HTBLOC",12,0
+4,"HTBLOC",13,0
+4,"HTBLOC",14,0
+4,"INTBLOC",0,""
+4,"INTBLOC",1,""
+4,"INTBLOC",2,""
+4,"INTBLOC",3,""
+4,"INTBLOC",4,""
+4,"INTBLOC",5,""
+4,"INTBLOC",6,""
+4,"INTBLOC",7,""
+4,"INTBLOC",8,""
+4,"INTBLOC",9,""
+4,"INTBLOC",10,""
+4,"INTBLOC",11,""
+4,"INTBLOC",12,""
+4,"INTBLOC",13,""
+4,"INTBLOC",14,""
+5,"INTMSK",0,"Business batch","ENG",100736,""
+5,"INTMSK",0,"","***"
+4,"LGBLOC",0,0
+4,"LGBLOC",1,0
+4,"LGBLOC",2,0
+4,"LGBLOC",3,0
+4,"LGBLOC",4,0
+4,"LGBLOC",5,0
+4,"LGBLOC",6,0
+4,"LGBLOC",7,0
+4,"LGBLOC",8,0
+4,"LGBLOC",9,0
+4,"LGBLOC",10,0
+4,"LGBLOC",11,0
+4,"LGBLOC",12,0
+4,"LGBLOC",13,0
+4,"LGBLOC",14,0
+4,"LINBLOC",0,1
+4,"LINBLOC",1,0
+4,"LINBLOC",2,0
+4,"LINBLOC",3,0
+4,"LINBLOC",4,0
+4,"LINBLOC",5,0
+4,"LINBLOC",6,0
+4,"LINBLOC",7,0
+4,"LINBLOC",8,0
+4,"LINBLOC",9,0
+4,"LINBLOC",10,0
+4,"LINBLOC",11,0
+4,"LINBLOC",12,0
+4,"LINBLOC",13,0
+4,"LINBLOC",14,0
+4,"LNGLIB",0,0
+4,"LNGLIB",1,0
+4,"LNGLIB",2,0
+4,"LNGLIB",3,0
+4,"LNGLIB",4,0
+4,"LNGLIB",5,0
+4,"LNGLIB",6,0
+4,"LNGLIB",7,0
+4,"LNGLIB",8,0
+4,"LNGLIB",9,0
+4,"LNGLIB",10,0
+4,"LNGLIB",11,0
+4,"LNGLIB",12,0
+4,"LNGLIB",13,0
+4,"LNGLIB",14,0
+4,"MDL",0,1
+4,"MODULE",0,9
+4,"NBBLOC",0,1
+4,"NBFIC",0,1
+4,"NBLIGT",0,999
+4,"NBLIGT",1,0
+4,"NBLIGT",2,0
+4,"NBLIGT",3,0
+4,"NBLIGT",4,0
+4,"NBLIGT",5,0
+4,"NBLIGT",6,0
+4,"NBLIGT",7,0
+4,"NBLIGT",8,0
+4,"NBLIGT",9,0
+4,"NBLIGT",10,0
+4,"NBLIGT",11,0
+4,"NBLIGT",12,0
+4,"NBLIGT",13,0
+4,"NBLIGT",14,0
+4,"NBRCOL",0,74
+4,"NBRLIG",0,25
+4,"OPTION",0,"KARID"
+4,"OPTION",1,""
+4,"OPTION",2,""
+4,"OPTION",3,""
+4,"OPTION",4,""
+4,"OPTION",5,""
+4,"OPTION",6,""
+4,"OPTION",7,""
+4,"OPTION",8,""
+4,"OPTION",9,""
+4,"OPTION",10,""
+4,"OPTION",11,""
+4,"OPTION",12,""
+4,"OPTION",13,""
+4,"OPTION",14,""
+4,"POSBLOC",0,1.1
+4,"POSBLOC",1,0
+4,"POSBLOC",2,0
+4,"POSBLOC",3,0
+4,"POSBLOC",4,0
+4,"POSBLOC",5,0
+4,"POSBLOC",6,0
+4,"POSBLOC",7,0
+4,"POSBLOC",8,0
+4,"POSBLOC",9,0
+4,"POSBLOC",10,0
+4,"POSBLOC",11,0
+4,"POSBLOC",12,0
+4,"POSBLOC",13,0
+4,"POSBLOC",14,0
+4,"RANG",0,5
+4,"RANG",1,0
+4,"RANG",2,0
+4,"RANG",3,0
+4,"RANG",4,0
+4,"RANG",5,0
+4,"RANG",6,0
+4,"RANG",7,0
+4,"RANG",8,0
+4,"RANG",9,0
+4,"RANG",10,0
+4,"RANG",11,0
+4,"RANG",12,0
+4,"RANG",13,0
+4,"RANG",14,0
+4,"STYBLOC",0,""
+4,"STYBLOC",1,""
+4,"STYBLOC",2,""
+4,"STYBLOC",3,""
+4,"STYBLOC",4,""
+4,"STYBLOC",5,""
+4,"STYBLOC",6,""
+4,"STYBLOC",7,""
+4,"STYBLOC",8,""
+4,"STYBLOC",9,""
+4,"STYBLOC",10,""
+4,"STYBLOC",11,""
+4,"STYBLOC",12,""
+4,"STYBLOC",13,""
+4,"STYBLOC",14,""
+5,"TITBLOC",0,"","ENG",0,""
+5,"TITBLOC",0,"","***"
+5,"TITBLOC",1,"","ENG",0,""
+5,"TITBLOC",1,"","***"
+5,"TITBLOC",2,"","ENG",0,""
+5,"TITBLOC",2,"","***"
+5,"TITBLOC",3,"","ENG",0,""
+5,"TITBLOC",3,"","***"
+5,"TITBLOC",4,"","ENG",0,""
+5,"TITBLOC",4,"","***"
+5,"TITBLOC",5,"","ENG",0,""
+5,"TITBLOC",5,"","***"
+5,"TITBLOC",6,"","ENG",0,""
+5,"TITBLOC",6,"","***"
+5,"TITBLOC",7,"","ENG",0,""
+5,"TITBLOC",7,"","***"
+5,"TITBLOC",8,"","ENG",0,""
+5,"TITBLOC",8,"","***"
+5,"TITBLOC",9,"","ENG",0,""
+5,"TITBLOC",9,"","***"
+5,"TITBLOC",10,"","ENG",0,""
+5,"TITBLOC",10,"","***"
+5,"TITBLOC",11,"","ENG",0,""
+5,"TITBLOC",11,"","***"
+5,"TITBLOC",12,"","ENG",0,""
+5,"TITBLOC",12,"","***"
+5,"TITBLOC",13,"","ENG",0,""
+5,"TITBLOC",13,"","***"
+5,"TITBLOC",14,"","ENG",0,""
+5,"TITBLOC",14,"","***"
+4,"TRTSPE",0,"SPEYBB"
+4,"TRTSPV",0,""
+4,"TRTSTD",0,"SUBYBB"
+4,"TYPBLOC",0,1
+4,"TYPBLOC",1,0
+4,"TYPBLOC",2,0
+4,"TYPBLOC",3,0
+4,"TYPBLOC",4,0
+4,"TYPBLOC",5,0
+4,"TYPBLOC",6,0
+4,"TYPBLOC",7,0
+4,"TYPBLOC",8,0
+4,"TYPBLOC",9,0
+4,"TYPBLOC",10,0
+4,"TYPBLOC",11,0
+4,"TYPBLOC",12,0
+4,"TYPBLOC",13,0
+4,"TYPBLOC",14,0
+4,"TYPMSK",0,1
+4,"UPDDAT",0,20190426
+4,"UPDDATTIM",0,"2019-04-26T03:01:46Z"
+4,"UPDFLG",0,0
+4,"UPDUSR",0,"DH"
+6,"AMK"
+3,"AMZ","YLIG"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YBUSBAT3"
+4,"CODTYP",0,"ABS"
+4,"CODZON",0,"YLIG"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-04-26T03:01:46Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,0
+4,"INTEVAL",0,""
+5,"INTIT",0,"","ENG",0,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,1
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,1
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,1
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,1
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-04-26T03:01:46Z"
+4,"UPDUSR",0,"DH"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YBATNBR"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YBUSBAT3"
+4,"CODTYP",0,"YBBN"
+4,"CODZON",0,"YBATNBR"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-04-26T03:01:46Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,999
+4,"INTEVAL",0,""
+5,"INTIT",0,"Business Batch number","ENG",100724,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,2
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,2
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,3
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,1
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-04-26T03:01:46Z"
+4,"UPDUSR",0,"DH"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YSRC"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YBUSBAT3"
+4,"CODTYP",0,"A"
+4,"CODZON",0,"YSRC"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-04-26T03:01:46Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,999
+4,"INTEVAL",0,""
+5,"INTIT",0,"Source","ENG",169,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,50
+4,"MODE",0,1
+4,"NOLIB",0,0
+4,"NOZONE",0,3
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,3
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-04-26T03:01:46Z"
+4,"UPDUSR",0,"DH"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YTRANSNBR"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YBUSBAT3"
+4,"CODTYP",0,"L"
+4,"CODZON",0,"YTRANSNBR"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-04-26T03:01:46Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,999
+4,"INTEVAL",0,""
+5,"INTIT",0,"Transaction number","ENG",33822,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,4
+4,"MODE",0,1
+4,"NOLIB",0,0
+4,"NOZONE",0,4
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,4
+4,"OBLIG",0,1
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-04-26T03:01:46Z"
+4,"UPDUSR",0,"DH"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YDETLIG"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YBUSBAT3"
+4,"CODTYP",0,"ABS"
+4,"CODZON",0,"YDETLIG"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-04-26T03:01:46Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,999
+4,"INTEVAL",0,""
+5,"INTIT",0,"Line number","ENG",28682,"Invalid text - Do not use"
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,1
+4,"NOLIB",0,0
+4,"NOZONE",0,5
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,4
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-04-26T03:01:46Z"
+4,"UPDUSR",0,"DH"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YFCY"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YBUSBAT3"
+4,"CODTYP",0,"FCY"
+4,"CODZON",0,"YFCY"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-04-26T03:01:46Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,999
+4,"INTEVAL",0,""
+5,"INTIT",0,"Site","ENG",1344,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,1
+4,"LONG",0,0
+4,"MODE",0,1
+4,"NOLIB",0,0
+4,"NOZONE",0,6
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,5
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-04-26T03:01:46Z"
+4,"UPDUSR",0,"DH"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YENTTYP"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YBUSBAT3"
+4,"CODTYP",0,"GTE"
+4,"CODZON",0,"YENTTYP"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-04-26T03:01:46Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,999
+4,"INTEVAL",0,""
+5,"INTIT",0,"Entry type","ENG",4969,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,1
+4,"LONG",0,0
+4,"MODE",0,1
+4,"NOLIB",0,0
+4,"NOZONE",0,7
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,6
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-04-26T03:01:46Z"
+4,"UPDUSR",0,"DH"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMP","YENTTYP"
+4,"CODAFF",0,"YBUSBAT3"
+4,"CODPAR",0,"GROUPE"
+4,"CODZON",0,"YENTTYP"
+4,"CREDATTIM",0,"2018-08-28T03:56:21Z"
+4,"CREUSR",0,"DH"
+4,"TYPAFF",0,1
+4,"UPDDATTIM",0,"2018-08-28T03:56:21Z"
+4,"UPDUSR",0,"DH"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP","YENTTYP"
+4,"CODAFF",0,"YBUSBAT3"
+4,"CODPAR",0,"LEDTYP"
+4,"CODZON",0,"YENTTYP"
+4,"CREDATTIM",0,"2018-08-28T03:56:21Z"
+4,"CREUSR",0,"DH"
+4,"TYPAFF",0,1
+4,"UPDDATTIM",0,"2018-08-28T03:56:21Z"
+4,"UPDUSR",0,"DH"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP","YENTTYP"
+4,"CODAFF",0,"YBUSBAT3"
+4,"CODPAR",0,"LEG"
+4,"CODZON",0,"YENTTYP"
+4,"CREDATTIM",0,"2018-08-28T03:56:21Z"
+4,"CREUSR",0,"DH"
+4,"TYPAFF",0,1
+4,"UPDDATTIM",0,"2018-08-28T03:56:21Z"
+4,"UPDUSR",0,"DH"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMZ","YJOU"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YBUSBAT3"
+4,"CODTYP",0,"JOU"
+4,"CODZON",0,"YJOU"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-04-26T03:01:46Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,999
+4,"INTEVAL",0,""
+5,"INTIT",0,"Journal","ENG",4314,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,1
+4,"LONG",0,0
+4,"MODE",0,1
+4,"NOLIB",0,0
+4,"NOZONE",0,8
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,7
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-04-26T03:01:46Z"
+4,"UPDUSR",0,"DH"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMP","YJOU"
+4,"CODAFF",0,"YBUSBAT3"
+4,"CODPAR",0,"GROUPE"
+4,"CODZON",0,"YJOU"
+4,"CREDATTIM",0,"2018-08-28T03:56:21Z"
+4,"CREUSR",0,"DH"
+4,"TYPAFF",0,1
+4,"UPDDATTIM",0,"2018-08-28T03:56:21Z"
+4,"UPDUSR",0,"DH"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP","YJOU"
+4,"CODAFF",0,"YBUSBAT3"
+4,"CODPAR",0,"LEG"
+4,"CODZON",0,"YJOU"
+4,"CREDATTIM",0,"2018-08-28T03:56:21Z"
+4,"CREUSR",0,"DH"
+4,"TYPAFF",0,1
+4,"UPDDATTIM",0,"2018-08-28T03:56:21Z"
+4,"UPDUSR",0,"DH"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMZ","YDETDES"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YBUSBAT3"
+4,"CODTYP",0,"A"
+4,"CODZON",0,"YDETDES"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-04-26T03:01:46Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,999
+4,"INTEVAL",0,""
+5,"INTIT",0,"Description","ENG",12402,"Descriptive text"
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,100
+4,"MODE",0,1
+4,"NOLIB",0,0
+4,"NOZONE",0,9
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,8
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-04-26T03:01:46Z"
+4,"UPDUSR",0,"DH"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YACC"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YBUSBAT3"
+4,"CODTYP",0,"GAC"
+4,"CODZON",0,"YACC"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-04-26T03:01:46Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,999
+4,"INTEVAL",0,""
+5,"INTIT",0,"Account","ENG",3956,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,1
+4,"LONG",0,0
+4,"MODE",0,1
+4,"NOLIB",0,0
+4,"NOZONE",0,10
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,9
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-04-26T03:01:46Z"
+4,"UPDUSR",0,"DH"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMP","YACC"
+4,"CODAFF",0,"YBUSBAT3"
+4,"CODPAR",0,"GAC"
+4,"CODZON",0,"YACC"
+4,"CREDATTIM",0,"2018-08-28T03:56:21Z"
+4,"CREUSR",0,"DH"
+4,"TYPAFF",0,1
+4,"UPDDATTIM",0,"2018-08-28T03:56:21Z"
+4,"UPDUSR",0,"DH"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMZ","YLIGDES"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YBUSBAT3"
+4,"CODTYP",0,"A"
+4,"CODZON",0,"YLIGDES"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-04-26T03:01:46Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,999
+4,"INTEVAL",0,""
+5,"INTIT",0,"Line description","ENG",7474,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,100
+4,"MODE",0,1
+4,"NOLIB",0,0
+4,"NOZONE",0,11
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,10
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-04-26T03:01:46Z"
+4,"UPDUSR",0,"DH"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YMESS"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YBUSBAT3"
+4,"CODTYP",0,"A"
+4,"CODZON",0,"YMESS"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-04-26T03:01:46Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,999
+4,"INTEVAL",0,""
+5,"INTIT",0,"Message","ENG",15545,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,250
+4,"MODE",0,1
+4,"NOLIB",0,0
+4,"NOZONE",0,12
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,11
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-04-26T03:01:46Z"
+4,"UPDUSR",0,"DH"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+7,"AMK","YBUSBAT3",""
+2,"ACLA","YBBT","Business batch"
+3,"ACLA",YBBT
+4,"ACCSTR",0,""
+4,"ACTTRT",0,""
+4,"ACTTRT",1,""
+4,"ACTTRT",2,""
+4,"ACTTRT",3,""
+4,"ACTTRT",4,""
+4,"ACTTRT",5,""
+4,"ACTTRT",6,""
+4,"ACTTRT",7,""
+4,"ACTTRT",8,""
+4,"ACTTRT",9,""
+4,"ACTTRT",10,""
+4,"ACTTRT",11,""
+4,"ACTTRT",12,""
+4,"ACTTRT",13,""
+4,"ACTTRT",14,""
+4,"ACTTRT",15,""
+4,"ACTTRT",16,""
+4,"ACTTRT",17,""
+4,"ACTTRT",18,""
+4,"ACTTRT",19,""
+4,"CODACT",0,"YICBS"
+4,"CODCLA",0,"YBBT"
+4,"CODTRT",0,"YBBT_CSPE"
+4,"CODTRT",1,""
+4,"CODTRT",2,""
+4,"CODTRT",3,""
+4,"CODTRT",4,""
+4,"CODTRT",5,""
+4,"CODTRT",6,""
+4,"CODTRT",7,""
+4,"CODTRT",8,""
+4,"CODTRT",9,""
+4,"CODTRT",10,""
+4,"CODTRT",11,""
+4,"CODTRT",12,""
+4,"CODTRT",13,""
+4,"CODTRT",14,""
+4,"CODTRT",15,""
+4,"CODTRT",16,""
+4,"CODTRT",17,""
+4,"CODTRT",18,""
+4,"CODTRT",19,""
+4,"CPYSTR",0,""
+4,"CREDATTIM",0,"2018-08-28T03:15:43Z"
+4,"CREUSR",0,"DH"
+4,"FCYSTR",0,"YBATFCY"
+4,"FLGACTX",0,0
+4,"FLGBUFFER",0,1
+4,"FLGCONSULT",0,1
+4,"FLGCREF",0,2
+4,"FLGDREF",0,2
+4,"FLGRREF",0,2
+4,"FLGSEARCH",0,1
+4,"FLGSYSTEM",0,0
+4,"FLGTR",0,2
+4,"FLGUREF",0,2
+4,"FLTREF",0,""
+4,"INDREF",0,"YBBH0"
+5,"INTCLA",0,"Business batch","ENG",100736,""
+5,"INTCLA",0,"","***"
+4,"KEYINT",0,"YBATNBR"
+4,"LEGSTR",0,""
+4,"LNKOBJ",0,""
+4,"MODULE",0,9
+4,"NBRTRT",0,1
+4,"RANTRT",0,1100
+4,"RANTRT",1,0
+4,"RANTRT",2,0
+4,"RANTRT",3,0
+4,"RANTRT",4,0
+4,"RANTRT",5,0
+4,"RANTRT",6,0
+4,"RANTRT",7,0
+4,"RANTRT",8,0
+4,"RANTRT",9,0
+4,"RANTRT",10,0
+4,"RANTRT",11,0
+4,"RANTRT",12,0
+4,"RANTRT",13,0
+4,"RANTRT",14,0
+4,"RANTRT",15,0
+4,"RANTRT",16,0
+4,"RANTRT",17,0
+4,"RANTRT",18,0
+4,"RANTRT",19,0
+4,"RAW",0,0
+4,"TABREF",0,"YBBHEADER"
+4,"TYPCLA",0,2
+4,"TYPTRT",0,3
+4,"TYPTRT",1,0
+4,"TYPTRT",2,0
+4,"TYPTRT",3,0
+4,"TYPTRT",4,0
+4,"TYPTRT",5,0
+4,"TYPTRT",6,0
+4,"TYPTRT",7,0
+4,"TYPTRT",8,0
+4,"TYPTRT",9,0
+4,"TYPTRT",10,0
+4,"TYPTRT",11,0
+4,"TYPTRT",12,0
+4,"TYPTRT",13,0
+4,"TYPTRT",14,0
+4,"TYPTRT",15,0
+4,"TYPTRT",16,0
+4,"TYPTRT",17,0
+4,"TYPTRT",18,0
+4,"TYPTRT",19,0
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDFLG",0,0
+4,"UPDUSR",0,"DH"
+6,"ACLA"
+3,"ACLAC","YBBD"
+4,"ACTCOL",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODCOL",0,"YBBD"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLGAPDCOL",0,2
+4,"FLGINSCOL",0,2
+4,"FLGSUPCOL",0,2
+4,"FLGTRICOL",0,2
+5,"INTCOL",0,"Business batch details","ENG",100729,""
+5,"INTCOL",0,"","***"
+4,"MAXCOL",0,0
+4,"MINCOL",0,1
+4,"PROCOL",0,""
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAC"
+3,"ACLAF","AUUID"
+4,"ACS",0,""
+4,"ACTFLD",0,""
+4,"CATSEARCH",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODCTL",0,""
+4,"CODTYP",0,"AUUID"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"AUUID"
+4,"FLDGRP",0,""
+4,"FLDSEARCH",0,1
+4,"FLGACCGET",0,1
+4,"INTEVAL",0,""
+5,"INTFLD",0,"Single identifier","ENG",42348,""
+5,"INTFLD",0,"","***"
+5,"INTSHTFLD",0,"Single identifier","ENG",42348,""
+5,"INTSHTFLD",0,"","***"
+4,"LNKCLA",0,""
+4,"LOBCNT",0,""
+4,"LOBFLD",0,""
+4,"LOBTAB",0,""
+4,"LONG",0,0
+4,"NOLIB",0,0
+4,"NUMFLD",0,140
+4,"NUMLIG",0,14
+4,"OBLIG",0,1
+4,"TABCONT",0,""
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAF"
+3,"ACLAF","CREDATTIM"
+4,"ACS",0,""
+4,"ACTFLD",0,""
+4,"CATSEARCH",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODCTL",0,""
+4,"CODTYP",0,"ADATIM"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"CREDATTIM"
+4,"FLDGRP",0,""
+4,"FLDSEARCH",0,1
+4,"FLGACCGET",0,1
+4,"INTEVAL",0,""
+5,"INTFLD",0,"Date time","ENG",48732,""
+5,"INTFLD",0,"","***"
+5,"INTSHTFLD",0,"Date time","ENG",48732,""
+5,"INTSHTFLD",0,"","***"
+4,"LNKCLA",0,""
+4,"LOBCNT",0,""
+4,"LOBFLD",0,""
+4,"LOBTAB",0,""
+4,"LONG",0,0
+4,"NOLIB",0,0
+4,"NUMFLD",0,90
+4,"NUMLIG",0,9
+4,"OBLIG",0,1
+4,"TABCONT",0,""
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAF"
+3,"ACLAF","CREUSR"
+4,"ACS",0,""
+4,"ACTFLD",0,""
+4,"CATSEARCH",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODCTL",0,""
+4,"CODTYP",0,"AUS"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"CREUSR"
+4,"FLDGRP",0,""
+4,"FLDSEARCH",0,1
+4,"FLGACCGET",0,1
+4,"INTEVAL",0,""
+5,"INTFLD",0,"User","ENG",250,""
+5,"INTFLD",0,"","***"
+5,"INTSHTFLD",0,"User","ENG",250,""
+5,"INTSHTFLD",0,"","***"
+4,"LNKCLA",0,""
+4,"LOBCNT",0,""
+4,"LOBFLD",0,""
+4,"LOBTAB",0,""
+4,"LONG",0,0
+4,"NOLIB",0,0
+4,"NUMFLD",0,110
+4,"NUMLIG",0,11
+4,"OBLIG",0,1
+4,"TABCONT",0,""
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAF"
+3,"ACLFP","CREUSR"
+4,"ADRVAL",0,2
+4,"AWMAJTYP",0,0
+4,"CODCLA",0,"YBBT"
+4,"CODPAR",0,"USR"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"CREUSR"
+4,"NUMPAR",0,1
+4,"TYPINT",0,7
+4,"TYPKEY",0,2
+4,"TYPPAR",0,1
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+4,"VALEUR",0,"CREUSR"
+6,"ACLFP"
+3,"ACLAF","UPDDATTIM"
+4,"ACS",0,""
+4,"ACTFLD",0,""
+4,"CATSEARCH",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODCTL",0,""
+4,"CODTYP",0,"ADATIM"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"UPDDATTIM"
+4,"FLDGRP",0,""
+4,"FLDSEARCH",0,1
+4,"FLGACCGET",0,1
+4,"INTEVAL",0,""
+5,"INTFLD",0,"Date time","ENG",48732,""
+5,"INTFLD",0,"","***"
+5,"INTSHTFLD",0,"Date time","ENG",48732,""
+5,"INTSHTFLD",0,"","***"
+4,"LNKCLA",0,""
+4,"LOBCNT",0,""
+4,"LOBFLD",0,""
+4,"LOBTAB",0,""
+4,"LONG",0,0
+4,"NOLIB",0,0
+4,"NUMFLD",0,100
+4,"NUMLIG",0,10
+4,"OBLIG",0,1
+4,"TABCONT",0,""
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAF"
+3,"ACLAF","UPDUSR"
+4,"ACS",0,""
+4,"ACTFLD",0,""
+4,"CATSEARCH",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODCTL",0,""
+4,"CODTYP",0,"AUS"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"UPDUSR"
+4,"FLDGRP",0,""
+4,"FLDSEARCH",0,1
+4,"FLGACCGET",0,1
+4,"INTEVAL",0,""
+5,"INTFLD",0,"User","ENG",250,""
+5,"INTFLD",0,"","***"
+5,"INTSHTFLD",0,"User","ENG",250,""
+5,"INTSHTFLD",0,"","***"
+4,"LNKCLA",0,""
+4,"LOBCNT",0,""
+4,"LOBFLD",0,""
+4,"LOBTAB",0,""
+4,"LONG",0,0
+4,"NOLIB",0,0
+4,"NUMFLD",0,120
+4,"NUMLIG",0,12
+4,"OBLIG",0,1
+4,"TABCONT",0,""
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAF"
+3,"ACLFP","UPDUSR"
+4,"ADRVAL",0,2
+4,"AWMAJTYP",0,0
+4,"CODCLA",0,"YBBT"
+4,"CODPAR",0,"USR"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"UPDUSR"
+4,"NUMPAR",0,1
+4,"TYPINT",0,7
+4,"TYPKEY",0,2
+4,"TYPPAR",0,1
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+4,"VALEUR",0,"UPDUSR"
+6,"ACLFP"
+3,"ACLAF","YBATCAT"
+4,"ACS",0,""
+4,"ACTFLD",0,""
+4,"CATSEARCH",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODCTL",0,""
+4,"CODTYP",0,"M"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"YBATCAT"
+4,"FLDGRP",0,""
+4,"FLDSEARCH",0,1
+4,"FLGACCGET",0,1
+4,"INTEVAL",0,""
+5,"INTFLD",0,"Category","ENG",707,""
+5,"INTFLD",0,"","***"
+5,"INTSHTFLD",0,"Category","ENG",707,""
+5,"INTSHTFLD",0,"","***"
+4,"LNKCLA",0,""
+4,"LOBCNT",0,""
+4,"LOBFLD",0,""
+4,"LOBTAB",0,""
+4,"LONG",0,15
+4,"NOLIB",0,6253
+4,"NUMFLD",0,70
+4,"NUMLIG",0,7
+4,"OBLIG",0,1
+4,"TABCONT",0,""
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAF"
+3,"ACLAF","YBATDAT"
+4,"ACS",0,""
+4,"ACTFLD",0,""
+4,"CATSEARCH",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODCTL",0,""
+4,"CODTYP",0,"D"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"YBATDAT"
+4,"FLDGRP",0,""
+4,"FLDSEARCH",0,1
+4,"FLGACCGET",0,1
+4,"INTEVAL",0,""
+5,"INTFLD",0,"Batch date","ENG",100726,""
+5,"INTFLD",0,"","***"
+5,"INTSHTFLD",0,"Batch date","ENG",100726,""
+5,"INTSHTFLD",0,"","***"
+4,"LNKCLA",0,""
+4,"LOBCNT",0,""
+4,"LOBFLD",0,""
+4,"LOBTAB",0,""
+4,"LONG",0,0
+4,"NOLIB",0,0
+4,"NUMFLD",0,40
+4,"NUMLIG",0,4
+4,"OBLIG",0,1
+4,"TABCONT",0,""
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAF"
+3,"ACLAF","YBATDES"
+4,"ACS",0,""
+4,"ACTFLD",0,""
+4,"CATSEARCH",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODCTL",0,""
+4,"CODTYP",0,"A"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"YBATDES"
+4,"FLDGRP",0,""
+4,"FLDSEARCH",0,1
+4,"FLGACCGET",0,1
+4,"INTEVAL",0,""
+5,"INTFLD",0,"Batch description","ENG",100725,""
+5,"INTFLD",0,"","***"
+5,"INTSHTFLD",0,"Batch description","ENG",100725,""
+5,"INTSHTFLD",0,"","***"
+4,"LNKCLA",0,""
+4,"LOBCNT",0,""
+4,"LOBFLD",0,""
+4,"LOBTAB",0,""
+4,"LONG",0,100
+4,"NOLIB",0,0
+4,"NUMFLD",0,30
+4,"NUMLIG",0,3
+4,"OBLIG",0,1
+4,"TABCONT",0,""
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAF"
+3,"ACLAF","YBATFCY"
+4,"ACS",0,""
+4,"ACTFLD",0,""
+4,"CATSEARCH",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODCTL",0,""
+4,"CODTYP",0,"FCY"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"YBATFCY"
+4,"FLDGRP",0,""
+4,"FLDSEARCH",0,2
+4,"FLGACCGET",0,1
+4,"INTEVAL",0,""
+5,"INTFLD",0,"Site","ENG",1344,""
+5,"INTFLD",0,"","***"
+5,"INTSHTFLD",0,"Site","ENG",1344,""
+5,"INTSHTFLD",0,"","***"
+4,"LNKCLA",0,""
+4,"LOBCNT",0,""
+4,"LOBFLD",0,""
+4,"LOBTAB",0,""
+4,"LONG",0,0
+4,"NOLIB",0,0
+4,"NUMFLD",0,10
+4,"NUMLIG",0,1
+4,"OBLIG",0,1
+4,"TABCONT",0,""
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAF"
+3,"ACLFP","YBATFCY"
+4,"ADRVAL",0,2
+4,"AWMAJTYP",0,0
+4,"CODCLA",0,"YBBT"
+4,"CODPAR",0,"AFILTER"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"YBATFCY"
+4,"NUMPAR",0,1
+4,"TYPINT",0,7
+4,"TYPKEY",0,1
+4,"TYPPAR",0,1
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+4,"VALEUR",0,""
+6,"ACLFP"
+3,"ACLFP","YBATFCY"
+4,"ADRVAL",0,2
+4,"AWMAJTYP",0,0
+4,"CODCLA",0,"YBBT"
+4,"CODPAR",0,"FCY"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"YBATFCY"
+4,"NUMPAR",0,3
+4,"TYPINT",0,7
+4,"TYPKEY",0,1
+4,"TYPPAR",0,1
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+4,"VALEUR",0,"YBATFCY"
+6,"ACLFP"
+3,"ACLFP","YBATFCY"
+4,"ADRVAL",0,2
+4,"AWMAJTYP",0,0
+4,"CODCLA",0,"YBBT"
+4,"CODPAR",0,"FCY"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"YBATFCY"
+4,"NUMPAR",0,2
+4,"TYPINT",0,7
+4,"TYPKEY",0,2
+4,"TYPPAR",0,1
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+4,"VALEUR",0,"YBATFCY"
+6,"ACLFP"
+3,"ACLAF","YBATNBR"
+4,"ACS",0,""
+4,"ACTFLD",0,""
+4,"CATSEARCH",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODCTL",0,""
+4,"CODTYP",0,"A"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"YBATNBR"
+4,"FLDGRP",0,""
+4,"FLDSEARCH",0,2
+4,"FLGACCGET",0,1
+4,"INTEVAL",0,""
+5,"INTFLD",0,"Business Batch number","ENG",100724,""
+5,"INTFLD",0,"","***"
+5,"INTSHTFLD",0,"Business Batch number","ENG",100724,""
+5,"INTSHTFLD",0,"","***"
+4,"LNKCLA",0,""
+4,"LOBCNT",0,""
+4,"LOBFLD",0,""
+4,"LOBTAB",0,""
+4,"LONG",0,30
+4,"NOLIB",0,0
+4,"NUMFLD",0,20
+4,"NUMLIG",0,2
+4,"OBLIG",0,1
+4,"TABCONT",0,""
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAF"
+3,"ACLAF","YBATNBRTEMP"
+4,"ACS",0,""
+4,"ACTFLD",0,""
+4,"CATSEARCH",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODCTL",0,""
+4,"CODTYP",0,"A"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"YBATNBRTEMP"
+4,"FLDGRP",0,""
+4,"FLDSEARCH",0,1
+4,"FLGACCGET",0,1
+4,"INTEVAL",0,""
+5,"INTFLD",0,"Batch number template","ENG",100888,""
+5,"INTFLD",0,"","***"
+5,"INTSHTFLD",0,"Batch number template","ENG",100888,""
+5,"INTSHTFLD",0,"","***"
+4,"LNKCLA",0,""
+4,"LOBCNT",0,""
+4,"LOBFLD",0,""
+4,"LOBTAB",0,""
+4,"LONG",0,30
+4,"NOLIB",0,0
+4,"NUMFLD",0,150
+4,"NUMLIG",0,15
+4,"OBLIG",0,1
+4,"TABCONT",0,""
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAF"
+3,"ACLAF","YBATREF"
+4,"ACS",0,""
+4,"ACTFLD",0,""
+4,"CATSEARCH",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODCTL",0,""
+4,"CODTYP",0,"A"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"YBATREF"
+4,"FLDGRP",0,""
+4,"FLDSEARCH",0,1
+4,"FLGACCGET",0,1
+4,"INTEVAL",0,""
+5,"INTFLD",0,"Batch reference","ENG",100727,""
+5,"INTFLD",0,"","***"
+5,"INTSHTFLD",0,"Ref.","ENG",100728,""
+5,"INTSHTFLD",0,"","***"
+4,"LNKCLA",0,""
+4,"LOBCNT",0,""
+4,"LOBFLD",0,""
+4,"LOBTAB",0,""
+4,"LONG",0,100
+4,"NOLIB",0,0
+4,"NUMFLD",0,50
+4,"NUMLIG",0,5
+4,"OBLIG",0,1
+4,"TABCONT",0,""
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAF"
+3,"ACLAF","YBATSTA"
+4,"ACS",0,""
+4,"ACTFLD",0,""
+4,"CATSEARCH",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODCTL",0,""
+4,"CODTYP",0,"M"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"YBATSTA"
+4,"FLDGRP",0,""
+4,"FLDSEARCH",0,1
+4,"FLGACCGET",0,1
+4,"INTEVAL",0,""
+5,"INTFLD",0,"Batch status","ENG",44467,""
+5,"INTFLD",0,"","***"
+5,"INTSHTFLD",0,"Batch status","ENG",44467,""
+5,"INTSHTFLD",0,"","***"
+4,"LNKCLA",0,""
+4,"LOBCNT",0,""
+4,"LOBFLD",0,""
+4,"LOBTAB",0,""
+4,"LONG",0,15
+4,"NOLIB",0,6252
+4,"NUMFLD",0,60
+4,"NUMLIG",0,6
+4,"OBLIG",0,1
+4,"TABCONT",0,""
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAF"
+3,"ACLAF","YBBD"
+4,"ACS",0,""
+4,"ACTFLD",0,""
+4,"CATSEARCH",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODCTL",0,""
+4,"CODTYP",0,""
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"YBBD"
+4,"FLDGRP",0,"YBBD"
+4,"FLDSEARCH",0,1
+4,"FLGACCGET",0,1
+4,"INTEVAL",0,""
+5,"INTFLD",0,"Business batch details","ENG",100729,""
+5,"INTFLD",0,"","***"
+5,"INTSHTFLD",0,"YBBD","ENG",101100,""
+5,"INTSHTFLD",0,"","***"
+4,"LNKCLA",0,"YBBD"
+4,"LOBCNT",0,""
+4,"LOBFLD",0,""
+4,"LOBTAB",0,""
+4,"LONG",0,0
+4,"NOLIB",0,0
+4,"NUMFLD",0,130
+4,"NUMLIG",0,13
+4,"OBLIG",0,0
+4,"TABCONT",0,""
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAF"
+3,"ACLAF","YFINSTA"
+4,"ACS",0,""
+4,"ACTFLD",0,""
+4,"CATSEARCH",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODCTL",0,""
+4,"CODTYP",0,"M"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"YFINSTA"
+4,"FLDGRP",0,""
+4,"FLDSEARCH",0,1
+4,"FLGACCGET",0,1
+4,"INTEVAL",0,""
+5,"INTFLD",0,"Status","ENG",1287,"To be used for a flag"
+5,"INTFLD",0,"","***"
+5,"INTSHTFLD",0,"Status","ENG",1287,"To be used for a flag"
+5,"INTSHTFLD",0,"","***"
+4,"LNKCLA",0,""
+4,"LOBCNT",0,""
+4,"LOBFLD",0,""
+4,"LOBTAB",0,""
+4,"LONG",0,15
+4,"NOLIB",0,617
+4,"NUMFLD",0,80
+4,"NUMLIG",0,8
+4,"OBLIG",0,1
+4,"TABCONT",0,""
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAF"
+3,"ACLAF","YREVERSDAT"
+4,"ACS",0,""
+4,"ACTFLD",0,"YLSP"
+4,"CATSEARCH",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODCTL",0,""
+4,"CODTYP",0,"D"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"YREVERSDAT"
+4,"FLDGRP",0,""
+4,"FLDSEARCH",0,1
+4,"FLGACCGET",0,1
+4,"INTEVAL",0,""
+5,"INTFLD",0,"Reversed date","ENG",101283,""
+5,"INTFLD",0,"","***"
+5,"INTSHTFLD",0,"Reversed date","ENG",101283,""
+5,"INTSHTFLD",0,"","***"
+4,"LNKCLA",0,""
+4,"LOBCNT",0,""
+4,"LOBFLD",0,""
+4,"LOBTAB",0,""
+4,"LONG",0,0
+4,"NOLIB",0,0
+4,"NUMFLD",0,190
+4,"NUMLIG",0,19
+4,"OBLIG",0,1
+4,"TABCONT",0,""
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAF"
+3,"ACLAF","YREVERSED"
+4,"ACS",0,""
+4,"ACTFLD",0,"YLSP"
+4,"CATSEARCH",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODCTL",0,""
+4,"CODTYP",0,"M"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"YREVERSED"
+4,"FLDGRP",0,""
+4,"FLDSEARCH",0,1
+4,"FLGACCGET",0,1
+4,"INTEVAL",0,""
+5,"INTFLD",0,"Reversed","ENG",101282,""
+5,"INTFLD",0,"","***"
+5,"INTSHTFLD",0,"Reversed","ENG",101282,""
+5,"INTSHTFLD",0,"","***"
+4,"LNKCLA",0,""
+4,"LOBCNT",0,""
+4,"LOBFLD",0,""
+4,"LOBTAB",0,""
+4,"LONG",0,4
+4,"NOLIB",0,1
+4,"NUMFLD",0,180
+4,"NUMLIG",0,18
+4,"OBLIG",0,1
+4,"TABCONT",0,""
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAF"
+3,"ACLAF","YREVERSNBR"
+4,"ACS",0,""
+4,"ACTFLD",0,"YLSP"
+4,"CATSEARCH",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODCTL",0,""
+4,"CODTYP",0,"A"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"YREVERSNBR"
+4,"FLDGRP",0,""
+4,"FLDSEARCH",0,1
+4,"FLGACCGET",0,1
+4,"INTEVAL",0,""
+5,"INTFLD",0,"Reversal number","ENG",101284,""
+5,"INTFLD",0,"","***"
+5,"INTSHTFLD",0,"Reversal no.","ENG",101285,""
+5,"INTSHTFLD",0,"","***"
+4,"LNKCLA",0,""
+4,"LOBCNT",0,""
+4,"LOBFLD",0,""
+4,"LOBTAB",0,""
+4,"LONG",0,30
+4,"NOLIB",0,0
+4,"NUMFLD",0,200
+4,"NUMLIG",0,20
+4,"OBLIG",0,1
+4,"TABCONT",0,""
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAF"
+3,"ACLAF","YSETPRC"
+4,"ACS",0,""
+4,"ACTFLD",0,"YLSP"
+4,"CATSEARCH",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODCTL",0,""
+4,"CODTYP",0,"M"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"YSETPRC"
+4,"FLDGRP",0,""
+4,"FLDSEARCH",0,1
+4,"FLGACCGET",0,1
+4,"INTEVAL",0,""
+5,"INTFLD",0,"Process","ENG",5274,"Noun"
+5,"INTFLD",0,"","***"
+5,"INTSHTFLD",0,"Process","ENG",5274,"Noun"
+5,"INTSHTFLD",0,"","***"
+4,"LNKCLA",0,""
+4,"LOBCNT",0,""
+4,"LOBFLD",0,""
+4,"LOBTAB",0,""
+4,"LONG",0,15
+4,"NOLIB",0,6244
+4,"NUMFLD",0,170
+4,"NUMLIG",0,17
+4,"OBLIG",0,1
+4,"TABCONT",0,""
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAF"
+3,"ACLAF","YSLCID"
+4,"ACS",0,""
+4,"ACTFLD",0,"YLSP"
+4,"CATSEARCH",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODCTL",0,""
+4,"CODTYP",0,"YSLC"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"FLDCLA",0,"YSLCID"
+4,"FLDGRP",0,""
+4,"FLDSEARCH",0,1
+4,"FLGACCGET",0,1
+4,"INTEVAL",0,""
+5,"INTFLD",0,"Sales Contract ID","ENG",100472,""
+5,"INTFLD",0,"","***"
+5,"INTSHTFLD",0,"Contract ID","ENG",100473,""
+5,"INTSHTFLD",0,"","***"
+4,"LNKCLA",0,""
+4,"LOBCNT",0,""
+4,"LOBFLD",0,""
+4,"LOBTAB",0,""
+4,"LONG",0,0
+4,"NOLIB",0,0
+4,"NUMFLD",0,160
+4,"NUMLIG",0,16
+4,"OBLIG",0,1
+4,"TABCONT",0,""
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAF"
+3,"ACLAT","C"
+4,"ACSMETSTD",0,""
+4,"ACTMETSTD",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODMETSTD",0,"C"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"ENAMETSTD",0,2
+4,"NOMETSTD",0,1
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAT"
+3,"ACLAT","D"
+4,"ACSMETSTD",0,""
+4,"ACTMETSTD",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODMETSTD",0,"D"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"ENAMETSTD",0,2
+4,"NOMETSTD",0,2
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAT"
+3,"ACLAT","P"
+4,"ACSMETSTD",0,""
+4,"ACTMETSTD",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODMETSTD",0,"P"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"ENAMETSTD",0,1
+4,"NOMETSTD",0,3
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAT"
+3,"ACLAT","R"
+4,"ACSMETSTD",0,""
+4,"ACTMETSTD",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODMETSTD",0,"R"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"ENAMETSTD",0,2
+4,"NOMETSTD",0,4
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAT"
+3,"ACLAT","U"
+4,"ACSMETSTD",0,""
+4,"ACTMETSTD",0,""
+4,"CODCLA",0,"YBBT"
+4,"CODMETSTD",0,"U"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"ENAMETSTD",0,2
+4,"NOMETSTD",0,5
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAT"
+3,"ACLAK","YBBD"
+4,"ABRLNK",0,"YBBD"
+4,"ABRORI",0,""
+4,"ACVLNK",0,""
+4,"CLALNK",0,"YBBD"
+4,"CLELNK",0,"YBBD0"
+4,"CLESORT",0,""
+4,"CODCLA",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"EXPLNK",0,"[F:YBBH]YBATNBR"
+4,"EXPSEL",0,""
+4,"FLGA",0,2
+4,"FLGC",0,2
+4,"FLGD",0,2
+4,"FLGR",0,2
+4,"FLGU",0,2
+4,"FLGV",0,0
+4,"NUMLIG",0,1
+4,"REFLNK",0,"YBBD"
+4,"TABLNK",0,"YBBDETAIL"
+4,"TABORI",0,"YBBHEADER"
+4,"TYPLNK",0,2
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+6,"ACLAK"
+3,"ACLAKP","YBBD"
+4,"CODCLA",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"KEYMAP",0,"YBATNBR"
+4,"PROMAP",0,""
+4,"REFLNK",0,"YBBD"
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+4,"VALDEFMAP",0,""
+6,"ACLAKP"
+3,"ACLAKP","YBBD"
+4,"CODCLA",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-06T23:55:10Z"
+4,"CREUSR",0,"DH"
+4,"KEYMAP",0,"YDETLIG"
+4,"PROMAP",0,""
+4,"REFLNK",0,"YBBD"
+4,"UPDDATTIM",0,"2019-03-06T23:55:10Z"
+4,"UPDUSR",0,"DH"
+4,"VALDEFMAP",0,""
+6,"ACLAKP"
+7,"ACLA","YBBT","Business batch"
+2,"ASW","YBBT","Business batch"
+3,"ASW",YBBT
+4,"ABRCLA",0,"YBBH"
+4,"ACTLNKFAC",0,""
+4,"ACTLNKFAC",1,""
+4,"ACTLNKFAC",2,""
+4,"ACTLNKFAC",3,""
+4,"ACTLNKFAC",4,""
+4,"ACTLNKFAC",5,""
+4,"ACTLNKFAC",6,""
+4,"ACTLNKFAC",7,""
+4,"ACTLNKFAC",8,""
+4,"ACTLNKFAC",9,""
+4,"ACTTRT",0,""
+4,"ACTTRT",1,""
+4,"ACTTRT",2,""
+4,"ACTTRT",3,""
+4,"ACTTRT",4,""
+4,"ACTTRT",5,""
+4,"ACTTRT",6,""
+4,"ACTTRT",7,""
+4,"ACTTRT",8,""
+4,"ACTTRT",9,""
+4,"ACTTRT",10,""
+4,"ACTTRT",11,""
+4,"ACTTRT",12,""
+4,"ACTTRT",13,""
+4,"ACTTRT",14,""
+4,"ACTTRT",15,""
+4,"ACTTRT",16,""
+4,"ACTTRT",17,""
+4,"ACTTRT",18,""
+4,"ACTTRT",19,""
+4,"AFCRIGHT",0,"GESYBB"
+4,"AFFLNKFAC",0,0
+4,"AFFLNKFAC",1,0
+4,"AFFLNKFAC",2,0
+4,"AFFLNKFAC",3,0
+4,"AFFLNKFAC",4,0
+4,"AFFLNKFAC",5,0
+4,"AFFLNKFAC",6,0
+4,"AFFLNKFAC",7,0
+4,"AFFLNKFAC",8,0
+4,"AFFLNKFAC",9,0
+4,"CODACT",0,"YICBS"
+4,"CODCLA",0,"YBBT"
+4,"CODCOM",0,1
+4,"CODCOM",1,2
+4,"CODCOM",2,3
+4,"CODCOM",3,4
+4,"CODCOM",4,5
+4,"CODCOM",5,6
+4,"CODCOM",6,7
+4,"CODCOM",7,8
+4,"CODCOM",8,0
+4,"CODCOM",9,0
+4,"CODCOM",10,0
+4,"CODCOM",11,0
+4,"CODCOM",12,0
+4,"CODCOM",13,0
+4,"CODCOM",14,0
+4,"CODCOM",15,0
+4,"CODCOM",16,0
+4,"CODCOM",17,0
+4,"CODCOM",18,0
+4,"CODCOM",19,0
+4,"CODFAC",0,1
+4,"CODFAC",1,2
+4,"CODFAC",2,3
+4,"CODFAC",3,4
+4,"CODFAC",4,5
+4,"CODFAC",5,0
+4,"CODFAC",6,0
+4,"CODFAC",7,0
+4,"CODFAC",8,0
+4,"CODFAC",9,0
+4,"CODIND",0,""
+4,"CODREP",0,"YBBT"
+4,"CODTRT",0,""
+4,"CODTRT",1,""
+4,"CODTRT",2,""
+4,"CODTRT",3,""
+4,"CODTRT",4,""
+4,"CODTRT",5,""
+4,"CODTRT",6,""
+4,"CODTRT",7,""
+4,"CODTRT",8,""
+4,"CODTRT",9,""
+4,"CODTRT",10,""
+4,"CODTRT",11,""
+4,"CODTRT",12,""
+4,"CODTRT",13,""
+4,"CODTRT",14,""
+4,"CODTRT",15,""
+4,"CODTRT",16,""
+4,"CODTRT",17,""
+4,"CODTRT",18,""
+4,"CODTRT",19,""
+4,"CREDATTIM",0,"2018-08-28T03:27:47Z"
+4,"CREUSR",0,"DH"
+4,"DEFLNKFAC",0,2
+4,"DEFLNKFAC",1,2
+4,"DEFLNKFAC",2,2
+4,"DEFLNKFAC",3,2
+4,"DEFLNKFAC",4,2
+4,"DEFLNKFAC",5,0
+4,"DEFLNKFAC",6,0
+4,"DEFLNKFAC",7,0
+4,"DEFLNKFAC",8,0
+4,"DEFLNKFAC",9,0
+4,"DEFREP",0,1
+4,"DESCRIPT",0,""
+4,"ENACOM",0,2
+4,"ENACOM",1,2
+4,"ENACOM",2,1
+4,"ENACOM",3,1
+4,"ENACOM",4,2
+4,"ENACOM",5,1
+4,"ENACOM",6,1
+4,"ENACOM",7,1
+4,"ENACOM",8,0
+4,"ENACOM",9,0
+4,"ENACOM",10,0
+4,"ENACOM",11,0
+4,"ENACOM",12,0
+4,"ENACOM",13,0
+4,"ENACOM",14,0
+4,"ENACOM",15,0
+4,"ENACOM",16,0
+4,"ENACOM",17,0
+4,"ENACOM",18,0
+4,"ENACOM",19,0
+4,"ENAFAC",0,2
+4,"ENAFAC",1,1
+4,"ENAFAC",2,2
+4,"ENAFAC",3,2
+4,"ENAFAC",4,1
+4,"ENAFAC",5,0
+4,"ENAFAC",6,0
+4,"ENAFAC",7,0
+4,"ENAFAC",8,0
+4,"ENAFAC",9,0
+4,"FLGSYSTEM",0,1
+4,"FONCTION",0,"GESYBB"
+5,"INTREP",0,"Business batch","ENG",100736,""
+5,"INTREP",0,"","***"
+4,"LNKMENFAC",0,""
+4,"LNKMENFAC",1,""
+4,"LNKMENFAC",2,""
+4,"LNKMENFAC",3,""
+4,"LNKMENFAC",4,""
+4,"LNKMENFAC",5,""
+4,"LNKMENFAC",6,""
+4,"LNKMENFAC",7,""
+4,"LNKMENFAC",8,""
+4,"LNKMENFAC",9,""
+4,"MODULE",0,9
+4,"NBRCOM",0,8
+4,"NBRFAC",0,5
+4,"NBRTRT",0,0
+4,"RANTRT",0,0
+4,"RANTRT",1,0
+4,"RANTRT",2,0
+4,"RANTRT",3,0
+4,"RANTRT",4,0
+4,"RANTRT",5,0
+4,"RANTRT",6,0
+4,"RANTRT",7,0
+4,"RANTRT",8,0
+4,"RANTRT",9,0
+4,"RANTRT",10,0
+4,"RANTRT",11,0
+4,"RANTRT",12,0
+4,"RANTRT",13,0
+4,"RANTRT",14,0
+4,"RANTRT",15,0
+4,"RANTRT",16,0
+4,"RANTRT",17,0
+4,"RANTRT",18,0
+4,"RANTRT",19,0
+4,"TYPMSKREP",0,1
+4,"TYPREP",0,1
+4,"TYPTRT",0,0
+4,"TYPTRT",1,0
+4,"TYPTRT",2,0
+4,"TYPTRT",3,0
+4,"TYPTRT",4,0
+4,"TYPTRT",5,0
+4,"TYPTRT",6,0
+4,"TYPTRT",7,0
+4,"TYPTRT",8,0
+4,"TYPTRT",9,0
+4,"TYPTRT",10,0
+4,"TYPTRT",11,0
+4,"TYPTRT",12,0
+4,"TYPTRT",13,0
+4,"TYPTRT",14,0
+4,"TYPTRT",15,0
+4,"TYPTRT",16,0
+4,"TYPTRT",17,0
+4,"TYPTRT",18,0
+4,"TYPTRT",19,0
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASW"
+3,"ASWS","BBH"
+4,"ACTSEC",0,""
+4,"CODREP",0,"YBBT"
+4,"CODSEC",0,"BBH"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+5,"INTSEC",0,"Business batch header","ENG",100723,""
+5,"INTSEC",0,"","***"
+4,"NIVSEC",0,10
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWS"
+3,"ASWB","BBH"
+4,"ACTBLC",0,""
+4,"CODBLC",0,"BBH"
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+5,"INTBLC",0,"Business batch header","ENG",100723,""
+5,"INTBLC",0,"","***"
+4,"NIVBLC",0,10
+4,"SECBLC",0,"BBH"
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWB"
+3,"ASWR","CREDATTIM"
+4,"ACTPRO",0,""
+4,"ALIAS",0,"CREDATTIM"
+4,"BLCPRO",0,"BBH"
+4,"CODPRO",0,"YBBH.CREDATTIM"
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETPRO",0,2
+4,"EDIPRO",0,1
+4,"INTEVALPRO",0,""
+5,"INTPRO",0,"Date time","ENG",48732,""
+5,"INTPRO",0,"","***"
+5,"INTSHTPRO",0,"Date time","ENG",48732,""
+5,"INTSHTPRO",0,"","***"
+4,"LOKPRO",0,2
+4,"NUMPRO",0,9
+4,"ORDPRO",0,90
+4,"PARENTPRO",0,1
+4,"PARFILPRO",0,1
+4,"QRYPRO",0,2
+4,"STADETPRO",0,1
+4,"STAEDIPRO",0,1
+4,"STAINIPRO",0,0
+4,"STALOKPRO",0,1
+4,"STAQRYPRO",0,1
+4,"STASUMPRO",0,1
+4,"SUMPRO",0,1
+4,"TAGPRO",0,""
+4,"TYPAFFPRO",0,1
+4,"UOMPRO",0,""
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWR"
+3,"ASWR","UPDUSR"
+4,"ACTPRO",0,""
+4,"ALIAS",0,"UPDUSR"
+4,"BLCPRO",0,"BBH"
+4,"CODPRO",0,"YBBH.UPDUSR"
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETPRO",0,2
+4,"EDIPRO",0,1
+4,"INTEVALPRO",0,""
+5,"INTPRO",0,"User","ENG",250,""
+5,"INTPRO",0,"","***"
+5,"INTSHTPRO",0,"User","ENG",250,""
+5,"INTSHTPRO",0,"","***"
+4,"LOKPRO",0,2
+4,"NUMPRO",0,10
+4,"ORDPRO",0,100
+4,"PARENTPRO",0,1
+4,"PARFILPRO",0,1
+4,"QRYPRO",0,2
+4,"STADETPRO",0,1
+4,"STAEDIPRO",0,1
+4,"STAINIPRO",0,0
+4,"STALOKPRO",0,1
+4,"STAQRYPRO",0,1
+4,"STASUMPRO",0,1
+4,"SUMPRO",0,1
+4,"TAGPRO",0,""
+4,"TYPAFFPRO",0,1
+4,"UOMPRO",0,""
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWR"
+3,"ASWR","YBATCAT"
+4,"ACTPRO",0,""
+4,"ALIAS",0,"YBATCAT"
+4,"BLCPRO",0,"BBH"
+4,"CODPRO",0,"YBBH.YBATCAT"
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETPRO",0,2
+4,"EDIPRO",0,1
+4,"INTEVALPRO",0,""
+5,"INTPRO",0,"Category","ENG",707,""
+5,"INTPRO",0,"","***"
+5,"INTSHTPRO",0,"Category","ENG",707,""
+5,"INTSHTPRO",0,"","***"
+4,"LOKPRO",0,2
+4,"NUMPRO",0,6
+4,"ORDPRO",0,60
+4,"PARENTPRO",0,1
+4,"PARFILPRO",0,1
+4,"QRYPRO",0,2
+4,"STADETPRO",0,1
+4,"STAEDIPRO",0,1
+4,"STAINIPRO",0,0
+4,"STALOKPRO",0,1
+4,"STAQRYPRO",0,1
+4,"STASUMPRO",0,1
+4,"SUMPRO",0,1
+4,"TAGPRO",0,""
+4,"TYPAFFPRO",0,1
+4,"UOMPRO",0,""
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWR"
+3,"ASWR","YBATDAT"
+4,"ACTPRO",0,""
+4,"ALIAS",0,"YBATDAT"
+4,"BLCPRO",0,"BBH"
+4,"CODPRO",0,"YBBH.YBATDAT"
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETPRO",0,2
+4,"EDIPRO",0,1
+4,"INTEVALPRO",0,""
+5,"INTPRO",0,"Batch date","ENG",100726,""
+5,"INTPRO",0,"","***"
+5,"INTSHTPRO",0,"Batch date","ENG",100726,""
+5,"INTSHTPRO",0,"","***"
+4,"LOKPRO",0,2
+4,"NUMPRO",0,4
+4,"ORDPRO",0,40
+4,"PARENTPRO",0,1
+4,"PARFILPRO",0,1
+4,"QRYPRO",0,2
+4,"STADETPRO",0,1
+4,"STAEDIPRO",0,1
+4,"STAINIPRO",0,0
+4,"STALOKPRO",0,1
+4,"STAQRYPRO",0,1
+4,"STASUMPRO",0,1
+4,"SUMPRO",0,1
+4,"TAGPRO",0,""
+4,"TYPAFFPRO",0,1
+4,"UOMPRO",0,""
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWR"
+3,"ASWR","YBATDES"
+4,"ACTPRO",0,""
+4,"ALIAS",0,"YBATDES"
+4,"BLCPRO",0,"BBH"
+4,"CODPRO",0,"YBBH.YBATDES"
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETPRO",0,2
+4,"EDIPRO",0,1
+4,"INTEVALPRO",0,""
+5,"INTPRO",0,"Batch description","ENG",100725,""
+5,"INTPRO",0,"","***"
+5,"INTSHTPRO",0,"Batch description","ENG",100725,""
+5,"INTSHTPRO",0,"","***"
+4,"LOKPRO",0,2
+4,"NUMPRO",0,3
+4,"ORDPRO",0,30
+4,"PARENTPRO",0,1
+4,"PARFILPRO",0,1
+4,"QRYPRO",0,2
+4,"STADETPRO",0,1
+4,"STAEDIPRO",0,1
+4,"STAINIPRO",0,0
+4,"STALOKPRO",0,1
+4,"STAQRYPRO",0,1
+4,"STASUMPRO",0,1
+4,"SUMPRO",0,1
+4,"TAGPRO",0,""
+4,"TYPAFFPRO",0,1
+4,"UOMPRO",0,""
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWR"
+3,"ASWR","YBATFCY"
+4,"ACTPRO",0,""
+4,"ALIAS",0,"YBATFCY"
+4,"BLCPRO",0,"BBH"
+4,"CODPRO",0,"YBBH.YBATFCY"
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETPRO",0,2
+4,"EDIPRO",0,1
+4,"INTEVALPRO",0,""
+5,"INTPRO",0,"Site","ENG",1344,""
+5,"INTPRO",0,"","***"
+5,"INTSHTPRO",0,"Site","ENG",1344,""
+5,"INTSHTPRO",0,"","***"
+4,"LOKPRO",0,2
+4,"NUMPRO",0,1
+4,"ORDPRO",0,10
+4,"PARENTPRO",0,1
+4,"PARFILPRO",0,1
+4,"QRYPRO",0,2
+4,"STADETPRO",0,1
+4,"STAEDIPRO",0,1
+4,"STAINIPRO",0,0
+4,"STALOKPRO",0,1
+4,"STAQRYPRO",0,1
+4,"STASUMPRO",0,1
+4,"SUMPRO",0,1
+4,"TAGPRO",0,""
+4,"TYPAFFPRO",0,1
+4,"UOMPRO",0,""
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWR"
+3,"ASWR","YBATNBR"
+4,"ACTPRO",0,""
+4,"ALIAS",0,"YBATNBR"
+4,"BLCPRO",0,"BBH"
+4,"CODPRO",0,"YBBH.YBATNBR"
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETPRO",0,2
+4,"EDIPRO",0,1
+4,"INTEVALPRO",0,""
+5,"INTPRO",0,"Business Batch number","ENG",100724,""
+5,"INTPRO",0,"","***"
+5,"INTSHTPRO",0,"Business Batch number","ENG",100724,""
+5,"INTSHTPRO",0,"","***"
+4,"LOKPRO",0,2
+4,"NUMPRO",0,2
+4,"ORDPRO",0,20
+4,"PARENTPRO",0,1
+4,"PARFILPRO",0,1
+4,"QRYPRO",0,2
+4,"STADETPRO",0,1
+4,"STAEDIPRO",0,1
+4,"STAINIPRO",0,0
+4,"STALOKPRO",0,1
+4,"STAQRYPRO",0,1
+4,"STASUMPRO",0,1
+4,"SUMPRO",0,1
+4,"TAGPRO",0,""
+4,"TYPAFFPRO",0,1
+4,"UOMPRO",0,""
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWR"
+3,"ASWR","YBATREF"
+4,"ACTPRO",0,""
+4,"ALIAS",0,"YBATREF"
+4,"BLCPRO",0,"BBH"
+4,"CODPRO",0,"YBBH.YBATREF"
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETPRO",0,2
+4,"EDIPRO",0,1
+4,"INTEVALPRO",0,""
+5,"INTPRO",0,"Batch reference","ENG",100727,""
+5,"INTPRO",0,"","***"
+5,"INTSHTPRO",0,"Ref.","ENG",100728,""
+5,"INTSHTPRO",0,"","***"
+4,"LOKPRO",0,2
+4,"NUMPRO",0,5
+4,"ORDPRO",0,50
+4,"PARENTPRO",0,1
+4,"PARFILPRO",0,1
+4,"QRYPRO",0,2
+4,"STADETPRO",0,1
+4,"STAEDIPRO",0,1
+4,"STAINIPRO",0,0
+4,"STALOKPRO",0,1
+4,"STAQRYPRO",0,1
+4,"STASUMPRO",0,1
+4,"SUMPRO",0,1
+4,"TAGPRO",0,""
+4,"TYPAFFPRO",0,1
+4,"UOMPRO",0,""
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWR"
+3,"ASWR","YBATSTA"
+4,"ACTPRO",0,""
+4,"ALIAS",0,"YBATSTA"
+4,"BLCPRO",0,"BBH"
+4,"CODPRO",0,"YBBH.YBATSTA"
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETPRO",0,2
+4,"EDIPRO",0,1
+4,"INTEVALPRO",0,""
+5,"INTPRO",0,"Batch status","ENG",44467,""
+5,"INTPRO",0,"","***"
+5,"INTSHTPRO",0,"Batch status","ENG",44467,""
+5,"INTSHTPRO",0,"","***"
+4,"LOKPRO",0,2
+4,"NUMPRO",0,7
+4,"ORDPRO",0,70
+4,"PARENTPRO",0,1
+4,"PARFILPRO",0,1
+4,"QRYPRO",0,2
+4,"STADETPRO",0,1
+4,"STAEDIPRO",0,1
+4,"STAINIPRO",0,0
+4,"STALOKPRO",0,1
+4,"STAQRYPRO",0,1
+4,"STASUMPRO",0,1
+4,"SUMPRO",0,1
+4,"TAGPRO",0,""
+4,"TYPAFFPRO",0,1
+4,"UOMPRO",0,""
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWR"
+3,"ASWR","YFINSTA"
+4,"ACTPRO",0,""
+4,"ALIAS",0,"YFINSTA"
+4,"BLCPRO",0,"BBH"
+4,"CODPRO",0,"YBBH.YFINSTA"
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETPRO",0,2
+4,"EDIPRO",0,1
+4,"INTEVALPRO",0,""
+5,"INTPRO",0,"Status","ENG",1287,"To be used for a flag"
+5,"INTPRO",0,"","***"
+5,"INTSHTPRO",0,"Status","ENG",1287,"To be used for a flag"
+5,"INTSHTPRO",0,"","***"
+4,"LOKPRO",0,2
+4,"NUMPRO",0,8
+4,"ORDPRO",0,80
+4,"PARENTPRO",0,1
+4,"PARFILPRO",0,1
+4,"QRYPRO",0,2
+4,"STADETPRO",0,1
+4,"STAEDIPRO",0,1
+4,"STAINIPRO",0,0
+4,"STALOKPRO",0,1
+4,"STAQRYPRO",0,1
+4,"STASUMPRO",0,1
+4,"SUMPRO",0,1
+4,"TAGPRO",0,""
+4,"TYPAFFPRO",0,1
+4,"UOMPRO",0,""
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWR"
+3,"ASWK",ADETAILS~1~YBBH.UPDUSR
+4,"ACVLNK",0,""
+4,"AFFLNK",0,1
+4,"ANCLNK",0,"YBBH.UPDUSR"
+4,"ATTLNK",0,2
+4,"CLALNK",0,"AUTILIS"
+4,"CLAPTRLNK",0,""
+4,"CMPLNK",0,2
+4,"CODFNCLNK",0,""
+4,"CODLNK",0,"ADETAILS"
+4,"CODMETLNK",0,""
+4,"CODOPELNK",0,""
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETLNK",0,2
+4,"EDILNK",0,1
+4,"ENALNK",0,2
+4,"FLGASYLNK",0,0
+4,"FLGSTDLNK",0,2
+4,"FREELNK",0,""
+5,"INTLNK",0,"Display","ENG",49838,"Verb in French"
+5,"INTLNK",0,"","***"
+4,"INVLNK",0,1
+4,"LOKLNK",0,1
+4,"MENLNK",0,""
+4,"NUMLNK",0,1
+4,"ORDLNK",0,200
+4,"ORDTECLNK",0,200
+4,"QRYLNK",0,2
+4,"REMSTDLNK",0,""
+4,"REPLNK",0,"AUTILIS"
+4,"RPTCOD",0,""
+4,"SUMLNK",0,1
+4,"TARLNK",0,0
+4,"TYPLNK",0,1
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWK"
+3,"ASWP",ADETAILS~1~YBBH.UPDUSR
+4,"ADRVAL",0,2
+4,"AFFLNK",0,1
+4,"AWMAJTYP",0,0
+4,"CODFLD",0,"YBBH.UPDUSR"
+4,"CODLNK",0,"ADETAILS"
+4,"CODPAR",0,"USR"
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"INTVAL",0,"YBBH.UPDUSR"
+4,"LNG",0,0
+4,"NOLIB",0,0
+4,"NUMPAR",0,1
+4,"PARENT",0,1
+4,"PARFIL",0,1
+4,"TYPAFF",0,0
+4,"TYPINT",0,7
+4,"TYPKEY",0,2
+4,"TYPPAR",0,3
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+4,"VALEUR",0,"YBBH.UPDUSR"
+6,"ASWP"
+3,"ASWK",ALOOKUP~1~YBBH.UPDUSR
+4,"ACVLNK",0,""
+4,"AFFLNK",0,1
+4,"ANCLNK",0,"YBBH.UPDUSR"
+4,"ATTLNK",0,3
+4,"CLALNK",0,"AUTILIS"
+4,"CLAPTRLNK",0,""
+4,"CMPLNK",0,9
+4,"CODFNCLNK",0,""
+4,"CODLNK",0,"ALOOKUP"
+4,"CODMETLNK",0,""
+4,"CODOPELNK",0,""
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETLNK",0,2
+4,"EDILNK",0,1
+4,"ENALNK",0,2
+4,"FLGASYLNK",0,0
+4,"FLGSTDLNK",0,2
+4,"FREELNK",0,""
+5,"INTLNK",0,"Selection","ENG",6028,""
+5,"INTLNK",0,"","***"
+4,"INVLNK",0,1
+4,"LOKLNK",0,2
+4,"MENLNK",0,""
+4,"NUMLNK",0,2
+4,"ORDLNK",0,400
+4,"ORDTECLNK",0,400
+4,"QRYLNK",0,2
+4,"REMSTDLNK",0,""
+4,"REPLNK",0,"AUTILIS"
+4,"RPTCOD",0,""
+4,"SUMLNK",0,1
+4,"TARLNK",0,0
+4,"TYPLNK",0,1
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWK"
+3,"ASWP",ALOOKUP~1~YBBH.UPDUSR
+4,"ADRVAL",0,1
+4,"AFFLNK",0,1
+4,"AWMAJTYP",0,0
+4,"CODFLD",0,"YBBH.UPDUSR"
+4,"CODLNK",0,"ALOOKUP"
+4,"CODPAR",0,"USR"
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"INTVAL",0,"YBBH.UPDUSR"
+4,"LNG",0,0
+4,"NOLIB",0,0
+4,"NUMPAR",0,1
+4,"PARENT",0,1
+4,"PARFIL",0,1
+4,"TYPAFF",0,0
+4,"TYPINT",0,7
+4,"TYPKEY",0,2
+4,"TYPPAR",0,3
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+4,"VALEUR",0,"YBBH.UPDUSR"
+6,"ASWP"
+3,"ASWK",AQUERY~1~YBBH.UPDUSR
+4,"ACVLNK",0,""
+4,"AFFLNK",0,1
+4,"ANCLNK",0,"YBBH.UPDUSR"
+4,"ATTLNK",0,1
+4,"CLALNK",0,"AUTILIS"
+4,"CLAPTRLNK",0,""
+4,"CMPLNK",0,5
+4,"CODFNCLNK",0,""
+4,"CODLNK",0,"AQUERY"
+4,"CODMETLNK",0,""
+4,"CODOPELNK",0,""
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETLNK",0,2
+4,"EDILNK",0,1
+4,"ENALNK",0,2
+4,"FLGASYLNK",0,0
+4,"FLGSTDLNK",0,2
+4,"FREELNK",0,""
+5,"INTLNK",0,"List","ENG",49616,""
+5,"INTLNK",0,"","***"
+4,"INVLNK",0,1
+4,"LOKLNK",0,1
+4,"MENLNK",0,""
+4,"NUMLNK",0,4
+4,"ORDLNK",0,500
+4,"ORDTECLNK",0,500
+4,"QRYLNK",0,2
+4,"REMSTDLNK",0,""
+4,"REPLNK",0,"AUTILIS"
+4,"RPTCOD",0,""
+4,"SUMLNK",0,1
+4,"TARLNK",0,0
+4,"TYPLNK",0,1
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWK"
+3,"ASWK",ASUMMARY~1~YBBH.UPDUSR
+4,"ACVLNK",0,""
+4,"AFFLNK",0,1
+4,"ANCLNK",0,"YBBH.UPDUSR"
+4,"ATTLNK",0,4
+4,"CLALNK",0,"AUTILIS"
+4,"CLAPTRLNK",0,""
+4,"CMPLNK",0,10
+4,"CODFNCLNK",0,""
+4,"CODLNK",0,"ASUMMARY"
+4,"CODMETLNK",0,""
+4,"CODOPELNK",0,""
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETLNK",0,2
+4,"EDILNK",0,1
+4,"ENALNK",0,2
+4,"FLGASYLNK",0,0
+4,"FLGSTDLNK",0,2
+4,"FREELNK",0,""
+5,"INTLNK",0,"Summary","ENG",12236,""
+5,"INTLNK",0,"","***"
+4,"INVLNK",0,1
+4,"LOKLNK",0,1
+4,"MENLNK",0,""
+4,"NUMLNK",0,3
+4,"ORDLNK",0,450
+4,"ORDTECLNK",0,450
+4,"QRYLNK",0,2
+4,"REMSTDLNK",0,""
+4,"REPLNK",0,"AUTILIS"
+4,"RPTCOD",0,""
+4,"SUMLNK",0,1
+4,"TARLNK",0,0
+4,"TYPLNK",0,1
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWK"
+3,"ASWP",ASUMMARY~1~YBBH.UPDUSR
+4,"ADRVAL",0,2
+4,"AFFLNK",0,1
+4,"AWMAJTYP",0,0
+4,"CODFLD",0,"YBBH.UPDUSR"
+4,"CODLNK",0,"ASUMMARY"
+4,"CODPAR",0,"USR"
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"INTVAL",0,"YBBH.UPDUSR"
+4,"LNG",0,0
+4,"NOLIB",0,0
+4,"NUMPAR",0,1
+4,"PARENT",0,1
+4,"PARFIL",0,1
+4,"TYPAFF",0,0
+4,"TYPINT",0,7
+4,"TYPKEY",0,2
+4,"TYPPAR",0,3
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+4,"VALEUR",0,"YBBH.UPDUSR"
+6,"ASWP"
+3,"ASWK",ADETAILS~1~YBBH.YBATFCY
+4,"ACVLNK",0,""
+4,"AFFLNK",0,1
+4,"ANCLNK",0,"YBBH.YBATFCY"
+4,"ATTLNK",0,2
+4,"CLALNK",0,"FACILITY"
+4,"CLAPTRLNK",0,""
+4,"CMPLNK",0,2
+4,"CODFNCLNK",0,""
+4,"CODLNK",0,"ADETAILS"
+4,"CODMETLNK",0,""
+4,"CODOPELNK",0,""
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETLNK",0,2
+4,"EDILNK",0,1
+4,"ENALNK",0,2
+4,"FLGASYLNK",0,0
+4,"FLGSTDLNK",0,2
+4,"FREELNK",0,""
+5,"INTLNK",0,"Display","ENG",49838,"Verb in French"
+5,"INTLNK",0,"","***"
+4,"INVLNK",0,1
+4,"LOKLNK",0,1
+4,"MENLNK",0,""
+4,"NUMLNK",0,5
+4,"ORDLNK",0,200
+4,"ORDTECLNK",0,200
+4,"QRYLNK",0,2
+4,"REMSTDLNK",0,""
+4,"REPLNK",0,"FACILITY"
+4,"RPTCOD",0,""
+4,"SUMLNK",0,1
+4,"TARLNK",0,0
+4,"TYPLNK",0,1
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWK"
+3,"ASWP",ADETAILS~1~YBBH.YBATFCY
+4,"ADRVAL",0,2
+4,"AFFLNK",0,1
+4,"AWMAJTYP",0,0
+4,"CODFLD",0,"YBBH.YBATFCY"
+4,"CODLNK",0,"ADETAILS"
+4,"CODPAR",0,"FCY"
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"INTVAL",0,"YBBH.YBATFCY"
+4,"LNG",0,0
+4,"NOLIB",0,0
+4,"NUMPAR",0,1
+4,"PARENT",0,1
+4,"PARFIL",0,1
+4,"TYPAFF",0,0
+4,"TYPINT",0,7
+4,"TYPKEY",0,2
+4,"TYPPAR",0,3
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+4,"VALEUR",0,"YBBH.YBATFCY"
+6,"ASWP"
+3,"ASWK",ALOOKUP~1~YBBH.YBATFCY
+4,"ACVLNK",0,""
+4,"AFFLNK",0,1
+4,"ANCLNK",0,"YBBH.YBATFCY"
+4,"ATTLNK",0,3
+4,"CLALNK",0,"FACILITY"
+4,"CLAPTRLNK",0,""
+4,"CMPLNK",0,9
+4,"CODFNCLNK",0,""
+4,"CODLNK",0,"ALOOKUP"
+4,"CODMETLNK",0,""
+4,"CODOPELNK",0,""
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETLNK",0,2
+4,"EDILNK",0,1
+4,"ENALNK",0,2
+4,"FLGASYLNK",0,0
+4,"FLGSTDLNK",0,2
+4,"FREELNK",0,""
+5,"INTLNK",0,"Selection","ENG",6028,""
+5,"INTLNK",0,"","***"
+4,"INVLNK",0,1
+4,"LOKLNK",0,2
+4,"MENLNK",0,""
+4,"NUMLNK",0,6
+4,"ORDLNK",0,400
+4,"ORDTECLNK",0,400
+4,"QRYLNK",0,2
+4,"REMSTDLNK",0,""
+4,"REPLNK",0,"FACILITY"
+4,"RPTCOD",0,""
+4,"SUMLNK",0,1
+4,"TARLNK",0,0
+4,"TYPLNK",0,1
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWK"
+3,"ASWP",ALOOKUP~1~YBBH.YBATFCY
+4,"ADRVAL",0,1
+4,"AFFLNK",0,1
+4,"AWMAJTYP",0,0
+4,"CODFLD",0,"YBBH.YBATFCY"
+4,"CODLNK",0,"ALOOKUP"
+4,"CODPAR",0,"FCY"
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"INTVAL",0,"YBBH.YBATFCY"
+4,"LNG",0,0
+4,"NOLIB",0,0
+4,"NUMPAR",0,1
+4,"PARENT",0,1
+4,"PARFIL",0,1
+4,"TYPAFF",0,0
+4,"TYPINT",0,7
+4,"TYPKEY",0,2
+4,"TYPPAR",0,3
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+4,"VALEUR",0,"YBBH.YBATFCY"
+6,"ASWP"
+3,"ASWK",AQUERY~1~YBBH.YBATFCY
+4,"ACVLNK",0,""
+4,"AFFLNK",0,1
+4,"ANCLNK",0,"YBBH.YBATFCY"
+4,"ATTLNK",0,1
+4,"CLALNK",0,"FACILITY"
+4,"CLAPTRLNK",0,""
+4,"CMPLNK",0,5
+4,"CODFNCLNK",0,""
+4,"CODLNK",0,"AQUERY"
+4,"CODMETLNK",0,""
+4,"CODOPELNK",0,""
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETLNK",0,2
+4,"EDILNK",0,1
+4,"ENALNK",0,2
+4,"FLGASYLNK",0,0
+4,"FLGSTDLNK",0,2
+4,"FREELNK",0,""
+5,"INTLNK",0,"List","ENG",49616,""
+5,"INTLNK",0,"","***"
+4,"INVLNK",0,1
+4,"LOKLNK",0,1
+4,"MENLNK",0,""
+4,"NUMLNK",0,7
+4,"ORDLNK",0,500
+4,"ORDTECLNK",0,500
+4,"QRYLNK",0,2
+4,"REMSTDLNK",0,""
+4,"REPLNK",0,"FACILITY"
+4,"RPTCOD",0,""
+4,"SUMLNK",0,1
+4,"TARLNK",0,0
+4,"TYPLNK",0,1
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWK"
+3,"ASWK",ACREATE~4~
+4,"ACVLNK",0,""
+4,"AFFLNK",0,4
+4,"ANCLNK",0,""
+4,"ATTLNK",0,1
+4,"CLALNK",0,""
+4,"CLAPTRLNK",0,""
+4,"CMPLNK",0,1
+4,"CODFNCLNK",0,"GESYBB"
+4,"CODLNK",0,"ACREATE"
+4,"CODMETLNK",0,""
+4,"CODOPELNK",0,""
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETLNK",0,1
+4,"EDILNK",0,1
+4,"ENALNK",0,2
+4,"FLGASYLNK",0,0
+4,"FLGSTDLNK",0,2
+4,"FREELNK",0,""
+5,"INTLNK",0,"Create","ENG",12414,""
+5,"INTLNK",0,"","***"
+4,"INVLNK",0,1
+4,"LOKLNK",0,1
+4,"MENLNK",0,""
+4,"NUMLNK",0,8
+4,"ORDLNK",0,150
+4,"ORDTECLNK",0,150
+4,"QRYLNK",0,2
+4,"REMSTDLNK",0,""
+4,"REPLNK",0,""
+4,"RPTCOD",0,""
+4,"SUMLNK",0,1
+4,"TARLNK",0,0
+4,"TYPLNK",0,4
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWK"
+3,"ASWP",ACREATE~4~
+4,"ADRVAL",0,2
+4,"AFFLNK",0,4
+4,"AWMAJTYP",0,0
+4,"CODFLD",0,""
+4,"CODLNK",0,"ACREATE"
+4,"CODPAR",0,"YBATNBR"
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"INTVAL",0,"YBBH.YBATNBR"
+4,"LNG",0,0
+4,"NOLIB",0,0
+4,"NUMPAR",0,1
+4,"PARENT",0,1
+4,"PARFIL",0,1
+4,"TYPAFF",0,0
+4,"TYPINT",0,7
+4,"TYPKEY",0,2
+4,"TYPPAR",0,3
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+4,"VALEUR",0,"YBBH.YBATNBR"
+6,"ASWP"
+3,"ASWK",AEXCEL~4~
+4,"ACVLNK",0,""
+4,"AFFLNK",0,4
+4,"ANCLNK",0,""
+4,"ATTLNK",0,1
+4,"CLALNK",0,"YBBT"
+4,"CLAPTRLNK",0,""
+4,"CMPLNK",0,8
+4,"CODFNCLNK",0,""
+4,"CODLNK",0,"AEXCEL"
+4,"CODMETLNK",0,""
+4,"CODOPELNK",0,""
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETLNK",0,1
+4,"EDILNK",0,1
+4,"ENALNK",0,2
+4,"FLGASYLNK",0,0
+4,"FLGSTDLNK",0,2
+4,"FREELNK",0,""
+5,"INTLNK",0,"Excel","ENG",27137,""
+5,"INTLNK",0,"","***"
+4,"INVLNK",0,1
+4,"LOKLNK",0,1
+4,"MENLNK",0,""
+4,"NUMLNK",0,11
+4,"ORDLNK",0,650
+4,"ORDTECLNK",0,650
+4,"QRYLNK",0,2
+4,"REMSTDLNK",0,""
+4,"REPLNK",0,"YBBT"
+4,"RPTCOD",0,""
+4,"SUMLNK",0,1
+4,"TARLNK",0,0
+4,"TYPLNK",0,1
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWK"
+3,"ASWK",AHELP~4~
+4,"ACVLNK",0,""
+4,"AFFLNK",0,4
+4,"ANCLNK",0,""
+4,"ATTLNK",0,1
+4,"CLALNK",0,""
+4,"CLAPTRLNK",0,""
+4,"CMPLNK",0,22
+4,"CODFNCLNK",0,""
+4,"CODLNK",0,"AHELP"
+4,"CODMETLNK",0,""
+4,"CODOPELNK",0,""
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETLNK",0,2
+4,"EDILNK",0,1
+4,"ENALNK",0,2
+4,"FLGASYLNK",0,0
+4,"FLGSTDLNK",0,2
+4,"FREELNK",0,""
+5,"INTLNK",0,"Help","ENG",78,""
+5,"INTLNK",0,"","***"
+4,"INVLNK",0,1
+4,"LOKLNK",0,1
+4,"MENLNK",0,""
+4,"NUMLNK",0,10
+4,"ORDLNK",0,550
+4,"ORDTECLNK",0,550
+4,"QRYLNK",0,2
+4,"REMSTDLNK",0,""
+4,"REPLNK",0,"YBBT"
+4,"RPTCOD",0,""
+4,"SUMLNK",0,1
+4,"TARLNK",0,0
+4,"TYPLNK",0,1
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWK"
+3,"ASWK",AQUERY~4~
+4,"ACVLNK",0,""
+4,"AFFLNK",0,4
+4,"ANCLNK",0,""
+4,"ATTLNK",0,1
+4,"CLALNK",0,"YBBT"
+4,"CLAPTRLNK",0,""
+4,"CMPLNK",0,5
+4,"CODFNCLNK",0,""
+4,"CODLNK",0,"AQUERY"
+4,"CODMETLNK",0,""
+4,"CODOPELNK",0,""
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETLNK",0,2
+4,"EDILNK",0,1
+4,"ENALNK",0,2
+4,"FLGASYLNK",0,0
+4,"FLGSTDLNK",0,2
+4,"FREELNK",0,""
+5,"INTLNK",0,"List","ENG",49616,""
+5,"INTLNK",0,"","***"
+4,"INVLNK",0,1
+4,"LOKLNK",0,1
+4,"MENLNK",0,""
+4,"NUMLNK",0,9
+4,"ORDLNK",0,500
+4,"ORDTECLNK",0,500
+4,"QRYLNK",0,1
+4,"REMSTDLNK",0,""
+4,"REPLNK",0,"YBBT"
+4,"RPTCOD",0,""
+4,"SUMLNK",0,1
+4,"TARLNK",0,0
+4,"TYPLNK",0,1
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWK"
+3,"ASWK",ADETAILS~5~
+4,"ACVLNK",0,""
+4,"AFFLNK",0,5
+4,"ANCLNK",0,""
+4,"ATTLNK",0,2
+4,"CLALNK",0,"YBBT"
+4,"CLAPTRLNK",0,""
+4,"CMPLNK",0,2
+4,"CODFNCLNK",0,""
+4,"CODLNK",0,"ADETAILS"
+4,"CODMETLNK",0,""
+4,"CODOPELNK",0,""
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETLNK",0,1
+4,"EDILNK",0,1
+4,"ENALNK",0,2
+4,"FLGASYLNK",0,0
+4,"FLGSTDLNK",0,2
+4,"FREELNK",0,""
+5,"INTLNK",0,"Display","ENG",49838,"Verb in French"
+5,"INTLNK",0,"","***"
+4,"INVLNK",0,1
+4,"LOKLNK",0,1
+4,"MENLNK",0,""
+4,"NUMLNK",0,12
+4,"ORDLNK",0,200
+4,"ORDTECLNK",0,200
+4,"QRYLNK",0,2
+4,"REMSTDLNK",0,""
+4,"REPLNK",0,"YBBT"
+4,"RPTCOD",0,""
+4,"SUMLNK",0,1
+4,"TARLNK",0,0
+4,"TYPLNK",0,1
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWK"
+3,"ASWP",ADETAILS~5~
+4,"ADRVAL",0,2
+4,"AFFLNK",0,5
+4,"AWMAJTYP",0,0
+4,"CODFLD",0,""
+4,"CODLNK",0,"ADETAILS"
+4,"CODPAR",0,"YBATNBR"
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"INTVAL",0,"YBBH.YBATNBR"
+4,"LNG",0,0
+4,"NOLIB",0,0
+4,"NUMPAR",0,1
+4,"PARENT",0,1
+4,"PARFIL",0,1
+4,"TYPAFF",0,0
+4,"TYPINT",0,7
+4,"TYPKEY",0,2
+4,"TYPPAR",0,3
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+4,"VALEUR",0,"YBBH.YBATNBR"
+6,"ASWP"
+3,"ASWK",AEDIT~5~
+4,"ACVLNK",0,""
+4,"AFFLNK",0,5
+4,"ANCLNK",0,""
+4,"ATTLNK",0,1
+4,"CLALNK",0,""
+4,"CLAPTRLNK",0,""
+4,"CMPLNK",0,3
+4,"CODFNCLNK",0,"GESYBB"
+4,"CODLNK",0,"AEDIT"
+4,"CODMETLNK",0,""
+4,"CODOPELNK",0,""
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETLNK",0,2
+4,"EDILNK",0,1
+4,"ENALNK",0,2
+4,"FLGASYLNK",0,0
+4,"FLGSTDLNK",0,2
+4,"FREELNK",0,""
+5,"INTLNK",0,"Edit","ENG",12964,""
+5,"INTLNK",0,"","***"
+4,"INVLNK",0,1
+4,"LOKLNK",0,1
+4,"MENLNK",0,""
+4,"NUMLNK",0,13
+4,"ORDLNK",0,250
+4,"ORDTECLNK",0,250
+4,"QRYLNK",0,2
+4,"REMSTDLNK",0,""
+4,"REPLNK",0,""
+4,"RPTCOD",0,""
+4,"SUMLNK",0,1
+4,"TARLNK",0,0
+4,"TYPLNK",0,4
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWK"
+3,"ASWP",AEDIT~5~
+4,"ADRVAL",0,2
+4,"AFFLNK",0,5
+4,"AWMAJTYP",0,0
+4,"CODFLD",0,""
+4,"CODLNK",0,"AEDIT"
+4,"CODPAR",0,"YBATNBR"
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"INTVAL",0,"YBBH.YBATNBR"
+4,"LNG",0,0
+4,"NOLIB",0,0
+4,"NUMPAR",0,1
+4,"PARENT",0,1
+4,"PARFIL",0,1
+4,"TYPAFF",0,0
+4,"TYPINT",0,7
+4,"TYPKEY",0,2
+4,"TYPPAR",0,3
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+4,"VALEUR",0,"YBBH.YBATNBR"
+6,"ASWP"
+3,"ASWK",AEXCEL~5~
+4,"ACVLNK",0,""
+4,"AFFLNK",0,5
+4,"ANCLNK",0,""
+4,"ATTLNK",0,1
+4,"CLALNK",0,"YBBT"
+4,"CLAPTRLNK",0,""
+4,"CMPLNK",0,7
+4,"CODFNCLNK",0,""
+4,"CODLNK",0,"AEXCEL"
+4,"CODMETLNK",0,""
+4,"CODOPELNK",0,""
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"DETLNK",0,2
+4,"EDILNK",0,1
+4,"ENALNK",0,2
+4,"FLGASYLNK",0,0
+4,"FLGSTDLNK",0,2
+4,"FREELNK",0,""
+5,"INTLNK",0,"Excel","ENG",27137,""
+5,"INTLNK",0,"","***"
+4,"INVLNK",0,1
+4,"LOKLNK",0,1
+4,"MENLNK",0,""
+4,"NUMLNK",0,14
+4,"ORDLNK",0,600
+4,"ORDTECLNK",0,600
+4,"QRYLNK",0,1
+4,"REMSTDLNK",0,""
+4,"REPLNK",0,"YBBT"
+4,"RPTCOD",0,""
+4,"SUMLNK",0,1
+4,"TARLNK",0,0
+4,"TYPLNK",0,1
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+6,"ASWK"
+3,"ASWP",AEXCEL~5~
+4,"ADRVAL",0,2
+4,"AFFLNK",0,5
+4,"AWMAJTYP",0,0
+4,"CODFLD",0,""
+4,"CODLNK",0,"AEXCEL"
+4,"CODPAR",0,"YBATNBR"
+4,"CODREP",0,"YBBT"
+4,"CREDATTIM",0,"2019-03-27T00:11:45Z"
+4,"CREUSR",0,"DH"
+4,"INTVAL",0,"YBBH.YBATNBR"
+4,"LNG",0,0
+4,"NOLIB",0,0
+4,"NUMPAR",0,1
+4,"PARENT",0,1
+4,"PARFIL",0,1
+4,"TYPAFF",0,0
+4,"TYPINT",0,7
+4,"TYPKEY",0,2
+4,"TYPPAR",0,3
+4,"UPDDATTIM",0,"2019-03-27T00:11:45Z"
+4,"UPDUSR",0,"DH"
+4,"VALEUR",0,"YBBH.YBATNBR"
+6,"ASWP"
+7,"ASW","YBBT","Business batch"
+8,"Patch DFC :DFCX1-440 on April     26,19 15: 21"
