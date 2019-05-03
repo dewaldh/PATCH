@@ -1,0 +1,4216 @@
+1,"Patch DFC :DFCX1-442 on May       02,19 12: 54","ENG","1","YLSP","X3","3",
+2,"TRT","SPEYSETRUL","Settlement Rule"
+#<AdxTL>@(#)0.0.0.0 $Revision$
+######################################################################################################################
+# Script            : SPEYSETRUL                                                                                     #
+# Creation date     : 19/11/2018                                                                                     #
+# Version           : 1.0.0                                                                                          #
+# Authors (Company) : Majid (Leverage)                                                                               #
+# Module            : Settlement Rule - Land Development                                                             #
+# -------------------------------------------------------------------------------------------------------------------#
+# Epic              : https://jira.leveragetech.com.au/browse/DFCX1-187                                              #
+# Description       : Settlement Rule                                                                                #
+#--------------------------------------------------------------------------------------------------------------------#
+# Evolutions        :                                                                                                #
+######################################################################################################################
+
+# Mask management YSETRUL (Specific)
+$ACTION
+Case ACTION
+  When "LIENS"          :   Gosub LIENS
+  When "VERIF_CRE"      :   Gosub VERIF_CRE
+  When Default
+Endcase
+Return
+
+
+######################################################################################
+$LIENS
+
+# Populate some fields from Settlement Rule Type
+If !clalev([F:YSRT2])       :   Local File YSETRULTYP [YSRT2]   : Endif
+Read [F:YSRT2]YSRT0 = [M:YSTR]YRULTYPCOD
+[M:YSTR]YCALTYP = [F:YSRT2]YCALTYP
+[M:YSTR]YENTTYP = [F:YSRT2]YENTTYP
+[M:YSTR]YJOU = [F:YSRT2]YJOU
+[M:YSTR]YALWADJ = [F:YSRT2]YALWADJ
+[M:YSTR]YSETPRC = [F:YSRT2]YSETPRC
+
+# Check the entry field status based on Settlement rule type
+Call CHECK_ENTRY_FIELD ()
+
+Return
+#------------------------------------------------------------------------------------#
+
+######################################################################################
+##
+$VERIF_CRE
+
+# Check there is no overlap between the rules
+If [M:YSTR]YVLDFRM <> [0/0/0]
+  Call NO_OVERLAP_RULE([M:YSTR]YVLDFRM)
+Endif
+
+If [M:YSTR]YVLDTO <> [0/0/0]
+  Call NO_OVERLAP_RULE([M:YSTR]YVLDTO)
+Endif
+
+Return
+#------------------------------------------------------------------------------------#
+
+######################################################################################
+##
+Subprog AM_YRULTYPCOD(VALEUR)
+Variable Char    VALEUR()
+
+# Refresh the value of screen from Settlement rule type
+If !clalev([F:YSRT2])         :     Local File YSETRULTYP [YSRT2]    :   Endif
+Read [F:YSRT2]YSRT0 = VALEUR
+
+[M:YSTR] = [F:YSRT2]
+If [M:YSTR]YVLDFRM = [0/0/0]  : [M:YSTR]YVLDFRM = date$   :   Endif
+
+# Value of block 4 should refresh after changing of rule type
+Raz [M:YSTR]YPRC, YFFXDVAL
+Raz [M:YSTR]YFFCY,YTFCY,YFBANK,YFCOA,YTCOA,YFACC,YTACC,YFDRCR,YGSTINC,YFGST,YTGST,YFAMTAMD,YTAMTAMD,YFLONAGR,YTLONAGR,YFPJTLIN,YTPJTLIN
+Raz [M:YSTR]YFDIE1,YFDIE2,YFDIE3,YFDIE4,YFDIE5,YFDIE6,YFDIE7,YFDIE8,YFDIE9,YFCCE1,YFCCE2,YFCCE3,YFCCE4,YFCCE5,YFCCE6,YFCCE7,YFCCE8,YFCCE9
+Raz [M:YSTR]YTDIE1,YTDIE2,YTDIE3,YTDIE4,YTDIE5,YTDIE6,YTDIE7,YTDIE8,YTDIE9,YTCCE1,YTCCE2,YTCCE3,YTCCE4,YTCCE5,YTCCE6,YTCCE7,YTCCE8,YTCCE9
+
+# Check the entry field statsu based on Settlement rule type
+Call CHECK_ENTRY_FIELD
+
+Affzo [M:YSTR]
+
+End
+#------------------------------------------------------------------------------------#
+
+######################################################################################
+Subprog C_YLANDPUR(VALEUR)
+Variable Char    VALEUR()
+
+  # Activate/Deactivat Object selection field
+  Call OBJSEL_STA ([M:YSTR]YEST, VALEUR, [M:YSTR]YPRECINCT, [M:YSTR]YSTAG, [M:YSTR]YLOT)
+
+  # If Estate is empty then populate that from Land purchase
+  If VALEUR <> "" and [M:YSTR]YEST = 0
+    If !clalev([F:YLDP2])       :   Local File YLNDPUR [YLDP2]      :   Endif
+      Read [F:YLDP2]YLDP0 = VALEUR
+      [M:YSTR]YEST = [F:YLDP2]YESTID
+      Affzo [M:YSTR]YEST
+    If clalev([F:YLDP2])    :   Close Local File  [YLDP2]   : Endif
+  Endif
+
+  # Check the Land purchase is under Estate
+  If VALEUR <> ""
+    Call C_YLNDPUR ([M:YSTR]YEST, VALEUR) From YSELLNDPUR
+  Endif
+
+End
+#------------------------------------------------------------------------------------#
+
+######################################################################################
+Subprog C_YPRECINCT(VALEUR)
+Variable Char    VALEUR()
+
+  # Activate/Deactivat Object selection field
+  Call OBJSEL_STA ([M:YSTR]YEST, [M:YSTR]YLANDPUR, VALEUR, [M:YSTR]YSTAG, [M:YSTR]YLOT)
+
+  # If Estate is empty then populate that from Precinct
+  If VALEUR <> "" and [M:YSTR]YEST = 0
+    If !clalev([F:YPRC2])   :   Local File YPRECINT [YPRC2]   : Endif
+      Read [F:YPRC2]YPRC0 = VALEUR
+      [M:YSTR]YEST = [F:YPRC2]YESTID
+      Affzo [M:YSTR]YEST
+    If clalev([F:YPRC2])    :   Close Local File  [YPRC2]   : Endif
+  Endif
+
+  # Check Precinct is under Estate
+  If VALEUR <> ""
+    Call C_YPREID ([M:YSTR]YEST, VALEUR) From YPRESEL
+  Endif
+
+End
+#------------------------------------------------------------------------------------#
+
+######################################################################################
+Subprog C_YSTAG(VALEUR)
+Variable Char    VALEUR()
+
+  # Activate/Deactivat Object selection field
+  Call OBJSEL_STA ([M:YSTR]YEST, [M:YSTR]YLANDPUR, [M:YSTR]YPRECINCT, VALEUR, [M:YSTR]YLOT)
+
+  # If Precinct is empty then populate that from Stage
+  If VALEUR <> "" and [M:YSTR]YPRECINCT = ""
+    If !clalev([F:YSTG2])   :   Local File YSTAGE [YSTG2]   : Endif
+      Read [F:YSTG2]YSTG0 = VALEUR
+      [M:YSTR]YEST = [F:YSTG2]YESTID
+      [M:YSTR]YPRECINCT = [F:YSTG2]YPREID
+      Affzo [M:YSTR]YEST, YPRECINCT
+    If clalev([F:YSTG2])    :   Close Local File  [YSTG2]   : Endif
+  Endif
+
+  # Check Stage value is under Estate
+  If VALEUR <> ""
+    Call C_YSTAID2 ([M:YSTR]YEST, [M:YSTR]YPRECINCT, VALEUR) From YSTASEL
+  Endif
+
+End
+#------------------------------------------------------------------------------------#
+
+######################################################################################
+Subprog C_YLOT(VALEUR)
+Variable Char    VALEUR()
+
+  # Activate/Deactivat Object selection field
+  Call OBJSEL_STA ([M:YSTR]YEST, [M:YSTR]YLANDPUR, [M:YSTR]YPRECINCT, [M:YSTR]YSTAG, VALEUR)
+
+  # If Stage is empty then populate that from Lot
+  If VALEUR <> "" and ([M:YSTR]YSTAG = "" or [M:YSTR]YLANDPUR = "" or [M:YSTR]YPRECINCT = "")
+    If !clalev([F:YLOT2])   :   Local File YLOT [YLOT2]   : Endif
+    Read [F:YLOT2]YLOT0 = VALEUR
+      [M:YSTR]YEST = [F:YLOT2]YESTID
+      [M:YSTR]YSTAG = [F:YLOT2]YSTAID
+      [M:YSTR]YLANDPUR = [F:YLOT2]YLNDPURID
+      Affzo [M:YSTR]YEST, YSTAG, YLANDPUR
+    If clalev([F:YLOT2])    :   Close Local File [YLOT2]   : Endif
+
+    # Update Precinct from Stage
+    If !clalev([F:YSTG2])   :   Local File YSTAGE [YSTG2]   : Endif
+      Read [F:YSTG2]YSTG0 = [M:YSTR]YSTAG
+      [M:YSTR]YPRECINCT = [F:YSTG2]YPREID
+      Affzo [M:YSTR]YPRECINCT
+    If clalev([F:YSTG2])    :   Close Local File  [YSTG2]   : Endif
+  Endif
+
+
+  # Check Lot value is under Estate and Stage
+  If VALEUR <> ""
+    Call C_YLOT ([M:YSTR]YEST, [M:YSTR]YSTAG, [M:YSTR]YLANDPUR, VALEUR) From YSELLOT
+  Endif
+
+End
+#------------------------------------------------------------------------------------#
+
+
+#------------------------------------------------------------------------------------#
+
+######################################################################################
+## Control Valid from & To
+Subprog C_YVLDFRM(VALEUR)
+Variable Date    VALEUR
+
+Call NO_OVERLAP_RULE(VALEUR)
+
+End
+
+######################################################################################
+Subprog C_YVLDTO(VALEUR)
+Variable Date    VALEUR
+
+# No date means foever
+If VALEUR = [0/0/0] or VALEUR = [31/12/1999]
+  VALEUR = [31/12/2029]
+  [M:YSTR]YVLDTO = [31/12/2029]
+Endif
+
+If VALEUR < [M:YSTR]YVLDFRM
+  GMESSAGE = mess(30,6255,1)       # Valid to cannot be before valid from
+  GERR = 1  : mkstat = 1
+Endif
+
+Call NO_OVERLAP_RULE(VALEUR)
+
+End
+#------------------------------------------------------------------------------------#
+
+
+######################################################################################
+# Check date does not have overlap with another Rule
+Subprog NO_OVERLAP_RULE(YDATE)
+Value Date YDATE
+
+If !clalev([F:YSTR2])        :   Local File YSETRUL [YSTR2]     :   Endif
+
+Filter [F:YSTR2] Where YEST=[M:YSTR]YEST & YLANDPUR=[M:YSTR]YLANDPUR & YPRECINCT=[M:YSTR]YPRECINCT & YSTAG=[M:YSTR]YSTAG &
+& YLOT=[M:YSTR]YLOT & YRULTYPCOD=[M:YSTR]YRULTYPCOD Order By YVLDFRM
+
+For [F:YSTR2] Where YRULID<>[M:YSTR]YRULID and (YVLDFRM <= YDATE and YDATE <= YVLDTO)
+    GMESSAGE = mess(35,6255,1) - [F:YSTR2]YRULID    # There is an overlapt between entered date and date of rule id:
+    GERR = 1
+    mkstat = 2
+Next
+
+If clalev([F:YSTR2])        :   Close Local File [YSTR2]     :   Endif
+
+End
+#------------------------------------------------------------------------------------#
+
+######################################################################################
+# Activate/Deactivate Object selection field
+Subprog OBJSEL_STA (YEST, YLANDPUR, YPRECINCT, YSTAG, YLOT)
+Value Integer YEST
+Value Char YLANDPUR, YPRECINCT, YSTAG, YLOT
+
+  If    YLANDPUR<>""  #YLANDPUR<>"" & YPRECINCT="" & YSTAG="" & YLOT=""
+    Grizo [M:YSTR]YPRECINCT, YSTAG, YLOT
+    Diszo [M:YSTR]YEST
+    Actzo [M:YSTR]YLANDPUR
+  Endif
+
+  If YPRECINCT<>"" #YLANDPUR="" & YPRECINCT<>"" & YSTAG="" & YLOT=""
+    Diszo [M:YSTR]YEST, YLANDPUR
+    Actzo [M:YSTR]YPRECINCT, YSTAG, YLOT
+  Endif
+
+  If YSTAG<>"" #YLANDPUR="" & YPRECINCT="" & YSTAG<>"" & YLOT=""
+    Diszo [M:YSTR]YEST, YLANDPUR, YPRECINCT
+    Actzo [M:YSTR]YSTAG, YLOT
+  Endif
+
+  If YLOT<>""  #YLANDPUR="" & YPRECINCT="" & YSTAG="" & YLOT<>""
+    Diszo [M:YSTR]YEST, YLANDPUR, YPRECINCT, YSTAG
+    Actzo [M:YSTR]YLOT
+  Endif
+
+  If YLANDPUR="" & YPRECINCT="" & YSTAG="" & YLOT=""
+    Actzo [M:YSTR]YEST, YLANDPUR, YPRECINCT, YSTAG, YLOT
+  Endif
+
+End
+#------------------------------------------------------------------------------------#
+
+
+######################################################################################
+##
+Subprog C_YFFCY(VALEUR)
+Variable Char    VALEUR()
+
+  If [M:YSTR]YFFCY <> VALEUR
+    Raz [M:YSTR]YFBANK, YFACC, YFGST, YFLONAGR, YFPJTLIN
+    Raz [M:YSTR]YFDIE1,YFDIE2,YFDIE3,YFDIE4,YFDIE5,YFDIE6,YFDIE7,YFDIE8,YFDIE9,YFCCE1,YFCCE2,YFCCE3,YFCCE4,YFCCE5,YFCCE6,YFCCE7,YFCCE8,YFCCE9
+
+    # Update COA
+    Call UPD_FCY_COA(VALEUR, "F")
+
+    # Update Dimension type
+    Call UPD_DIE (VALEUR, "F")
+
+    Affzo [M:YSTR]YFBANK, YFACC, YFGST, YFLONAGR, YFPJTLIN, YFCCE1,YFCCE2,YFCCE3,YFCCE4,YFCCE5,YFCCE6,YFCCE7,YFCCE8,YFCCE9
+  Endif
+End
+#------------------------------------------------------------------------------------#
+
+######################################################################################
+## After modification of From Site
+Subprog AM_YFFCY(VALEUR)
+Variable Char    VALEUR()
+
+
+  # Update GST code
+  Call UPD_GST4FCY (VALEUR, [M:YSTR]YTFCY, [M:YSTR]YFACC, [M:YSTR]YTACC)
+
+
+  # If Journal entry type = Journal or Cash then To site = From site and Disable
+  If [F:GTE]YBUSBATTYP = 3 or [F:GTE]YBUSBATTYP = 2
+    [M:YSTR]YTFCY = VALEUR
+    Call UPD_FCY_COA([M:YSTR]YTFCY, "T")
+    Call UPD_DIE ([M:YSTR]YTFCY, "T")
+    Call UPD_GST4FCY ([M:YSTR]YFFCY, [M:YSTR]YTFCY, [M:YSTR]YFACC, [M:YSTR]YTACC)
+    Diszo [M:YSTR]YTFCY
+    Affzo [M:YSTR]YTFCY
+  Endif
+
+
+End
+#------------------------------------------------------------------------------------#
+
+######################################################################################
+##
+Subprog C_YTFCY(VALEUR)
+Variable Char    VALEUR()
+
+  If [M:YSTR]YTFCY <> VALEUR
+    Raz [M:YSTR]YTACC, YTGST, YTLONAGR, YTPJTLIN
+    Raz [M:YSTR]YTDIE1,YTDIE2,YTDIE3,YTDIE4,YTDIE5,YTDIE6,YTDIE7,YTDIE8,YTDIE9,YTCCE1,YTCCE2,YTCCE3,YTCCE4,YTCCE5,YTCCE6,YTCCE7,YTCCE8,YTCCE9
+
+    # Update COA
+    Call UPD_FCY_COA(VALEUR, "T")
+
+    # Update Dimension type
+    Call UPD_DIE (VALEUR, "T")
+
+    # To site cannot be same as From site on IE
+    If [F:GTE]YBUSBATTYP = 1
+      If VALEUR = [M:YSTR]YFFCY
+        GMESSAGE = mess(38,6255,1)       # For IE From site and To site should be different
+        GERR = 1  : mkstat = 1
+      Endif
+    Endif
+    Affzo [M:YSTR]YTACC, YTGST, YTLONAGR, YTPJTLIN, YTCCE1,YTCCE2,YTCCE3,YTCCE4,YTCCE5,YTCCE6,YTCCE7,YTCCE8,YTCCE9
+
+  Endif
+End
+#------------------------------------------------------------------------------------#
+
+######################################################################################
+Subprog AM_YTFCY(VALEUR)
+Variable Char    VALEUR()
+
+
+  # Update GST code
+  Call UPD_GST4FCY ([M:YSTR]YFFCY, VALEUR, [M:YSTR]YFACC, [M:YSTR]YTACC)
+
+
+End
+#------------------------------------------------------------------------------------#
+
+
+######################################################################################
+##
+Subprog C_YFPJTLIN(VALEUR)
+Variable Char    VALEUR()
+
+  # If Project Link is mandatory (Account is a Project Account) the Job will default from the Project link and display only
+  Call UPD_PRJ_CCE ([M:YSTR]YFCOA,[M:YSTR]YFACC, VALEUR, "F")
+
+End
+
+######################################################################################
+Subprog C_YTPJTLIN(VALEUR)
+Variable Char    VALEUR()
+
+  # If Project Link is mandatory (Account is a Project Account) the Job will default from the Project link and display only
+  Call UPD_PRJ_CCE ([M:YSTR]YTCOA,[M:YSTR]YTACC, VALEUR, "T")
+
+End
+#------------------------------------------------------------------------------------#
+
+
+######################################################################################
+## After change of Bank
+Subprog AM_YFBANK(VALEUR)
+Variable Char    VALEUR()
+
+# For CASH entry type: defaulting account from bank and making it read only
+If [F:GTE]YBUSBATTYP = 2 and VALEUR <> ""
+  If !clalev([F:YBAN])        :   Local File BANK [YBAN]    : Endif
+
+  Read [F:YBAN]BAN0 = VALEUR
+  If !fstat and [F:YBAN]BANACC <> "" and [M:YSTR]YFACC <> [F:YBAN]BANACC
+    [M:YSTR]YFACC = [F:YBAN]BANACC
+
+    Call C_YFACC([M:YSTR]YFACC)
+
+    # Dimension activation
+    #Call UPD_DIE_ACT ([M:YSTR]YFCOA, [M:YSTR]YFACC, "F")
+
+    # Update GST (Tax)
+    #Call UPD_GST4FCY ([M:YSTR]YFFCY, [M:YSTR]YTFCY, [M:YSTR]YFACC, [M:YSTR]YTACC)
+
+    # Each time user selects the account the project fields should be refreshed
+    Raz [M:YSTR]YFPJTLIN
+    Affzo [M:YSTR]YFPJTLIN
+
+    Diszo [M:YSTR]YFACC
+  Endif
+
+  If clalev([F:YBAN])        :   Close Local File [YBAN]    : Endif
+Endif
+
+End
+
+
+#------------------------------------------------------------------------------------#
+
+######################################################################################
+## Control From Account
+Subprog C_YFACC(VALEUR)
+Variable Char    VALEUR()
+
+  # Dimension activation
+  Call UPD_DIE_ACT ([M:YSTR]YFCOA, VALEUR, "F")
+
+  # Update GST (Tax)
+  Call UPD_GST4FCY ([M:YSTR]YFFCY, [M:YSTR]YTFCY, VALEUR, [M:YSTR]YTACC)
+
+
+  If [M:YSTR]YFACC <> VALEUR
+    # Each time user selects the account the project fields should be refreshed
+    Raz [M:YSTR]YFPJTLIN
+    Affzo [M:YSTR]YFPJTLIN
+  Endif
+
+  # no need for this Control when it calls from Bank change script
+  If zoncou = "YFACC"
+    Call C_YACC([M:YSTR]YFFCY, "0", VALEUR) From YSELACCFCY
+  Endif
+
+End
+#------------------------------------------------------------------------------------#
+
+######################################################################################
+# Control To Account
+Subprog C_YTACC(VALEUR)
+Variable Char    VALEUR()
+
+  # Dimension title
+  Call UPD_DIE_ACT ([M:YSTR]YTCOA, VALEUR, "T")
+
+  # Update GST (Tax)
+  Call UPD_GST4FCY ([M:YSTR]YFFCY, [M:YSTR]YTFCY, [M:YSTR]YFACC, VALEUR)
+
+  If [M:YSTR]YTACC <> VALEUR
+    # Each time user selects the account the project fields should be refreshed
+    Raz [M:YSTR]YTPJTLIN
+    Affzo [M:YSTR]YTPJTLIN
+  Endif
+
+  # Verify the Account is ok
+  Call C_YACC([M:YSTR]YTFCY, "0", VALEUR) From YSELACCFCY
+
+End
+#------------------------------------------------------------------------------------#
+
+######################################################################################
+##
+Subprog C_YPRC(VALEUR)
+Variable Decimal VALEUR
+
+# Either percentage or fixed value field should be available
+If VALEUR <> 0
+  Diszo [M:YSTR]YFFXDVAL
+#Else
+#  Actzo [M:YSTR]YFFXDVAL
+Endif
+
+End
+#------------------------------------------------------------------------------------#
+
+Subprog C_YFFXDVAL(VALEUR)
+Variable Decimal VALEUR
+
+# Either percentage or fixed value field should be available
+If VALEUR <> 0
+  Diszo [M:YSTR]YPRC
+#Else
+#  Actzo [M:YSTR]YPRC
+Endif
+
+End
+#------------------------------------------------------------------------------------#
+
+######################################################################################
+##
+Subprog UPD_PRJ_CCE (YCOA, YACC, YOPP, YTYP)
+Value Char YCOA, YACC, YOPP, YTYP
+
+
+
+Local Char YPRJNUM, YBUDCOD, YPCCCOD, YJOBDIE, YCCDIE
+
+If !clalev([F:YGAC])       : Local File GACCOUNT [YGAC]   :   Endif
+Read [F:YGAC]GAC0 = YCOA;YACC
+If !fstat & [F:YGAC]YPJM=2      #   Account is Project managed
+
+  If !clalev([F:YOPPPJM])        :    Local File OPPORPJM [YOPPPJM]  :  Endif
+  If !clalev([F:YPJLB])          :    Local File PJMBUDLIG [YPJLB]   :  Endif
+
+  If instr(1,YOPP,'-')>0
+    YPRJNUM =  left$(YOPP, instr(1,YOPP,'-')-1)
+    YBUDCOD =  seg$(YOPP,instr(1,YOPP,'-')+1,len(YOPP))
+
+    Read [F:YOPPPJM]OPPPJM0 = YPRJNUM
+    For [F:YPJLB]PJLB0 Where OPPNUM=YPRJNUM and PBUCOD=YBUDCOD
+      YPCCCOD = [F:YPJLB]PCCCOD
+      Break
+    Next
+  Else
+    Read [F:YOPPPJM]OPPPJM0 = YOPP
+    For [F:YPJLB]PJLB0 Where OPPNUM=YOPP
+      YPCCCOD = [F:YPJLB]PCCCOD         #   Cost type of Cost structure
+      Break
+    Next
+  Endif
+
+  If YTYP = "F"
+    [M:YSTR]YFCCE1 = [F:YOPPPJM]CCE(0)
+    [M:YSTR]YFCCE2 = [F:YOPPPJM]CCE(1)
+    [M:YSTR]YFCCE3 = [F:YOPPPJM]CCE(2)
+    [M:YSTR]YFCCE4 = YPCCCOD
+    [M:YSTR]YFCCE5 = [F:YOPPPJM]CCE(4)
+    [M:YSTR]YFCCE6 = [F:YOPPPJM]CCE(5)
+    [M:YSTR]YFCCE7 = [F:YOPPPJM]CCE(6)
+    [M:YSTR]YFCCE8 = [F:YOPPPJM]CCE(7)
+    [M:YSTR]YFCCE9 = [F:YOPPPJM]CCE(8)
+    If [M:YSTR]YFCCE1 <> ""   :   Diszo [M:YSTR]YFCCE1  : Endif
+    If [M:YSTR]YFCCE2 <> ""   :   Diszo [M:YSTR]YFCCE2  : Endif
+    If [M:YSTR]YFCCE3 <> ""   :   Diszo [M:YSTR]YFCCE3  : Endif
+    If [M:YSTR]YFCCE4 <> ""   :   Diszo [M:YSTR]YFCCE4  : Endif
+    If [M:YSTR]YFCCE5 <> ""   :   Diszo [M:YSTR]YFCCE5  : Endif
+    If [M:YSTR]YFCCE6 <> ""   :   Diszo [M:YSTR]YFCCE6  : Endif
+    If [M:YSTR]YFCCE7 <> ""   :   Diszo [M:YSTR]YFCCE7  : Endif
+    If [M:YSTR]YFCCE8 <> ""   :   Diszo [M:YSTR]YFCCE8  : Endif
+    If [M:YSTR]YFCCE9 <> ""   :   Diszo [M:YSTR]YFCCE9  : Endif
+
+  Elsif YTYP = "T"
+    [M:YSTR]YTCCE1 = [F:YOPPPJM]CCE(0)
+    [M:YSTR]YTCCE2 = [F:YOPPPJM]CCE(1)
+    [M:YSTR]YTCCE3 = [F:YOPPPJM]CCE(2)
+    [M:YSTR]YTCCE4 = YPCCCOD
+    [M:YSTR]YTCCE5 = [F:YOPPPJM]CCE(4)
+    [M:YSTR]YTCCE6 = [F:YOPPPJM]CCE(5)
+    [M:YSTR]YTCCE7 = [F:YOPPPJM]CCE(6)
+    [M:YSTR]YTCCE8 = [F:YOPPPJM]CCE(7)
+    [M:YSTR]YTCCE9 = [F:YOPPPJM]CCE(8)
+    If [M:YSTR]YTCCE1 <> ""   :   Diszo [M:YSTR]YTCCE1  : Endif
+    If [M:YSTR]YTCCE2 <> ""   :   Diszo [M:YSTR]YTCCE2  : Endif
+    If [M:YSTR]YTCCE3 <> ""   :   Diszo [M:YSTR]YTCCE3  : Endif
+    If [M:YSTR]YTCCE4 <> ""   :   Diszo [M:YSTR]YTCCE4  : Endif
+    If [M:YSTR]YTCCE5 <> ""   :   Diszo [M:YSTR]YTCCE5  : Endif
+    If [M:YSTR]YTCCE6 <> ""   :   Diszo [M:YSTR]YTCCE6  : Endif
+    If [M:YSTR]YTCCE7 <> ""   :   Diszo [M:YSTR]YTCCE7  : Endif
+    If [M:YSTR]YTCCE8 <> ""   :   Diszo [M:YSTR]YTCCE8  : Endif
+    If [M:YSTR]YTCCE9 <> ""   :   Diszo [M:YSTR]YTCCE9  : Endif
+  Endif
+
+
+
+  Affzo [M:YSTR]
+
+Endif
+
+End
+#------------------------------------------------------------------------------------#
+
+############################################################################################
+# GST rules based on site
+Subprog UPD_GST4FCY(YFFCY, YTFCY, YFACC, YTACC)
+Value Char    YFFCY, YTFCY, YFACC, YTACC
+
+Local Char REQUEST(255)(0..3)
+Local Shortint YSAMEGRP
+
+# For IE, if From Company and To Company are in the same GST Group, set to NA and user cannot change.
+REQUEST(0) = "Select count(g.CODGSTGRP_0) CNT from GSTGRPD g Inner join FACILITY f on f.LEGCPY_0=g.CPY_0 "
+REQUEST(0) -= "and f.FCY_0='" + YFFCY + "' Where g.CODGSTGRP_0 in ("
+REQUEST(1) = "Select g2.CODGSTGRP_0 from GSTGRPD g2 Inner join FACILITY f2 on f2.LEGCPY_0=g2.CPY_0 "
+REQUEST(1) -= "and f2.FCY_0='" + YTFCY + "')"
+
+For (Integer CNT) From "5" Sql REQUEST As [YLNK]
+  YSAMEGRP = [YLNK]CNT
+Next
+
+If YSAMEGRP > 0 & [F:GTE]YBUSBATTYP = 1     #   From and To Site/Company are belong to same compny
+  [M:YSTR]YFGST = "N/A" : [M:YSTR]YTGST = "N/A"
+  Diszo [M:YSTR]YFGST, YTGST
+Else
+
+  # Default to Tax of Account code
+  If YFACC <> ""
+    Local Char REQUEST(255)(0..3)
+    REQUEST(0) = "Select a.VAT_0 From FACILITY f Inner join COMPANY c on f.LEGCPY_0=c.CPY_0 Inner join GACM m on c.ACM_0=m.GCM_0 "
+    REQUEST(1) = "Inner join GLED l on m.LED_0=l.LED_0 Inner join GACCOUNT a on l.COA_0=a.COA_0 Where a.ENAFLG_0=2 "
+    REQUEST(2) = "and f.FCY_0='" + YFFCY + "' and a.ACC_0='" + YFACC + "'"
+
+    For (Char VAT(30)) From "5" Sql REQUEST As [YLNK]
+      [M:YSTR]YFGST = [YLNK]VAT
+    Next
+  Endif
+
+  # Default to Tax of Account code
+  If YTACC <> ""
+    Local Char REQUEST(255)(0..3)
+    REQUEST(0) = "Select a.VAT_0 From FACILITY f Inner join COMPANY c on f.LEGCPY_0=c.CPY_0 Inner join GACM m on c.ACM_0=m.GCM_0 "
+    REQUEST(1) = "Inner join GLED l on m.LED_0=l.LED_0 Inner join GACCOUNT a on l.COA_0=a.COA_0 Where a.ENAFLG_0=2 "
+    REQUEST(2) = "and f.FCY_0='" + YTFCY + "' and a.ACC_0='" + YTACC + "'"
+
+    For (Char VAT(30)) From "5" Sql REQUEST As [YLNK]
+      [M:YSTR]YTGST = [YLNK]VAT
+    Next
+  Endif
+
+Endif
+
+Affzo [M:YSTR]YFGST, YTGST
+
+End
+#------------------------------------------------------------------------------------#
+
+######################################################################################
+# Update dimension type for the site
+Subprog UPD_FCY_COA (YFCY, YTYP)
+Value Char YFCY(), YTYP()
+
+# Update COA
+
+  Local Char REQUEST(255)(0..3)
+
+  Actzo [M:YSTR]YFGST
+  # Default to Tax of Account code
+  Local Char REQUEST(255)(0..3)
+  REQUEST(0) = "Select l.COA_0 From FACILITY f Inner join COMPANY c on f.LEGCPY_0=c.CPY_0 Inner join GACM m on c.ACM_0=m.GCM_0 "
+  REQUEST(1) = "Inner join GLED l on m.LED_0=l.LED_0 and f.FCY_0='" + YFCY + "'"
+
+  For (Char COA(30)) From "5" Sql REQUEST As [YLNK]
+    If YTYP = 'F'
+      [M:YSTR]YFCOA = [YLNK]COA
+    Elsif YTYP = 'T'
+      [M:YSTR]YTCOA = [YLNK]COA
+    Endif
+  Next
+
+End
+#------------------------------------------------------------------------------------#
+
+############################################################################################
+# UPD_DIE_TIT ([M:YSTR]YFCOA, [M:YSTR]YFACC, "F")
+# Update dimenion type and caption from Account
+Subprog  UPD_DIE (YFCY, YTYP)
+Value Char YFCY, YTYP
+
+  Local Char REQUEST(255)(0..5)
+  REQUEST(0) = "SELECT DISTINCT CPY.CPY_0, CPY.DIE_0, CPY.DIE_1, CPY.DIE_2, CPY.DIE_3, CPY.DIE_4, CPY.DIE_5, CPY.DIE_6, CPY.DIE_7, CPY.DIE_8 "
+  REQUEST(1) -= "From FACILITY FCY INNER JOIN COMPANY CPY ON CPY.MAIFCY_0 = FCY.FCY_0 and FCY.LEGCPY_0 = CPY.CPY_0 "
+  REQUEST(3) -= "Where FCY.FCY_0 = '" + YFCY + "'AND CPY.YCPYACT_0 = 2"
+
+If YTYP = "F"
+  For (Char CPY, Char DIE0, Char DIE1, Char DIE2, Char DIE3, Char DIE4, Char DIE5, Char DIE6, Char DIE7, Char DIE8) From "5" Sql REQUEST As [YLNK]
+    [M:YSTR]YFDIE1 = DIE0 : Chgtzn[M:YSTR]YFCCE1 With func AFNC.TEXTRA("GDIE","DESTRA",DIE0,"")
+    [M:YSTR]YFDIE2 = DIE1 : Chgtzn[M:YSTR]YFCCE2 With func AFNC.TEXTRA("GDIE","DESTRA",DIE1,"")
+    [M:YSTR]YFDIE3 = DIE2 : Chgtzn[M:YSTR]YFCCE3 With func AFNC.TEXTRA("GDIE","DESTRA",DIE2,"")
+    [M:YSTR]YFDIE4 = DIE3 : Chgtzn[M:YSTR]YFCCE4 With func AFNC.TEXTRA("GDIE","DESTRA",DIE3,"")
+    [M:YSTR]YFDIE5 = DIE4 : Chgtzn[M:YSTR]YFCCE5 With func AFNC.TEXTRA("GDIE","DESTRA",DIE4,"")
+    [M:YSTR]YFDIE6 = DIE5 : Chgtzn[M:YSTR]YFCCE6 With func AFNC.TEXTRA("GDIE","DESTRA",DIE5,"")
+    [M:YSTR]YFDIE7 = DIE6 : Chgtzn[M:YSTR]YFCCE7 With func AFNC.TEXTRA("GDIE","DESTRA",DIE6,"")
+    [M:YSTR]YFDIE8 = DIE7 : Chgtzn[M:YSTR]YFCCE8 With func AFNC.TEXTRA("GDIE","DESTRA",DIE7,"")
+    [M:YSTR]YFDIE9 = DIE8 : Chgtzn[M:YSTR]YFCCE9 With func AFNC.TEXTRA("GDIE","DESTRA",DIE8,"")
+    Break
+  Next
+  If [M:YSTR]YFDIE1 <> ""   :   Actzo [M:YSTR]YFDIE1  : Endif
+  If [M:YSTR]YFDIE2 <> ""   :   Actzo [M:YSTR]YFDIE2  : Endif
+  If [M:YSTR]YFDIE3 <> ""   :   Actzo [M:YSTR]YFDIE3  : Endif
+  If [M:YSTR]YFDIE4 <> ""   :   Actzo [M:YSTR]YFDIE4  : Endif
+  If [M:YSTR]YFDIE5 <> ""   :   Actzo [M:YSTR]YFDIE5  : Endif
+  If [M:YSTR]YFDIE6 <> ""   :   Actzo [M:YSTR]YFDIE6  : Endif
+  If [M:YSTR]YFDIE7 <> ""   :   Actzo [M:YSTR]YFDIE7  : Endif
+  If [M:YSTR]YFDIE8 <> ""   :   Actzo [M:YSTR]YFDIE8  : Endif
+  If [M:YSTR]YFDIE9 <> ""   :   Actzo [M:YSTR]YFDIE9  : Endif
+
+Elsif YTYP = "T"
+  For (Char CPY, Char DIE0, Char DIE1, Char DIE2, Char DIE3, Char DIE4, Char DIE5, Char DIE6, Char DIE7, Char DIE8) From "5" Sql REQUEST As [YLNK]
+    [M:YSTR]YTDIE1 = DIE0 : Chgtzn[M:YSTR]YTCCE1 With func AFNC.TEXTRA("GDIE","DESTRA",DIE0,"")
+    [M:YSTR]YTDIE2 = DIE1 : Chgtzn[M:YSTR]YTCCE2 With func AFNC.TEXTRA("GDIE","DESTRA",DIE1,"")
+    [M:YSTR]YTDIE3 = DIE2 : Chgtzn[M:YSTR]YTCCE3 With func AFNC.TEXTRA("GDIE","DESTRA",DIE2,"")
+    [M:YSTR]YTDIE4 = DIE3 : Chgtzn[M:YSTR]YTCCE4 With func AFNC.TEXTRA("GDIE","DESTRA",DIE3,"")
+    [M:YSTR]YTDIE5 = DIE4 : Chgtzn[M:YSTR]YTCCE5 With func AFNC.TEXTRA("GDIE","DESTRA",DIE4,"")
+    [M:YSTR]YTDIE6 = DIE5 : Chgtzn[M:YSTR]YTCCE6 With func AFNC.TEXTRA("GDIE","DESTRA",DIE5,"")
+    [M:YSTR]YTDIE7 = DIE6 : Chgtzn[M:YSTR]YTCCE7 With func AFNC.TEXTRA("GDIE","DESTRA",DIE6,"")
+    [M:YSTR]YTDIE8 = DIE7 : Chgtzn[M:YSTR]YTCCE8 With func AFNC.TEXTRA("GDIE","DESTRA",DIE7,"")
+    [M:YSTR]YTDIE9 = DIE8 : Chgtzn[M:YSTR]YTCCE9 With func AFNC.TEXTRA("GDIE","DESTRA",DIE8,"")
+    Break
+  Next
+  If [M:YSTR]YTDIE1 <> ""   :   Actzo [M:YSTR]YTDIE1  : Endif
+  If [M:YSTR]YTDIE2 <> ""   :   Actzo [M:YSTR]YTDIE2  : Endif
+  If [M:YSTR]YTDIE3 <> ""   :   Actzo [M:YSTR]YTDIE3  : Endif
+  If [M:YSTR]YTDIE4 <> ""   :   Actzo [M:YSTR]YTDIE4  : Endif
+  If [M:YSTR]YTDIE5 <> ""   :   Actzo [M:YSTR]YTDIE5  : Endif
+  If [M:YSTR]YTDIE6 <> ""   :   Actzo [M:YSTR]YTDIE6  : Endif
+  If [M:YSTR]YTDIE7 <> ""   :   Actzo [M:YSTR]YTDIE7  : Endif
+  If [M:YSTR]YTDIE8 <> ""   :   Actzo [M:YSTR]YTDIE8  : Endif
+  If [M:YSTR]YTDIE9 <> ""   :   Actzo [M:YSTR]YTDIE9  : Endif
+Endif
+
+End
+
+############################################################################################
+# UPD_DIE_TIT ([M:YSTR]YFCOA, [M:YSTR]YFACC, "F")
+# Update dimenion type and caption from Account
+Subprog  UPD_DIE_ACT (YCOA, YACC, YTYP)
+Value Char YCOA, YACC, YTYP
+
+# populates dimension from Account
+  If !clalev([F:YGAC])       : Local File GACCOUNT [YGAC]   :   Endif
+  Read [F:YGAC]GAC0 = YCOA;YACC
+  If YTYP = "F"
+    Diszo [M:YSTR]YFCCE1, YFCCE2, YFCCE3, YFCCE4, YFCCE5, YFCCE6, YFCCE7, YFCCE8, YFCCE9
+
+    For I = 0 To 8
+      For J = 1 To 9
+        If evalue ("[F:YGAC]DIE("+num$(I)+")<>''") and evalue("[M:YSTR]YFDIE"+num$(J)+"=[F:YGAC]DIE("+num$(I)+")")
+          Case J
+            When 1  : Actzo [M:YSTR]YFCCE1
+            When 2  : Actzo [M:YSTR]YFCCE2
+            When 3  : Actzo [M:YSTR]YFCCE3
+            When 4  : Actzo [M:YSTR]YFCCE4
+            When 5  : Actzo [M:YSTR]YFCCE5
+            When 6  : Actzo [M:YSTR]YFCCE6
+            When 7  : Actzo [M:YSTR]YFCCE7
+            When 8  : Actzo [M:YSTR]YFCCE8
+            When 9  : Actzo [M:YSTR]YFCCE9
+          Endcase
+        Endif
+
+        # If Account is a Project Account then Project Link is Active/Mandatory else disabled
+        If [F:YGAC]YPJM=2
+          Actzo [M:YSTR]YFPJTLIN
+        Else
+          #[M:YSTR]YFPJTLIN = ""
+          Diszo [M:YSTR]YFPJTLIN
+        Endif
+     Next
+    Next
+  Elsif YTYP = "T"
+    Diszo [M:YSTR]YTCCE1, YTCCE2, YTCCE3, YTCCE4, YTCCE5, YTCCE6, YTCCE7, YTCCE8, YTCCE9
+
+    For I = 0 To 8
+      For J = 1 To 9
+        If evalue ("[F:YGAC]DIE("+num$(I)+")<>''") and evalue("[M:YSTR]YTDIE"+num$(J)+"=[F:YGAC]DIE("+num$(I)+")")
+          Case J
+            When 1  : Actzo [M:YSTR]YTCCE1
+            When 2  : Actzo [M:YSTR]YTCCE2
+            When 3  : Actzo [M:YSTR]YTCCE3
+            When 4  : Actzo [M:YSTR]YTCCE4
+            When 5  : Actzo [M:YSTR]YTCCE5
+            When 6  : Actzo [M:YSTR]YTCCE6
+            When 7  : Actzo [M:YSTR]YTCCE7
+            When 8  : Actzo [M:YSTR]YTCCE8
+            When 9  : Actzo [M:YSTR]YTCCE9
+          Endcase
+        Endif
+
+        # If Account is a Project Account then Project Link is Active/Mandatory else disabled
+        If [F:YGAC]YPJM=2
+          Actzo [M:YSTR]YTPJTLIN
+        Else
+          Diszo [M:YSTR]YTPJTLIN
+        Endif
+      Next
+    Next
+
+  Endif
+
+End
+
+#------------------------------------------------------------------------------------#
+# Activate or deactivate of fields based on Settlement rule type
+#------------------------------------------------------------------------------------#
+Subprog CHECK_ENTRY_FIELD ()
+  If [F:YSRT2]YRULTYPCOD <> [M:YSTR]YRULTYPCOD  : Read [F:YSRT2]YSRT0 = [M:YSTR]YRULTYPCOD  : Endif
+  If [F:GTE]TYP <> [M:YSTR]YENTTYP              : Read [F:GTE]GTE0 = [F:YSRT2]YENTTYP;"AUS"  : Endif
+  If [F:JOU]JOU <> [M:YSTR]YJOU                 : Read [F:JOU]JOU0 = [F:YSRT2]YJOU;"AUS"     : Endif
+
+  # Rules for the Fields on "To" section
+  If [F:GTE]YBUSBATTYP = 1       # Inter-entity
+    Actzo [M:YSTR]YTFCY, YTACC, YTGST, YTAMTAMD, YTLONAGR, YTPJTLIN, YTCCE1, YTCCE2, YTCCE3, YTCCE4, YTCCE5
+  Elsif [F:GTE]YBUSBATTYP = 2    # Cash
+    Actzo [M:YSTR]YTFCY, YTACC, YTGST, YTAMTAMD, YTPJTLIN, YTCCE1, YTCCE2, YTCCE3, YTCCE4, YTCCE5
+    Diszo [M:YSTR]YTLONAGR
+
+    # In Cash the From account should populate from bank
+    If [M:YSTR]YFBANK <> "" and [M:YSTR]YFACC <> ""
+      Diszo [M:YSTR]YFACC
+    Endif
+  Elsif [F:GTE]YBUSBATTYP = 3    # Journal
+    Actzo [M:YSTR]YTACC, YTGST, YTAMTAMD, YTPJTLIN, YTCCE1, YTCCE2, YTCCE3, YTCCE4, YTCCE5
+    Diszo [M:YSTR]YTFCY, YTLONAGR
+  Endif
+
+  # If the Settlement Rule Journal /Entry Type is Cash, then Bank is available and mandatory.
+  If [F:GTE]YBUSBATTYP = 2 or [F:JOU]YBUSBATTYP = 2
+    Actzo [M:YSTR]YFBANK
+  Else
+    Diszo [M:YSTR]YFBANK
+  Endif
+
+  #Where Settlement Rule - Entry Type is Inter-Entity then ELA is Available and optional otherwise disabled
+  If [F:GTE]YBUSBATTYP = 1
+    Actzo [M:YSTR]YFLONAGR
+  Else
+    Diszo [M:YSTR]YFLONAGR
+  Endif
+
+  # If Account is a Project Account then Project Link is Active/Mandatory else disabled
+  If !clalev([F:YGAC])       : Local File GACCOUNT [YGAC]   :   Endif
+  Read [F:YGAC]GAC0 = [M:YSTR]YFCOA;[M:YSTR]YFACC
+  If !fstat & [F:YGAC]YPJM=2
+    Actzo [M:YSTR]YFPJTLIN
+  Else
+    Diszo [M:YSTR]YFPJTLIN
+  Endif
+
+  Read [F:YGAC]GAC0 = [M:YSTR]YTCOA;[M:YSTR]YTACC
+  If !fstat & [F:YGAC]YPJM=2
+    Actzo [M:YSTR]YTPJTLIN
+  Else
+    Diszo [M:YSTR]YTPJTLIN
+  Endif
+
+  # Process = Recognition then Deactive Adjustment (this rules comes from Settlement rule type spec)
+  # If [M:YSTR]YSETPRC = 2 : Diszo [M:YSTR]YALWADJ : Else  Actzo [M:YSTR]YALWADJ : Endif
+
+  # Percentage and Fixed value not available if Adjustment = Yes
+  # If [M:YSTR]YALWADJ = 2 : Diszo [M:YSTR]YCALTYP : Else  Actzo [M:YSTR]YCALTYP : Endif
+
+
+
+
+  # Process = Recognition set Allow adjustment to No and disabled
+  # If [M:YSTR]YSETPRC = 2    :   Diszo [M:YSTR]YALWADJ   : Endif
+  # Value adjustment = Yes, then Calculation type will default to Fixed value and cannot be changed
+  # If [M:YSTR]YALWADJ = 2    :   Diszo [M:YSTR]YCALTYP   : Endif
+
+  # Status of Fixed or Percentage
+  If    [M:YSTR]YCALTYP <> 1                          # Calc. type <> Fixed value
+    Diszo [M:YSTR]YFFXDVAL  : Actzo [M:YSTR]YPRC
+  Else      # Calc. type = Fixed value
+    If [M:YSTR]YSETPRC = 2                            # Process = Recognition & Calc. type = Fixed value
+      Actzo [M:YSTR]YFFXDVAL  : Diszo [M:YSTR]YPRC
+    Elsif [M:YSTR]YSETPRC = 1 & [M:YSTR]YALWADJ = 2   # Process = Receipt & Allow adj. = Yes & Calc. type = Fixed value
+      Diszo [M:YSTR]YFFXDVAL  : Diszo [M:YSTR]YPRC
+    Elsif [M:YSTR]YSETPRC = 1 & [M:YSTR]YALWADJ = 1   # Process = Receipt & Allow adj. = No & Calc. type = Fixed value
+      Actzo [M:YSTR]YFFXDVAL  : Diszo [M:YSTR]YPRC
+    Endif
+  Endif
+
+  # Dimension title
+  If [M:YSTR]YFFCY <> ""
+    Call UPD_DIE ([M:YSTR]YFFCY, "F")
+    Call UPD_DIE_ACT ([M:YSTR]YFCOA, [M:YSTR]YFACC, "F")
+  Endif
+  If [M:YSTR]YTFCY <> ""
+    Call UPD_DIE ([M:YSTR]YTFCY, "F")
+    Call UPD_DIE_ACT ([M:YSTR]YTCOA, [M:YSTR]YTACC, "T")
+  Endif
+
+  # Dimension
+#  If [M:YSTR]YFDIE1=""  : Diszo [M:YSTR]YFCCE1  : Else  : Actzo [M:YSTR]YFCCE1  : Endif
+#  If [M:YSTR]YFDIE2=""  : Diszo [M:YSTR]YFCCE2  : Else  : Actzo [M:YSTR]YFCCE2  : Endif
+#  If [M:YSTR]YFDIE3=""  : Diszo [M:YSTR]YFCCE3  : Else  : Actzo [M:YSTR]YFCCE3  : Endif
+#  If [M:YSTR]YFDIE4=""  : Diszo [M:YSTR]YFCCE4  : Else  : Actzo [M:YSTR]YFCCE4  : Endif
+#  If [M:YSTR]YFDIE5=""  : Diszo [M:YSTR]YFCCE5  : Else  : Actzo [M:YSTR]YFCCE5  : Endif
+#  If [M:YSTR]YFDIE6=""  : Diszo [M:YSTR]YFCCE6  : Else  : Actzo [M:YSTR]YFCCE6  : Endif
+#  If [M:YSTR]YFDIE7=""  : Diszo [M:YSTR]YFCCE7  : Else  : Actzo [M:YSTR]YFCCE7  : Endif
+#  If [M:YSTR]YFDIE8=""  : Diszo [M:YSTR]YFCCE8  : Else  : Actzo [M:YSTR]YFCCE8  : Endif
+#  If [M:YSTR]YFDIE9=""  : Diszo [M:YSTR]YFCCE9  : Else  : Actzo [M:YSTR]YFCCE9  : Endif
+#
+#  If [M:YSTR]YTDIE1=""  : Diszo [M:YSTR]YTCCE1  : Else  : Actzo [M:YSTR]YTCCE1  : Endif
+#  If [M:YSTR]YTDIE2=""  : Diszo [M:YSTR]YTCCE2  : Else  : Actzo [M:YSTR]YTCCE2  : Endif
+#  If [M:YSTR]YTDIE3=""  : Diszo [M:YSTR]YTCCE3  : Else  : Actzo [M:YSTR]YTCCE3  : Endif
+#  If [M:YSTR]YTDIE4=""  : Diszo [M:YSTR]YTCCE4  : Else  : Actzo [M:YSTR]YTCCE4  : Endif
+#  If [M:YSTR]YTDIE5=""  : Diszo [M:YSTR]YTCCE5  : Else  : Actzo [M:YSTR]YTCCE5  : Endif
+#  If [M:YSTR]YTDIE6=""  : Diszo [M:YSTR]YTCCE6  : Else  : Actzo [M:YSTR]YTCCE6  : Endif
+#  If [M:YSTR]YTDIE7=""  : Diszo [M:YSTR]YTCCE7  : Else  : Actzo [M:YSTR]YTCCE7  : Endif
+#  If [M:YSTR]YTDIE8=""  : Diszo [M:YSTR]YTCCE8  : Else  : Actzo [M:YSTR]YTCCE8  : Endif
+#  If [M:YSTR]YTDIE9=""  : Diszo [M:YSTR]YTCCE9  : Else  : Actzo [M:YSTR]YTCCE9  : Endif
+
+  # Read dimension value from project and disactivate
+  Call UPD_PRJ_CCE ([M:YSTR]YFCOA,[M:YSTR]YFACC, [M:YSTR]YFPJTLIN, "F")
+  Call UPD_PRJ_CCE ([M:YSTR]YTCOA,[M:YSTR]YTACC, [M:YSTR]YTPJTLIN, "T")
+
+End
+#------------------------------------------------------------------------------------#
+
+
+######################################################################################
+
+**********
+7,"TRT","SPEYSETRUL","Settlement Rule"
+2,"ATB","YSETRUL","Settlement Rule"
+3,"ATB",YSETRUL
+4,"ABRFIC",0,"YSTR"
+4,"ASDCLE",0,""
+4,"AUDBI",0,1
+4,"AUDCLE",0,""
+4,"AUDCRE",0,1
+4,"AUDDEL",0,1
+4,"AUDSDA",0,1
+4,"AUDUPD",0,1
+4,"AUDWRK",0,1
+4,"CODACT",0,"YLSP"
+4,"CODFIC",0,"YSETRUL"
+4,"COLDEC",0,""
+4,"COLFMT",0,""
+4,"COLLNG",0,""
+4,"CRE",0,1
+4,"CREDAT",0,20181115
+4,"CREDATTIM",0,"2018-11-15T01:11:47Z"
+4,"CREUSR",0,"MAJID"
+4,"FLG130",0,1
+4,"FLGLEG",0,0
+4,"GENTRA",0,1
+4,"INTIT",0,"YRULDES"
+4,"INTITC",0,""
+5,"INTITFIC",0,"Settlement Rule","ENG",101129,""
+5,"INTITFIC",0,"","***"
+4,"MODULE",0,1
+4,"NBENREG",0,0
+4,"OPT",0,0
+4,"SECURE",0,1
+4,"STA",0,0
+4,"SYMBOL",0,""
+4,"TYPDBA",0,3
+4,"TYPDLV",0,1
+4,"TYPFIC",0,1
+4,"UPDDAT",0,20190502
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDFLG",0,0
+4,"UPDUSR",0,"MAJID"
+4,"ZERO",0,1
+6,"ATB"
+3,"ATZ",AUUID
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"AUUID"
+4,"CODZONE",0,"AUUID"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,0
+5,"NOABREG",0,"Single identifier","ENG",42348,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Single identifier","ENG",42348,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Single identifier","ENG",42348,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,70
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",CREDATTIM
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"ADATIM"
+4,"CODZONE",0,"CREDATTIM"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,0
+5,"NOABREG",0,"Date time","ENG",48732,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Date time","ENG",48732,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Date time","ENG",48732,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,68
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",CREUSR
+4,"ANNUL",0,4
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"AUS"
+4,"CODZONE",0,"CREUSR"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"AUTILIS"
+4,"LONG",0,0
+5,"NOABREG",0,"User","ENG",250,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"User","ENG",250,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"User","ENG",250,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,71
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,1
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",UPDDATTIM
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"ADATIM"
+4,"CODZONE",0,"UPDDATTIM"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,0
+5,"NOABREG",0,"Date time","ENG",48732,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Date time","ENG",48732,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Date time","ENG",48732,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,69
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",UPDUSR
+4,"ANNUL",0,4
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"AUS"
+4,"CODZONE",0,"UPDUSR"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"AUTILIS"
+4,"LONG",0,0
+5,"NOABREG",0,"User","ENG",250,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"User","ENG",250,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"User","ENG",250,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,72
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,1
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YACTFLG
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"M"
+4,"CODZONE",0,"YACTFLG"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,4
+5,"NOABREG",0,"Active","ENG",26260,"Feminine singular"
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Active","ENG",26260,"Feminine singular"
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,1
+5,"NOLONG",0,"Active","ENG",26260,"Feminine singular"
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,3
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YEST
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,"YLAND"
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"YEST"
+4,"CODZONE",0,"YEST"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"YESTA"
+4,"LONG",0,0
+5,"NOABREG",0,"Estate","ENG",100372,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Estate","ENG",100372,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Estate","ENG",100372,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,4
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YFACC
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"GAC"
+4,"CODZONE",0,"YFACC"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""";YFACC"
+4,"LIEN",0,"GACCOUNT"
+4,"LONG",0,0
+5,"NOABREG",0,"Account","ENG",3956,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Account","ENG",3956,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Account","ENG",3956,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,18
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",GAC
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"GAC"
+4,"CODZON",0,"YFACC"
+4,"CREDATTIM",0,"2018-11-15T01:09:42Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:09:45Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YFAMTAMD
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"M"
+4,"CODZONE",0,"YFAMTAMD"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,15
+5,"NOABREG",0,"Amt. amend.","ENG",101133,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Amount amendment","ENG",101132,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,6246
+5,"NOLONG",0,"Amount amendment","ENG",101132,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,22
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YFBANK
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"BAN"
+4,"CODZONE",0,"YFBANK"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"BANK"
+4,"LONG",0,0
+5,"NOABREG",0,"Bank","ENG",38162,"Adjective (plural)"
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Bank","ENG",38162,"Adjective (plural)"
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Bank","ENG",38162,"Adjective (plural)"
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,16
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YFCCE1
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"CCE"
+4,"CODZONE",0,"YFCCE1"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""";"""
+4,"LIEN",0,"CACCE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dimension 1","ENG",26007,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"From Dimension 1","ENG",101170,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"From Dimension 1","ENG",101170,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,34
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YFCCE2
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"CCE"
+4,"CODZONE",0,"YFCCE2"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""";"""
+4,"LIEN",0,"CACCE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dimension 2","ENG",26008,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"From Dimension 2","ENG",101171,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"From Dimension 2","ENG",101171,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,35
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",CCE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CCE"
+4,"CODZON",0,"YFCCE2"
+4,"CREDATTIM",0,"2018-11-27T22:53:23Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-27T22:53:27Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YFCCE3
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"CCE"
+4,"CODZONE",0,"YFCCE3"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""";"""
+4,"LIEN",0,"CACCE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dimension 3","ENG",31145,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"From Dimension 3","ENG",101172,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"From Dimension 3","ENG",101172,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,36
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",CCE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CCE"
+4,"CODZON",0,"YFCCE3"
+4,"CREDATTIM",0,"2018-11-27T22:53:51Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-27T22:53:54Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YFCCE4
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"CCE"
+4,"CODZONE",0,"YFCCE4"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""";"""
+4,"LIEN",0,"CACCE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dimension 4","ENG",39141,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"From Dimension 4","ENG",101173,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"From Dimension 4","ENG",101173,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,37
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",CCE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CCE"
+4,"CODZON",0,"YFCCE4"
+4,"CREDATTIM",0,"2018-11-27T22:54:31Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-27T22:54:33Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YFCCE5
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"CCE"
+4,"CODZONE",0,"YFCCE5"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""";"""
+4,"LIEN",0,"CACCE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dimension 5","ENG",39142,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"From Dimension 5","ENG",101174,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"From Dimension 5","ENG",101174,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,38
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",CCE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CCE"
+4,"CODZON",0,"YFCCE5"
+4,"CREDATTIM",0,"2018-11-27T22:54:58Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-27T22:55:01Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YFCCE6
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"CCE"
+4,"CODZONE",0,"YFCCE6"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""";"""
+4,"LIEN",0,"CACCE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dimension 6","ENG",39143,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"From Dimension 6","ENG",101175,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"From Dimension 6","ENG",101175,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,39
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",CCE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CCE"
+4,"CODZON",0,"YFCCE6"
+4,"CREDATTIM",0,"2018-11-27T22:55:27Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-27T22:55:35Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YFCCE7
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"CCE"
+4,"CODZONE",0,"YFCCE7"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""";"""
+4,"LIEN",0,"CACCE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dimension 7","ENG",39144,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"From Dimension 7","ENG",101176,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"From Dimension 7","ENG",101176,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,40
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",CCE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CCE"
+4,"CODZON",0,"YFCCE7"
+4,"CREDATTIM",0,"2018-11-27T22:55:57Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-27T22:56:01Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YFCCE8
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"CCE"
+4,"CODZONE",0,"YFCCE8"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""";"""
+4,"LIEN",0,"CACCE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dimension 8","ENG",39145,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"From Dimension 8","ENG",101177,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"From Dimension 8","ENG",101177,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,41
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",CCE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CCE"
+4,"CODZON",0,"YFCCE8"
+4,"CREDATTIM",0,"2018-11-27T22:56:29Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-27T22:56:32Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YFCCE9
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"CCE"
+4,"CODZONE",0,"YFCCE9"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""";"""
+4,"LIEN",0,"CACCE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dimension 9","ENG",39146,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"From Dimension 9","ENG",101178,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"From Dimension 9","ENG",101178,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,42
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",CCE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CCE"
+4,"CODZON",0,"YFCCE9"
+4,"CREDATTIM",0,"2018-11-27T22:56:54Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-27T22:56:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YFCOA
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"COA"
+4,"CODZONE",0,"YFCOA"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"GCOA"
+4,"LONG",0,0
+5,"NOABREG",0,"From COA","ENG",101158,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"From COA","ENG",101158,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"From COA","ENG",101158,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,17
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YFDIE1
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"DIE"
+4,"CODZONE",0,"YFDIE1"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"GDIE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dim. Type 1","ENG",101161,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Dimension type 1","ENG",5674,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Dimension type","ENG",3984,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,25
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YFDIE2
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"DIE"
+4,"CODZONE",0,"YFDIE2"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"GDIE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dim. Type 2","ENG",101182,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Dimension type 2","ENG",5675,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Dimension type 2","ENG",5675,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,26
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YFDIE3
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"DIE"
+4,"CODZONE",0,"YFDIE3"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"GDIE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dim. Type 3","ENG",101183,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Dimension type 3","ENG",5676,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Dimension type 3","ENG",5676,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,27
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YFDIE4
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"DIE"
+4,"CODZONE",0,"YFDIE4"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"GDIE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dim. Type 4","ENG",101184,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Dimension type 4","ENG",5677,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Dimension type 4","ENG",5677,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,28
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YFDIE5
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"DIE"
+4,"CODZONE",0,"YFDIE5"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"GDIE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dim. Type 5","ENG",101185,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Dimension type 5","ENG",5678,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Dimension type 5","ENG",5678,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,29
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YFDIE6
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"DIE"
+4,"CODZONE",0,"YFDIE6"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"GDIE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dim. Type 6","ENG",101186,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Dimension type 6","ENG",5679,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Dimension type 6","ENG",5679,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,30
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YFDIE7
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"DIE"
+4,"CODZONE",0,"YFDIE7"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"GDIE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dim. Type 7","ENG",101187,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Dimension type 7","ENG",5680,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Dimension type 7","ENG",5680,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,31
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YFDIE8
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"DIE"
+4,"CODZONE",0,"YFDIE8"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"GDIE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dim. Type 8","ENG",101188,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Dimension type 8","ENG",5681,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Dimension type 8","ENG",5681,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,32
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YFDIE9
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"DIE"
+4,"CODZONE",0,"YFDIE9"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"GDIE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dim. Type 9","ENG",101189,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Dimension type 9","ENG",5682,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Dimension type 9","ENG",5682,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,33
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YFDRCR
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"M"
+4,"CODZONE",0,"YFDRCR"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,15
+5,"NOABREG",0,"Dr/Cr","ENG",101135,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Dr/Cr","ENG",101135,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,6245
+5,"NOLONG",0,"Dr/Cr","ENG",101135,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,19
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YFFCY
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"FCY"
+4,"CODZONE",0,"YFFCY"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"FACILITY"
+4,"LONG",0,0
+5,"NOABREG",0,"From Site","ENG",101136,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"From Site","ENG",101136,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"From Site","ENG",101136,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,15
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YFFXDVAL
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"DCB"
+4,"CODZONE",0,"YFFXDVAL"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,9.2
+5,"NOABREG",0,"Fixed Value","ENG",101137,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Fixed Value","ENG",101137,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Fixed Value","ENG",101137,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,14
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YFGST
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"VAT"
+4,"CODZONE",0,"YFGST"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,"YFGST;"""
+4,"LIEN",0,"TABVAT"
+4,"LONG",0,0
+5,"NOABREG",0,"Tax","ENG",6818,"Specific meaning of tax, i.e. VAT"
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Tax","ENG",6818,"Specific meaning of tax, i.e. VAT"
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Tax","ENG",6818,"Specific meaning of tax, i.e. VAT"
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,21
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",CHAMPCOD
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CHAMPCOD"
+4,"CODZON",0,"YFGST"
+4,"CREDATTIM",0,"2018-11-15T01:11:21Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:11:25Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",CODMSK
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CODMSK"
+4,"CODZON",0,"YFGST"
+4,"CREDATTIM",0,"2018-11-15T01:11:21Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:11:25Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",CPY
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CPY"
+4,"CODZON",0,"YFGST"
+4,"CREDATTIM",0,"2018-11-15T01:11:21Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:11:25Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",FCY
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"FCY"
+4,"CODZON",0,"YFGST"
+4,"CREDATTIM",0,"2018-11-15T01:11:21Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:11:25Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",FONCTION
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"FONCTION"
+4,"CODZON",0,"YFGST"
+4,"CREDATTIM",0,"2018-11-15T01:11:21Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:11:25Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",GROUPE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"GROUPE"
+4,"CODZON",0,"YFGST"
+4,"CREDATTIM",0,"2018-11-15T01:11:21Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:11:25Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",LEG
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"LEG"
+4,"CODZON",0,"YFGST"
+4,"CREDATTIM",0,"2018-11-15T01:11:21Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:11:25Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",WCRITERE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"WCRITERE"
+4,"CODZON",0,"YFGST"
+4,"CREDATTIM",0,"2018-11-15T01:11:21Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:11:25Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YFLONAGR
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,"YICLA"
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"YLONAGR"
+4,"CODZONE",0,"YFLONAGR"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"YENTLOAAGR"
+4,"LONG",0,0
+5,"NOABREG",0,"Loan No","ENG",100658,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Loan Agreement no","ENG",100118,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Loan Agreement no","ENG",100118,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,23
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",SITE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"SITE"
+4,"CODZON",0,"YFLONAGR"
+4,"CREDATTIM",0,"2018-11-15T01:19:28Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:19:31Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YFPJTLIN
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"PIM"
+4,"CODZONE",0,"YFPJTLIN"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"PIMPL"
+4,"LONG",0,0
+5,"NOABREG",0,"Project link","ENG",54491,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Project link","ENG",54491,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Project link","ENG",54491,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,24
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",BOOCRM
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"BOOCRM"
+4,"CODZON",0,"YFPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:19:58Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:20:08Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",BOOPRP
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"BOOPRP"
+4,"CODZON",0,"YFPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:19:58Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:20:08Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",BOOPRPBUD
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"BOOPRPBUD"
+4,"CODZON",0,"YFPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:19:58Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:20:08Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",BOOPRPTAC5
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"BOOPRPTAC5"
+4,"CODZON",0,"YFPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:19:58Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:20:08Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",BOOPRPTAC6
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"BOOPRPTAC6"
+4,"CODZON",0,"YFPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:19:58Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:20:08Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",BOOPRPTAC7
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"BOOPRPTAC7"
+4,"CODZON",0,"YFPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:19:58Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:20:08Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",BPR
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"BPR"
+4,"CODZON",0,"YFPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:19:58Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:20:08Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",CODMSK
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CODMSK"
+4,"CODZON",0,"YFPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:19:58Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:20:08Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",FLDNAM
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"FLDNAM"
+4,"CODZON",0,"YFPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:19:58Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:20:08Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",INTERLOC
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"INTERLOC"
+4,"CODZON",0,"YFPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:19:58Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:20:08Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",MODULE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"MODULE"
+4,"CODZON",0,"YFPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:19:58Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:20:08Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",NOLIG
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"NOLIG"
+4,"CODZON",0,"YFPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:19:58Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:20:08Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",SITE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"SITE"
+4,"CODZON",0,"YFPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:19:58Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:20:08Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",SOCIETE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"SOCIETE"
+4,"CODZON",0,"YFPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:19:58Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:20:08Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",USEDISBUD
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"USEDISBUD"
+4,"CODZON",0,"YFPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:19:58Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:20:08Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",USEDISPRP
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"USEDISPRP"
+4,"CODZON",0,"YFPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:19:58Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:20:08Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",USEDISTAC
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"USEDISTAC"
+4,"CODZON",0,"YFPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:19:58Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:20:08Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",ZONDET
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"ZONDET"
+4,"CODZON",0,"YFPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:19:58Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:20:08Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",ZONHEAD
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"ZONHEAD"
+4,"CODZON",0,"YFPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:19:58Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:20:08Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YGSTINC
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"M"
+4,"CODZONE",0,"YGSTINC"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,4
+5,"NOABREG",0,"GST Inc.","ENG",101001,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"GST Inc.","ENG",101001,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,1
+5,"NOLONG",0,"GST Inc.","ENG",101001,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,20
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YLANDPUR
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,"YLAND"
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"YLND"
+4,"CODZONE",0,"YLANDPUR"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,0
+5,"NOABREG",0,"Land Purchase","ENG",100650,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Land Purchase","ENG",100650,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Land Purchase","ENG",100650,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,5
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YLIGDES
+4,"ANNUL",0,1
+4,"CHPLEG",0,1
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"A"
+4,"CODZONE",0,"YLIGDES"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,100
+5,"NOABREG",0,"Line des.","ENG",100731,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Line description","ENG",7474,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Line description","ENG",7474,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,10
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YLOT
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,"YLAND"
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"YLOT"
+4,"CODZONE",0,"YLOT"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"YLOT"
+4,"LONG",0,0
+5,"NOABREG",0,"Lot","ENG",2721,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Lot","ENG",2721,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Lot","ENG",2721,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,8
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YPRC
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"DCB"
+4,"CODZONE",0,"YPRC"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,3.2
+5,"NOABREG",0,"Percentage","ENG",3568,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Percentage","ENG",3568,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Percentage","ENG",3568,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,13
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YPRECINCT
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,"YLAND"
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"YPREC"
+4,"CODZONE",0,"YPRECINCT"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"YPRECINT"
+4,"LONG",0,0
+5,"NOABREG",0,"Precinct","ENG",100373,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Precinct","ENG",100373,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Precinct","ENG",100373,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,6
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YRULDES
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"DES"
+4,"CODZONE",0,"YRULDES"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,0
+5,"NOABREG",0,"Description","ENG",282,"Designation"
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Description","ENG",282,"Designation"
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Description","ENG",282,"Designation"
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,9
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YRULID
+4,"ANNUL",0,1
+4,"CHPLEG",0,1
+4,"CODACT",0,"YLSP"
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"YSRID"
+4,"CODZONE",0,"YRULID"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,0
+5,"NOABREG",0,"Rule ID","ENG",101131,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Settlement Rule ID","ENG",101130,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Settlement Rule ID","ENG",101130,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,1
+4,"OBLIG",0,2
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YRULTYPCOD
+4,"ANNUL",0,1
+4,"CHPLEG",0,1
+4,"CODACT",0,"YLSP"
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"YSRLTYP"
+4,"CODZONE",0,"YRULTYPCOD"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,0
+5,"NOABREG",0,"Code","ENG",5296,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Code","ENG",5296,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Code","ENG",5296,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,2
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YSTAG
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,"YLAND"
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"YSTA"
+4,"CODZONE",0,"YSTAG"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"YSTAGE"
+4,"LONG",0,0
+5,"NOABREG",0,"Stage","ENG",32952,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Stage","ENG",32952,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Stage","ENG",32952,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,7
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YTACC
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"GAC"
+4,"CODZONE",0,"YTACC"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""";YTACC"
+4,"LIEN",0,"GACCOUNT"
+4,"LONG",0,0
+5,"NOABREG",0,"Account","ENG",3956,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Account","ENG",3956,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Account","ENG",3956,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,45
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",GAC
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"GAC"
+4,"CODZON",0,"YTACC"
+4,"CREDATTIM",0,"2018-11-15T01:21:04Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:21:06Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YTAMTAMD
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"M"
+4,"CODZONE",0,"YTAMTAMD"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,15
+5,"NOABREG",0,"Amt. amend.","ENG",101133,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Amount amendment","ENG",101132,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,6246
+5,"NOLONG",0,"Amount amendment","ENG",101132,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,47
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YTCCE1
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"CCE"
+4,"CODZONE",0,"YTCCE1"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""";"""
+4,"LIEN",0,"CACCE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dimension 1","ENG",26007,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"To Dimension 1","ENG",101190,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Dimension 1","ENG",26007,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,59
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YTCCE2
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"CCE"
+4,"CODZONE",0,"YTCCE2"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""";"""
+4,"LIEN",0,"CACCE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dimension 2","ENG",26008,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"To Dimension 2","ENG",101162,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"To Dimension 2","ENG",101162,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,60
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",CCE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CCE"
+4,"CODZON",0,"YTCCE2"
+4,"CREDATTIM",0,"2018-11-27T23:36:49Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-27T23:36:51Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YTCCE3
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"CCE"
+4,"CODZONE",0,"YTCCE3"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""";"""
+4,"LIEN",0,"CACCE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dimension 3","ENG",31145,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"To Dimension 3","ENG",101163,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"To Dimension 3","ENG",101163,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,61
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",CCE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CCE"
+4,"CODZON",0,"YTCCE3"
+4,"CREDATTIM",0,"2018-11-27T23:37:43Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-27T23:37:45Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YTCCE4
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"CCE"
+4,"CODZONE",0,"YTCCE4"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""";"""
+4,"LIEN",0,"CACCE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dimension 4","ENG",39141,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"To Dimension 4","ENG",101164,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"To Dimension 4","ENG",101164,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,62
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",CCE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CCE"
+4,"CODZON",0,"YTCCE4"
+4,"CREDATTIM",0,"2018-11-27T23:38:19Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-27T23:38:21Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YTCCE5
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"CCE"
+4,"CODZONE",0,"YTCCE5"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""";"""
+4,"LIEN",0,"CACCE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dimension 5","ENG",39142,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"To Dimension 5","ENG",101165,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"To Dimension 5","ENG",101165,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,63
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",CCE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CCE"
+4,"CODZON",0,"YTCCE5"
+4,"CREDATTIM",0,"2018-11-27T23:38:52Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-27T23:38:54Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YTCCE6
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"CCE"
+4,"CODZONE",0,"YTCCE6"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""";"""
+4,"LIEN",0,"CACCE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dimension 6","ENG",39143,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"To Dimension 6","ENG",101166,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"To Dimension 6","ENG",101166,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,64
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",CCE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CCE"
+4,"CODZON",0,"YTCCE6"
+4,"CREDATTIM",0,"2018-11-27T23:39:24Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-27T23:39:26Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YTCCE7
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"CCE"
+4,"CODZONE",0,"YTCCE7"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""";"""
+4,"LIEN",0,"CACCE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dimension 7","ENG",39144,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"To Dimension 7","ENG",101167,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"To Dimension 7","ENG",101167,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,65
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",CCE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CCE"
+4,"CODZON",0,"YTCCE7"
+4,"CREDATTIM",0,"2018-11-27T23:39:54Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-27T23:39:56Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YTCCE8
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"CCE"
+4,"CODZONE",0,"YTCCE8"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""";"""
+4,"LIEN",0,"CACCE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dimension 8","ENG",39145,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"To Dimension 8","ENG",101168,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"To Dimension 8","ENG",101168,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,66
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",CCE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CCE"
+4,"CODZON",0,"YTCCE8"
+4,"CREDATTIM",0,"2018-11-27T23:40:27Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-27T23:40:29Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YTCCE9
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"CCE"
+4,"CODZONE",0,"YTCCE9"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""";"""
+4,"LIEN",0,"CACCE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dimension 9","ENG",39146,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"To Dimension 9","ENG",101169,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"To Dimension 9","ENG",101169,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,67
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",CCE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CCE"
+4,"CODZON",0,"YTCCE9"
+4,"CREDATTIM",0,"2018-11-27T23:41:00Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-27T23:41:02Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YTCOA
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"COA"
+4,"CODZONE",0,"YTCOA"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"GCOA"
+4,"LONG",0,0
+5,"NOABREG",0,"From COA","ENG",101158,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"To COA","ENG",101159,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"From COA","ENG",101158,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,44
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YTDIE1
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"DIE"
+4,"CODZONE",0,"YTDIE1"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"GDIE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dim. Type 1","ENG",101161,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Dimension type 1","ENG",5674,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Dimension type","ENG",3984,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,50
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YTDIE2
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"DIE"
+4,"CODZONE",0,"YTDIE2"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"GDIE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dim. Type 2","ENG",101182,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Dimension type 2","ENG",5675,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Dimension type 2","ENG",5675,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,51
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YTDIE3
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"DIE"
+4,"CODZONE",0,"YTDIE3"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"GDIE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dim. Type 3","ENG",101183,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Dimension type 3","ENG",5676,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Dimension type 3","ENG",5676,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,52
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YTDIE4
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"DIE"
+4,"CODZONE",0,"YTDIE4"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"GDIE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dim. Type 4","ENG",101184,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Dimension type 4","ENG",5677,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Dimension type 4","ENG",5677,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,53
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YTDIE5
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"DIE"
+4,"CODZONE",0,"YTDIE5"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"GDIE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dim. Type 5","ENG",101185,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Dimension type 5","ENG",5678,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Dimension type 5","ENG",5678,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,54
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YTDIE6
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"DIE"
+4,"CODZONE",0,"YTDIE6"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"GDIE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dim. Type 6","ENG",101186,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Dimension type 6","ENG",5679,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Dimension type 6","ENG",5679,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,55
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YTDIE7
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"DIE"
+4,"CODZONE",0,"YTDIE7"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"GDIE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dim. Type 7","ENG",101187,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Dimension type 7","ENG",5680,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Dimension type 7","ENG",5680,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,56
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YTDIE8
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"DIE"
+4,"CODZONE",0,"YTDIE8"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"GDIE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dim. Type 8","ENG",101188,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Dimension type 8","ENG",5681,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Dimension type 8","ENG",5681,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,57
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YTDIE9
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"DIE"
+4,"CODZONE",0,"YTDIE9"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"GDIE"
+4,"LONG",0,0
+5,"NOABREG",0,"Dim. Type 9","ENG",101189,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Dimension type 9","ENG",5682,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Dimension type 9","ENG",5682,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,58
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YTFCY
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"FCY"
+4,"CODZONE",0,"YTFCY"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"FACILITY"
+4,"LONG",0,0
+5,"NOABREG",0,"To Site","ENG",101134,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"To Site","ENG",101134,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"To Site","ENG",101134,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,43
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YTGST
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"VAT"
+4,"CODZONE",0,"YTGST"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,"YTGST;"""
+4,"LIEN",0,"TABVAT"
+4,"LONG",0,0
+5,"NOABREG",0,"Tax","ENG",6818,"Specific meaning of tax, i.e. VAT"
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Tax","ENG",6818,"Specific meaning of tax, i.e. VAT"
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Tax","ENG",6818,"Specific meaning of tax, i.e. VAT"
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,46
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",CHAMPCOD
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CHAMPCOD"
+4,"CODZON",0,"YTGST"
+4,"CREDATTIM",0,"2018-11-15T01:21:39Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:21:42Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",CODMSK
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CODMSK"
+4,"CODZON",0,"YTGST"
+4,"CREDATTIM",0,"2018-11-15T01:21:39Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:21:42Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",CPY
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CPY"
+4,"CODZON",0,"YTGST"
+4,"CREDATTIM",0,"2018-11-15T01:21:39Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:21:42Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",FCY
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"FCY"
+4,"CODZON",0,"YTGST"
+4,"CREDATTIM",0,"2018-11-15T01:21:39Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:21:42Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",FONCTION
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"FONCTION"
+4,"CODZON",0,"YTGST"
+4,"CREDATTIM",0,"2018-11-15T01:21:39Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:21:42Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",GROUPE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"GROUPE"
+4,"CODZON",0,"YTGST"
+4,"CREDATTIM",0,"2018-11-15T01:21:39Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:21:42Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",LEG
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"LEG"
+4,"CODZON",0,"YTGST"
+4,"CREDATTIM",0,"2018-11-15T01:21:39Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:21:42Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",WCRITERE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"WCRITERE"
+4,"CODZON",0,"YTGST"
+4,"CREDATTIM",0,"2018-11-15T01:21:39Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:21:42Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YTLONAGR
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,"YICLA"
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"YLONAGR"
+4,"CODZONE",0,"YTLONAGR"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"YENTLOAAGR"
+4,"LONG",0,0
+5,"NOABREG",0,"Loan No","ENG",100658,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Loan Agreement no","ENG",100118,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Loan Agreement no","ENG",100118,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,48
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YTPJTLIN
+4,"ANNUL",0,1
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"PIM"
+4,"CODZONE",0,"YTPJTLIN"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"PIMPL"
+4,"LONG",0,0
+5,"NOABREG",0,"Project link","ENG",54491,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Project link","ENG",54491,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Project link","ENG",54491,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,49
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"AMP",BOOCRM
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"BOOCRM"
+4,"CODZON",0,"YTPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:25:03Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:25:05Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",BOOPRP
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"BOOPRP"
+4,"CODZON",0,"YTPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:25:03Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:25:05Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",BOOPRPBUD
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"BOOPRPBUD"
+4,"CODZON",0,"YTPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:25:03Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:25:05Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",BOOPRPTAC5
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"BOOPRPTAC5"
+4,"CODZON",0,"YTPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:25:03Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:25:05Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",BOOPRPTAC6
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"BOOPRPTAC6"
+4,"CODZON",0,"YTPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:25:03Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:25:05Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",BOOPRPTAC7
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"BOOPRPTAC7"
+4,"CODZON",0,"YTPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:25:03Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:25:05Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",BPR
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"BPR"
+4,"CODZON",0,"YTPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:25:03Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:25:05Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",CODMSK
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"CODMSK"
+4,"CODZON",0,"YTPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:25:03Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:25:05Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",FLDNAM
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"FLDNAM"
+4,"CODZON",0,"YTPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:25:03Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:25:05Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",INTERLOC
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"INTERLOC"
+4,"CODZON",0,"YTPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:25:03Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:25:05Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",MODULE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"MODULE"
+4,"CODZON",0,"YTPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:25:03Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:25:05Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",NOLIG
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"NOLIG"
+4,"CODZON",0,"YTPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:25:03Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:25:05Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",SITE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"SITE"
+4,"CODZON",0,"YTPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:25:03Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:25:05Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",SOCIETE
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"SOCIETE"
+4,"CODZON",0,"YTPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:25:03Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:25:05Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",USEDISBUD
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"USEDISBUD"
+4,"CODZON",0,"YTPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:25:03Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:25:05Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",USEDISPRP
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"USEDISPRP"
+4,"CODZON",0,"YTPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:25:03Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:25:05Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",USEDISTAC
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"USEDISTAC"
+4,"CODZON",0,"YTPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:25:03Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:25:05Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",ZONDET
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"ZONDET"
+4,"CODZON",0,"YTPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:25:03Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:25:05Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"AMP",ZONHEAD
+4,"CODAFF",0,"YSETRUL"
+4,"CODPAR",0,"ZONHEAD"
+4,"CODZON",0,"YTPJTLIN"
+4,"CREDATTIM",0,"2018-11-15T01:25:03Z"
+4,"CREUSR",0,"MAJID"
+4,"TYPAFF",0,2
+4,"UPDDATTIM",0,"2018-11-15T01:25:05Z"
+4,"UPDUSR",0,"MAJID"
+4,"VALPAR",0,""""
+6,"AMP"
+3,"ATZ",YVLDFRM
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"D"
+4,"CODZONE",0,"YVLDFRM"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,0
+5,"NOABREG",0,"Valid from","ENG",1536,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Valid from","ENG",1536,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Valid from","ENG",1536,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,11
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",YVLDTO
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODTYP",0,"D"
+4,"CODZONE",0,"YVLDTO"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,0
+5,"NOABREG",0,"Valid to","ENG",5463,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Valid to","ENG",5463,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Valid to","ENG",5463,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,12
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATI",YSTR0
+4,"CODACT",0,""
+4,"CODFIC",0,"YSETRUL"
+4,"CODIND",0,"YSTR0"
+4,"CREDATTIM",0,"2019-05-02T02:18:57Z"
+4,"CREUSR",0,"MAJID"
+4,"DESCRIPT",0,"YRULID"
+4,"HOMONYM",0,1
+4,"NIVDEC",0,0
+4,"NUMLIG",0,1
+4,"ORDIND",0,1
+4,"UPDDATTIM",0,"2019-05-02T02:18:57Z"
+4,"UPDUSR",0,"MAJID"
+6,"ATI"
+7,"ATB","YSETRUL","Settlement Rule"
+2,"AOB","YSETRUL","Settlement Rule"
+3,"AOB",YSETRUL
+4,"ABREV",0,"YSETRUL"
+4,"ABRFIC",0,""
+4,"ARCURL",0,""
+4,"CODACT",0,"YLSP"
+4,"CREDAT",0,20181116
+4,"CREDATTIM",0,"2018-11-16T04:09:14Z"
+4,"CREUSR",0,"MAJID"
+4,"IMPMSK",0,""
+4,"IMPMSK",1,""
+4,"IMPMSK",2,""
+4,"IMPMSK",3,""
+4,"IMPMSK",4,""
+4,"IMPMSK",5,""
+4,"IMPMSK",6,""
+4,"IMPMSK",7,""
+4,"IMPMSK",8,""
+4,"IMPMSK",9,""
+4,"IMPMSK",10,""
+4,"IMPMSK",11,""
+4,"IMPMSK",12,""
+4,"IMPMSK",13,""
+4,"IMPMSK",14,""
+4,"IMPMSK",15,""
+4,"IMPORT",0,1
+4,"IMPTAB",0,""
+4,"IMPTAB",1,""
+4,"IMPTAB",2,""
+4,"IMPTAB",3,""
+4,"IMPTAB",4,""
+4,"IMPTAB",5,""
+4,"IMPTAB",6,""
+4,"IMPTAB",7,""
+4,"IMPTAB",8,""
+4,"IMPTAB",9,""
+4,"IMPTAB",10,""
+4,"IMPTAB",11,""
+4,"IMPTAB",12,""
+4,"IMPTAB",13,""
+4,"IMPTAB",14,""
+4,"IMPTAB",15,""
+4,"IMPTBL",0,""
+4,"IMPTBL",1,""
+4,"IMPTBL",2,""
+4,"IMPTBL",3,""
+4,"IMPTBL",4,""
+4,"IMPTBL",5,""
+4,"IMPTBL",6,""
+4,"IMPTBL",7,""
+4,"IMPTBL",8,""
+4,"IMPTBL",9,""
+4,"IMPTBL",10,""
+4,"IMPTBL",11,""
+4,"IMPTBL",12,""
+4,"IMPTBL",13,""
+4,"IMPTBL",14,""
+4,"IMPTBL",15,""
+5,"LIBEL",0,"Settlement Rule","ENG",101129,""
+5,"LIBEL",0,"","***"
+5,"LIBPAR",0,"","ENG",0,""
+5,"LIBPAR",0,"","***"
+5,"LIBSHO",0,"Calculated Cash Set.","ENG",100514,""
+5,"LIBSHO",0,"","***"
+4,"MENU",0,"MYLD2"
+4,"MLOCK",0,1
+4,"MODELE",0,""
+4,"MODULE",0,1
+4,"NBOPT",0,0
+4,"NBRIMP",0,0
+4,"NBSCR",0,0
+4,"NBVUE",0,0
+4,"NOMFIC",0,"YSETRUL"
+4,"OPTCND",0,""
+4,"OPTCND",1,""
+4,"OPTCND",2,""
+4,"OPTCND",3,""
+4,"OPTCND",4,""
+4,"OPTCND",5,""
+4,"OPTCND",6,""
+4,"OPTCND",7,""
+4,"OPTCND",8,""
+4,"OPTCND",9,""
+4,"OPTCND",10,""
+4,"OPTCND",11,""
+4,"OPTCND",12,""
+4,"OPTCND",13,""
+4,"OPTCND",14,""
+4,"OPTCND",15,""
+4,"OPTCND",16,""
+4,"OPTCND",17,""
+4,"OPTCND",18,""
+4,"OPTCND",19,""
+4,"OPTCOD",0,""
+4,"OPTCOD",1,""
+4,"OPTCOD",2,""
+4,"OPTCOD",3,""
+4,"OPTCOD",4,""
+4,"OPTCOD",5,""
+4,"OPTCOD",6,""
+4,"OPTCOD",7,""
+4,"OPTCOD",8,""
+4,"OPTCOD",9,""
+4,"OPTCOD",10,""
+4,"OPTCOD",11,""
+4,"OPTCOD",12,""
+4,"OPTCOD",13,""
+4,"OPTCOD",14,""
+4,"OPTCOD",15,""
+4,"OPTCOD",16,""
+4,"OPTCOD",17,""
+4,"OPTCOD",18,""
+4,"OPTCOD",19,""
+5,"OPTERR",0,"","ENG",0,""
+5,"OPTERR",0,"","***"
+5,"OPTERR",1,"","ENG",0,""
+5,"OPTERR",1,"","***"
+5,"OPTERR",2,"","ENG",0,""
+5,"OPTERR",2,"","***"
+5,"OPTERR",3,"","ENG",0,""
+5,"OPTERR",3,"","***"
+5,"OPTERR",4,"","ENG",0,""
+5,"OPTERR",4,"","***"
+5,"OPTERR",5,"","ENG",0,""
+5,"OPTERR",5,"","***"
+5,"OPTERR",6,"","ENG",0,""
+5,"OPTERR",6,"","***"
+5,"OPTERR",7,"","ENG",0,""
+5,"OPTERR",7,"","***"
+5,"OPTERR",8,"","ENG",0,""
+5,"OPTERR",8,"","***"
+5,"OPTERR",9,"","ENG",0,""
+5,"OPTERR",9,"","***"
+5,"OPTERR",10,"","ENG",0,""
+5,"OPTERR",10,"","***"
+5,"OPTERR",11,"","ENG",0,""
+5,"OPTERR",11,"","***"
+5,"OPTERR",12,"","ENG",0,""
+5,"OPTERR",12,"","***"
+5,"OPTERR",13,"","ENG",0,""
+5,"OPTERR",13,"","***"
+5,"OPTERR",14,"","ENG",0,""
+5,"OPTERR",14,"","***"
+5,"OPTERR",15,"","ENG",0,""
+5,"OPTERR",15,"","***"
+5,"OPTERR",16,"","ENG",0,""
+5,"OPTERR",16,"","***"
+5,"OPTERR",17,"","ENG",0,""
+5,"OPTERR",17,"","***"
+5,"OPTERR",18,"","ENG",0,""
+5,"OPTERR",18,"","***"
+5,"OPTERR",19,"","ENG",0,""
+5,"OPTERR",19,"","***"
+5,"OPTLIB",0,"","ENG",0,""
+5,"OPTLIB",0,"","***"
+5,"OPTLIB",1,"","ENG",0,""
+5,"OPTLIB",1,"","***"
+5,"OPTLIB",2,"","ENG",0,""
+5,"OPTLIB",2,"","***"
+5,"OPTLIB",3,"","ENG",0,""
+5,"OPTLIB",3,"","***"
+5,"OPTLIB",4,"","ENG",0,""
+5,"OPTLIB",4,"","***"
+5,"OPTLIB",5,"","ENG",0,""
+5,"OPTLIB",5,"","***"
+5,"OPTLIB",6,"","ENG",0,""
+5,"OPTLIB",6,"","***"
+5,"OPTLIB",7,"","ENG",0,""
+5,"OPTLIB",7,"","***"
+5,"OPTLIB",8,"","ENG",0,""
+5,"OPTLIB",8,"","***"
+5,"OPTLIB",9,"","ENG",0,""
+5,"OPTLIB",9,"","***"
+5,"OPTLIB",10,"","ENG",0,""
+5,"OPTLIB",10,"","***"
+5,"OPTLIB",11,"","ENG",0,""
+5,"OPTLIB",11,"","***"
+5,"OPTLIB",12,"","ENG",0,""
+5,"OPTLIB",12,"","***"
+5,"OPTLIB",13,"","ENG",0,""
+5,"OPTLIB",13,"","***"
+5,"OPTLIB",14,"","ENG",0,""
+5,"OPTLIB",14,"","***"
+5,"OPTLIB",15,"","ENG",0,""
+5,"OPTLIB",15,"","***"
+5,"OPTLIB",16,"","ENG",0,""
+5,"OPTLIB",16,"","***"
+5,"OPTLIB",17,"","ENG",0,""
+5,"OPTLIB",17,"","***"
+5,"OPTLIB",18,"","ENG",0,""
+5,"OPTLIB",18,"","***"
+5,"OPTLIB",19,"","ENG",0,""
+5,"OPTLIB",19,"","***"
+4,"RANG",0,20
+4,"RPT1",0,""
+4,"RPT2",0,""
+4,"SCRABR",0,""
+4,"SCRABR",1,""
+4,"SCRABR",2,""
+4,"SCRABR",3,""
+4,"SCRABR",4,""
+4,"SCRABR",5,""
+4,"SCRABR",6,""
+4,"SCRABR",7,""
+4,"SCRNAM",0,""
+4,"SCRNAM",1,""
+4,"SCRNAM",2,""
+4,"SCRNAM",3,""
+4,"SCRNAM",4,""
+4,"SCRNAM",5,""
+4,"SCRNAM",6,""
+4,"SCRNAM",7,""
+4,"SELCAR",0,1
+4,"SELCLE",0,""
+4,"SELOPT",0,""
+4,"SELORD",0,1
+4,"SELTREE",0,1
+4,"STA",0,1
+4,"TRTSPE",0,"SPEYSETRUL"
+4,"TRTSPV",0,""
+4,"TYPGES",0,1
+4,"UPDDAT",0,20190502
+4,"UPDDATTIM",0,"2019-05-02T02:46:31Z"
+4,"UPDFLG",0,0
+4,"UPDUSR",0,"MAJID"
+4,"VUEABR",0,""
+4,"VUEABR",1,""
+4,"VUEABR",2,""
+4,"VUEABR",3,""
+4,"VUEABR",4,""
+4,"VUEABR",5,""
+4,"VUEABR",6,""
+4,"VUEABR",7,""
+4,"VUEABR",8,""
+4,"VUEABR",9,""
+4,"VUEACT",0,""
+4,"VUEACT",1,""
+4,"VUEACT",2,""
+4,"VUEACT",3,""
+4,"VUEACT",4,""
+4,"VUEACT",5,""
+4,"VUEACT",6,""
+4,"VUEACT",7,""
+4,"VUEACT",8,""
+4,"VUEACT",9,""
+4,"VUECOD",0,""
+4,"VUECOD",1,""
+4,"VUECOD",2,""
+4,"VUECOD",3,""
+4,"VUECOD",4,""
+4,"VUECOD",5,""
+4,"VUECOD",6,""
+4,"VUECOD",7,""
+4,"VUECOD",8,""
+4,"VUECOD",9,""
+4,"ZACC",0,""
+4,"ZSITE",0,""
+6,"AOB"
+3,"AOT",YSETRUL1
+4,"ABREV",0,"YSETRUL"
+4,"CREDATTIM",0,"2019-05-02T02:46:32Z"
+4,"CREUSR",0,"MAJID"
+4,"NUMLIG",0,1
+4,"TABABR",0,""
+4,"TABACT",0,""
+4,"TABCLE",0,"GTE0"
+4,"TABFIC",0,"GTYPACCENT"
+4,"TABLIEN",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:46:32Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOT"
+3,"AOT",YSETRUL2
+4,"ABREV",0,"YSETRUL"
+4,"CREDATTIM",0,"2019-05-02T02:46:32Z"
+4,"CREUSR",0,"MAJID"
+4,"NUMLIG",0,2
+4,"TABABR",0,""
+4,"TABACT",0,""
+4,"TABCLE",0,"JOU0"
+4,"TABFIC",0,"GJOURNAL"
+4,"TABLIEN",0,""
+4,"UPDDATTIM",0,"2019-05-02T02:46:32Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOT"
+3,"AOL",YSETRUL
+4,"ABREV",0,"YSETRUL"
+4,"CREDATTIM",0,"2019-05-02T02:46:32Z"
+4,"CREUSR",0,"MAJID"
+4,"DELDEF",0,1
+4,"NBSEL",0,8
+4,"SELEXP",0,""
+4,"SELEXP",1,""
+4,"SELEXP",2,""
+4,"SELEXP",3,""
+4,"SELEXP",4,""
+4,"SELEXP",5,""
+4,"SELEXP",6,""
+4,"SELEXP",7,""
+4,"SELEXP",8,""
+4,"SELEXP",9,""
+4,"SELEXP",10,""
+4,"SELEXP",11,""
+4,"SELEXP",12,""
+4,"SELEXP",13,""
+4,"SELEXP",14,""
+4,"SELEXP",15,""
+4,"SELFIC",0,"YSETRUL"
+4,"SELFIC",1,"YSETRUL"
+4,"SELFIC",2,"YSETRUL"
+4,"SELFIC",3,"YSETRUL"
+4,"SELFIC",4,"YSETRUL"
+4,"SELFIC",5,"YSETRUL"
+4,"SELFIC",6,"YSETRUL"
+4,"SELFIC",7,"YSETRUL"
+4,"SELFIC",8,""
+4,"SELFIC",9,""
+4,"SELFIC",10,""
+4,"SELFIC",11,""
+4,"SELFIC",12,""
+4,"SELFIC",13,""
+4,"SELFIC",14,""
+4,"SELFIC",15,""
+5,"SELINT",0,"Rule ID","ENG",101131,""
+5,"SELINT",0,"","***"
+5,"SELINT",1,"Description","ENG",282,"Designation"
+5,"SELINT",1,"","***"
+5,"SELINT",2,"Code","ENG",5296,""
+5,"SELINT",2,"","***"
+5,"SELINT",3,"Estate","ENG",100372,""
+5,"SELINT",3,"","***"
+5,"SELINT",4,"Land Purchase","ENG",100650,""
+5,"SELINT",4,"","***"
+5,"SELINT",5,"Precinct","ENG",100373,""
+5,"SELINT",5,"","***"
+5,"SELINT",6,"Stage","ENG",32952,""
+5,"SELINT",6,"","***"
+5,"SELINT",7,"Lot","ENG",2721,""
+5,"SELINT",7,"","***"
+5,"SELINT",8,"","ENG",0,""
+5,"SELINT",8,"","***"
+5,"SELINT",9,"","ENG",0,""
+5,"SELINT",9,"","***"
+5,"SELINT",10,"","ENG",0,""
+5,"SELINT",10,"","***"
+5,"SELINT",11,"","ENG",0,""
+5,"SELINT",11,"","***"
+5,"SELINT",12,"","ENG",0,""
+5,"SELINT",12,"","***"
+5,"SELINT",13,"","ENG",0,""
+5,"SELINT",13,"","***"
+5,"SELINT",14,"","ENG",0,""
+5,"SELINT",14,"","***"
+5,"SELINT",15,"","ENG",0,""
+5,"SELINT",15,"","***"
+4,"SELLNG",0,0
+4,"SELLNG",1,0
+4,"SELLNG",2,0
+4,"SELLNG",3,0
+4,"SELLNG",4,0
+4,"SELLNG",5,0
+4,"SELLNG",6,0
+4,"SELLNG",7,0
+4,"SELLNG",8,0
+4,"SELLNG",9,0
+4,"SELLNG",10,0
+4,"SELLNG",11,0
+4,"SELLNG",12,0
+4,"SELLNG",13,0
+4,"SELLNG",14,0
+4,"SELLNG",15,0
+4,"SELSAI",0,""
+4,"SELSAI",1,""
+4,"SELSAI",2,""
+4,"SELSAI",3,""
+4,"SELSAI",4,""
+4,"SELSAI",5,""
+4,"SELSAI",6,""
+4,"SELSAI",7,""
+4,"SELSAI",8,""
+4,"SELSAI",9,""
+4,"SELSAI",10,""
+4,"SELSAI",11,""
+4,"SELSAI",12,""
+4,"SELSAI",13,""
+4,"SELSAI",14,""
+4,"SELSAI",15,""
+4,"SELTYP",0,""
+4,"SELTYP",1,""
+4,"SELTYP",2,""
+4,"SELTYP",3,""
+4,"SELTYP",4,""
+4,"SELTYP",5,""
+4,"SELTYP",6,""
+4,"SELTYP",7,""
+4,"SELTYP",8,""
+4,"SELTYP",9,""
+4,"SELTYP",10,""
+4,"SELTYP",11,""
+4,"SELTYP",12,""
+4,"SELTYP",13,""
+4,"SELTYP",14,""
+4,"SELTYP",15,""
+4,"SELZON",0,"YRULID"
+4,"SELZON",1,"YRULDES"
+4,"SELZON",2,"YRULTYPCOD"
+4,"SELZON",3,"YEST"
+4,"SELZON",4,"YLANDPUR"
+4,"SELZON",5,"YPRECINCT"
+4,"SELZON",6,"YSTAG"
+4,"SELZON",7,"YLOT"
+4,"SELZON",8,""
+4,"SELZON",9,""
+4,"SELZON",10,""
+4,"SELZON",11,""
+4,"SELZON",12,""
+4,"SELZON",13,""
+4,"SELZON",14,""
+4,"SELZON",15,""
+4,"UPDDATTIM",0,"2019-05-02T02:46:32Z"
+4,"UPDUSR",0,"MAJID"
+6,"AOL"
+7,"AOB","YSETRUL","Settlement Rule"
+8,"Patch DFC :DFCX1-442 on May       02,19 12: 54"

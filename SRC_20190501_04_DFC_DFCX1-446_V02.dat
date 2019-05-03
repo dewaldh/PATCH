@@ -1,0 +1,1845 @@
+1,"Patch DFC :DFCX1-446 on May       01,19 16: 25","ENG","1","YSUP","X3","3",
+2,"TRT","SPEBIS","Supplier BP invoice"
+#<AdxTL>@(#)0.0.0.0 $Revision$ Supplier BP invoice
+######################################################################################################################
+# Script            : SPEBIS                                                                                         #
+# Creation date     : 12/12/2018                                                                                     #
+# Version           : 1.0.0                                                                                          #
+# Authors (Company) : LT (Leverage Technology)                                                                       #
+# Module            : A/P-A/R accounting                                                                             #
+# -------------------------------------------------------------------------------------------------------------------#
+# Epic              :                                                                                                #
+#--------------------------------------------------------------------------------------------------------------------#
+# Evolutions        :                                                                                                #
+######################################################################################################################
+$ACTION
+  Case ACTION
+    When "OUVRE"        : Gosub OUVRE
+    When "INICRE"       : Gosub INICRE
+    When "VERIF_CRE"    : Gosub VERIF_CRE
+    When "VERIF_MOD"    : Gosub VERIF_MOD
+    When "APRES_CRE"    : Gosub APRES_CRE
+    When "APRES_MOD"    : Gosub APRES_MOD
+    When "LIENS"        : Gosub LIENS
+    When "STYLE"        : Gosub STYLE
+    When "SETBOUT"      : Gosub SETBOUT
+    When "AVANT_CHOI"   : Gosub AVANT_CHOI
+    When Default
+  Endcase
+Return
+
+
+#------------------------------------------------------------------------------------#
+#Open
+#------------------------------------------------------------------------------------#
+$OUVRE
+
+If clalev([F:YGAC])  = 0 : Local File GACCOUNT    [YGAC]  : Endif
+If clalev([F:YPJM])  = 0 : Local File OPPORPJM    [YPJM]  : Endif
+If clalev([F:YBAN])  = 0 : Local File BANK        [YBAN]  : Endif
+If clalev([F:YBID])  = 0 : Local File BID         [YBID]  : Endif
+If clalev([F:YAPN])  = 0 : Local File YAPNINVOICE [YAPN]  : Endif
+If clalev([F:YPIH])  = 0 : Local File PINVOICE    [YPIH]  : Endif
+If clalev([F:YPIL])  = 0 : Local File BPSINVLIG   [YPIL]  : Endif
+If clalev([F:YPCC])  = 0 : Local File YPCCACC     [YPCC]  : Endif
+If clalev([F:YVAC])  = 0 : Local File TABVACBPR   [YVAC]  : Endif
+If clalev([F:YBPS])  = 0 : Local File BPSUPPLIER  [YBPS]  : Endif
+If clalev([F:YCPY])  = 0 : Local File COMPANY     [YCPY]  : Endif
+If clalev([F:YGACM]) = 0 : Local File GACM        [YGACM] : Endif
+If clalev([F:YGLED]) = 0 : Local File GLED        [YGLED] : Endif
+If clalev([F:YPJB])  = 0 : Local File PJMBUDLIG   [YPJB]  : Endif
+If clalev([F:YPIM])  = 0 : Local File PIMPL       [YPIM]  : Endif
+If clalev([F:YBPR])  = 0 : Local File BPARTNER    [YBPR]  : Endif
+If clalev([F:YVAT])  = 0 : Local File TABVAT      [YVAT]  : Endif
+If clalev([F:YCPY])  = 0 : Local File COMPANY     [YCPY]  : Endif
+
+Return
+
+
+#------------------------------------------------------------------------------------#
+#Before Creation
+#------------------------------------------------------------------------------------#
+$INICRE
+  Gosub VALIDATEPJM
+Return
+
+
+#------------------------------------------------------------------------------------#
+#Before Creation
+#------------------------------------------------------------------------------------#
+$VERIF_CRE
+
+  Gosub VALIDATESUPREF
+  Gosub VALIDATENAVREF
+  Gosub VALIDATEPJM
+
+  #check if the web service had an error.
+  If GWEBSERV
+    If GYOK = 0
+      OK = 0
+    Endif
+  Endif
+
+  #DFCX1-337 Update Amount - GST header amount to supress "Totals different from header" warning message when creating / updating record
+  [M:BIS1]AMTNOT = sum([M]AMTNOTLIN(0..[M]NBLIG-1))
+  Affzo [M:BIS1]AMTNOT
+
+Return
+
+
+#------------------------------------------------------------------------------------#
+#After Creation
+#------------------------------------------------------------------------------------#
+$APRES_CRE
+
+  #Refresh budget lines
+  For I = 0 To [M:BIS3]NBLIG-1
+    Call UPDATE_LINE_BUDGET(I,[M:BIS3]ACC1(I),[M:BIS3]PJTLIN(I),[M:BIS3]AMTNOTLIN(I),1)
+  Next
+
+  Gosub VALIDATE_OVERBUDGET
+
+  #DFCX1-389 Check if Budget Checks are enabled for the Company
+  Read[F:YCPY]CPY0 = [M:BIS0]CPY
+
+  If fstat = 0
+
+    If [F:CPY]YBUDCHK = 2
+
+      #Warn if invoice is overbudget and not posted
+      If [M:BIS1]YOVRBUD = 2 and [M:BIS1]STA = 2
+        GMESSAGE = "The project's budget is exceeded. Posting of the invoice is disabled. Please correct the budget or invoice."
+        GERR = 1
+      Endif
+
+    Endif
+
+  Endif
+
+Return
+
+
+#------------------------------------------------------------------------------------#
+#Before Modification
+#------------------------------------------------------------------------------------#
+$VERIF_MOD
+
+  Gosub VALIDATEPJM
+
+  #check if the web service had an error.
+  If GWEBSERV
+    If GYOK = 0
+      OK = 0
+    Endif
+  Endif
+
+Return
+
+
+#------------------------------------------------------------------------------------#
+#After modify
+#------------------------------------------------------------------------------------#
+$APRES_MOD
+
+  #Refresh budget lines
+  For I = 0 To [M:BIS3]NBLIG-1
+    Call UPDATE_LINE_BUDGET(I,[M:BIS3]ACC1(I),[M:BIS3]PJTLIN(I),[M:BIS3]AMTNOTLIN(I),1)
+  Next
+
+  Gosub VALIDATE_OVERBUDGET
+
+  #DFCX1-389 Check if Budget Checks are enabled for the Company
+  Read[F:YCPY]CPY0 = [M:BIS0]CPY
+
+  If fstat = 0
+
+    If [F:CPY]YBUDCHK = 2
+
+      #Warn if invoice is overbudget and not posted
+      If [M:BIS1]YOVRBUD = 2 and [M:BIS1]STA = 2
+        GMESSAGE = "The project's budget is exceeded. Posting of the invoice is disabled. Please correct the budget or invoice."
+        GERR = 1
+      Endif
+
+    Endif
+
+  Endif
+
+Return
+
+
+#------------------------------------------------------------------------------------#
+#Process Lines
+#------------------------------------------------------------------------------------#
+$LIENS
+
+  #DFCX1-153 Display Project Description and Project Budget Description
+  If [M:BIS1]PJTH <> ""
+
+    #Open table
+    If !clalev ([F:YPIML]) : Local File PIMPL [F:YPIML] : Endif
+
+    Read [F:YPIML]PIM0 = [M:BIS1]PJTH
+
+    If fstat = 0
+
+      #Get description
+      Call LECTEXTRA([M:BIS1]YPJTD,"PIMPL","PIMDESAXX",[F:YPIML]OPPNUM,"") From ATEXTRA
+      Call LECTEXTRA([M:BIS1]YPJTB,"PIMPL","PIMDESAXX",[M:BIS1]PJTH,"") From ATEXTRA
+
+      #Refresh field
+      Affzo [M:BIS1]YPJTD,YPJTB
+
+    Endif
+
+    #Close table
+    If clalev([F:YPIML]) : Close Local File [F:YPIML] : Endif
+
+  Endif
+
+Return
+
+
+#------------------------------------------------------------------------------------#
+#STYLE
+#------------------------------------------------------------------------------------#
+$STYLE
+
+  #DFCX1-153 - DW -  the user must be unable to selected Project Header - Start
+  If func AFNC.ACTIV("YPJM") = 1
+    If dim([M:BIC1]PJTH)>0 : Chgfmt [M:BIC1]PJTH With "-K:40X" : Raz [M:BIC1]PJTH : Endif
+  Endif
+  #DFCX1-153 - DW -  the user must be unable to selected Project Header - End
+
+  #Refresh budget lines
+  For I = 0 To [M:BIS3]NBLIG-1
+    Call UPDATE_LINE_BUDGET(I,[M:BIS3]ACC1(I),[M:BIS3]PJTLIN(I),[M:BIS3]AMTNOTLIN(I),1)
+  Next
+
+  Gosub VALIDATE_OVERBUDGET
+
+  #DFCX1-389 Check if Budget Checks are enabled for the Company
+  Read[F:YCPY]CPY0 = [M:BIS0]CPY
+
+  If fstat = 0
+
+    If [F:CPY]YBUDCHK = 2
+
+      #Warn if invoice is overbudget and not posted
+      If [M:BIS1]YOVRBUD = 2 and [M:BIS1]STA = 2
+        GMESSAGE = "The project's budget is exceeded. Posting of the invoice is disabled. Please correct the budget or invoice."
+        GERR = 1
+      Endif
+
+    Endif
+
+  Endif
+
+  # DFCX1-437 (DH)
+  Local Integer I : I = 0
+  For I = 0 To [M:BIS3]NBLIG-1
+    Read [F:YGAC]GAC0 = GPLAN(1);[M:BIS3]ACC1(I)
+    If [F:YGAC]YPJM = 1 Then
+      Diszo [M:BIS3]PJTLIN(I)
+    Else
+      Actzo [M:BIS3]PJTLIN(I)
+    Endif
+  Next
+
+Return
+
+
+#------------------------------------------------------------------------------------#
+#Set Buttons
+#------------------------------------------------------------------------------------#
+$SETBOUT
+
+  [M:BIS3]YTAX1 = 0
+  For I = 0 To [M:BIS3]NBLIG-1
+    [M:BIS3]YTAX1 += [M:BIS3]AMTVAT(I)
+  Next
+  Affzo [M:BIS3]YTAX1
+
+  #DFCX1-389 Check if Budget Checks are enabled for the Company
+  Read[F:YCPY]CPY0 = [M:BIS0]CPY
+
+  If fstat = 0
+
+    If [F:CPY]YBUDCHK = 2
+
+      #Disable Post button if the budget is exceeded
+      If [M:BIS1]YOVRBUD = 2 and [M:BIS1]STA = 2
+        Call VIREBOUT(CHAINE,"V") From GOBJET
+      Endif
+
+    Endif
+
+  Endif
+
+Return
+
+
+#------------------------------------------------------------------------------------#
+#AVANT_CHOI
+#------------------------------------------------------------------------------------#
+$AVANT_CHOI
+# 2018/12/12 Jose
+# I had to disable the following lines as it render the whole BIS function un-usable as the New button was never getting enabled, so no new records could be entered!!
+
+#GCONF(3) = 0
+##If YUPDBUD = 2
+#  mkstat = 4
+#  Gosub ENTRE_MODIF From GOBJSUB
+#  Gosub SETBOUT From GOBJSUB
+##Endif
+
+Return
+
+
+#------------------------------------------------------------------------------------#
+#Validate X3 invoice reference
+#------------------------------------------------------------------------------------#
+$VALIDATESUPREF
+
+Filter [F:YPIH]
+Filter [F:YPIH] Where [F:YPIH]BPRVCR = [M:BIS1]BPRVCR and [F:YPIH]BPR = [M:BIS0]BPR
+
+If rowcount([F:YPIH]) > 0
+  Read [F:YPIH] First
+  GERR = 1 : GMESSAGE = "Reference entered on invoice " + [F:YPIH]NUM : OK = 0 : GOK = 0
+
+  #if the web service is called and validation fails, flag the error variable
+  If GWEBSERV
+    GYOK = 0
+  Endif
+Endif
+
+Return
+
+
+#------------------------------------------------------------------------------------#
+#Validate Navision invoice reference
+#------------------------------------------------------------------------------------#
+$VALIDATENAVREF
+
+Filter [F:YAPN]
+Filter [F:YAPN] Where [F:YAPN]YINVNUM  = [M:BIS1]BPRVCR and [F:YAPN]YBPS = [M:BIS0]BPR
+
+If rowcount([F:YAPN]) > 0
+  Read [F:YAPN] First
+
+  #if the web service is called and validation fails, flag the error variable
+  If !GWEBSERV
+    GERR = 1 : GMESSAGE = "Reference entered is on Navision invoice " + num$([F:YAPN]YINVNUM) : OK = 0 : GOK = 0 : Return
+  Endif
+
+
+Endif
+Return
+
+
+#------------------------------------------------------------------------------------#
+#Validate PJM linked accounts
+#------------------------------------------------------------------------------------#
+$VALIDATEPJM
+
+Local Char YMSG(250)
+
+  For I = 0 To [M:BIS3]NBLIG-1
+  Filter [F:YGAC] Where ACC = [M:BIS3]ACC1(I)
+  For [F:YGAC]
+
+  If [F:YGAC]YPJM = 2 and [M:BIS3]PJTLIN(I) = ""
+    YMSG += num$(I + 1) + ", "
+  Endif
+
+  Next
+  Filter [F:YGAC]
+
+  Next
+
+  If len(YMSG) > 0
+    GMESSAGE = mess(2,6201,1) + left$(YMSG,len(YMSG)-2) # "Please enter a project code on the following lines: " + ZMSG
+    GERR = 1
+    GOK = 0
+  Endif
+
+Return
+
+
+#------------------------------------------------------------------------------------#
+#After Change - BPR
+#------------------------------------------------------------------------------------#
+Subprog AM_BPR(VALEUR)
+Variable Char    VALEUR()
+
+  #MANTIS HUB ISSUE 0000069 - SUPPLIER NAME NOT DEFAULTING AFTER CHOOSING A SUPPLIER
+  Read [F:YBPS]BPS0 = VALEUR
+
+  If fstat = 0
+    [M:BIS0]BPRNAM = [F:YBPS]BPSNAM
+    Affzo [M:BIS0]BPRNAM
+  Endif
+
+  Read [F:YBPR]BPR0 = VALEUR
+
+  If fstat = 0
+    [M:BIS0]YCRN = [F:YBPR]CRN
+    Affzo [M:BIS0]YCRN
+  Endif
+
+  #DFCX1-300 Default Payment Related fields in supplier invoice screen
+  [M:BIS1]BPRPAY = [F:YBPS]BPRPAY
+  Call UPDATE_PAYMENT_DETAILS([F:YBPS]BPRPAY)
+  [M:BIS1]PTE = [F:YBPS]PTE
+  Affzo [M:BIS1]BPRPAY,PTE
+
+  #Get Pay from bank for Company / Site
+  Local Integer I : I = 0
+  Local Char REQUEST(255)
+  REQUEST = "SELECT COUNT(BAN_0) FROM BANK WHERE CPY_0 = '" + [M:BIS0]CPY + "' AND FCY_0 = '" + [M:BIS0]FCY + "' AND YSTA_0 = 2"
+
+  For (Integer BANKS) From "5" Sql REQUEST As [YBANK1]
+    I = [YBANK1]BANKS
+  Next
+
+  If I = 1
+
+    REQUEST = "SELECT BAN_0 FROM BANK WHERE CPY_0 = '" + [M:BIS0]CPY + "' AND FCY_0 = '" + [M:BIS0]FCY + "' AND YSTA_0 = 2"
+
+    For (Char BANK(50)) From "5" Sql REQUEST As [YBANK2]
+      [M:BIS1]YPAYBANK = [YBANK2]BANK
+      Affzo [M:BIS1]YPAYBANK
+    Next
+
+  Endif
+
+  #DEW - Change Tab order
+  zonsui = "[M:BIS1]BPRDAT"
+
+End
+
+
+#------------------------------------------------------------------------------------#
+#After Change - BPRVCR
+#------------------------------------------------------------------------------------#
+Subprog AM_BPRVCR(VALEUR)
+Variable Char    VALEUR()
+
+  If VALEUR <> ""
+    # Check if the Supplier invoice number exists already
+    Filter [F:YPIH]
+    Filter [F:YPIH] Where [F:YPIH]BPRVCR = VALEUR and [F:YPIH]BPR = [M:BIS0]BPR
+
+    If rowcount([F:YPIH]) > 0
+      Read [F:YPIH] First
+      #Disable the Create button if reference number is duplicated
+      Disable GSTACRE
+      Infbox("Reference entered on invoice " + [F:YPIH]NUM + "." + chr$(13) + chr$(10) + "Please click on the Document no. magnifier to open the document")
+      Raz [M:BIS0]
+      Raz [M:BIS1]
+      Affzo [M]
+      [M:BIS0]NUM = [F:YPIH]NUM
+      Affzo [M:BIS0]NUM
+      mkstat = 2
+
+
+      #Nap "GESBIS/1/OBJBIS/M/PIN1807002-100011"
+  #    Affzo [M:BIS0]
+  #    Affzo [M:BIS1]
+    Else
+      #Enable the Create button if reference number is not duplicated
+      Enable GSTACRE
+
+      # Validate Navision invoice reference
+      Filter [F:YAPN]
+      Filter [F:YAPN] Where [F:YAPN]YINVNUM = VALEUR and [F:YAPN]YBPS = [M:BIS0]BPR
+
+      If fstat = 0
+        If rowcount([F:YAPN]) > 0
+          Read [F:YAPN] First
+          GERR = 1 : GMESSAGE = "Reference entered is on Navision invoice " + num$([F:YAPN]YINVNUM) : mkstat = 2 : End
+        Endif
+      Endif
+    Endif
+  Endif
+
+End
+
+
+#------------------------------------------------------------------------------------#
+#SETS THE DEFAULT BANK VALUE TO THE DEFAULT BANK FROM PJM
+#------------------------------------------------------------------------------------#
+Subprog AP_PJTH(VALEUR)
+Variable Char    VALEUR()
+
+  Read [F:YPIM]PIM0 = VALEUR
+
+  If fstat = 0
+
+    Read [F:YPJM]OPPPJM0 = [F:YPIM]OPPNUM
+
+    If fstat = 0
+
+      #DFCX1-47 Only override Bank if there is a value in Project
+      If [F:YPJM]YDEFBAN <> ""
+        [M:BIS1]YPAYBANK = [F:YPJM]YDEFBAN
+        Affzo [M:BIS1]YPAYBANK
+      Endif
+
+    Endif
+  Endif
+
+End
+
+#--------------------------------------------------------------
+# After change - AMTATI
+#--------------------------------------------------------------
+Subprog AM_AMTATI(VALEUR)
+Variable Decimal VALEUR
+
+  #Move focus to GRID
+  zonsui = "[M:BIS3]FCYLIN"
+
+End
+
+
+#------------------------------------------------------------------------------------#
+#After change - BPAPAY Account
+#------------------------------------------------------------------------------------#
+Subprog AM_BPAPAY(VALEUR)
+Variable Char    VALEUR()
+
+  #Clear existing values
+  [M:BIS1]YBPAYREF = ""
+  [M:BIS1]YBILLCOD = ""
+
+  #Check if we have a default Bank Address Details then select it
+  Local Char QRY(255)
+  QRY = "SELECT TOP 1 PAB2_0, PAB3_0 FROM BID WHERE BPANUM_0 = '" + [M:BIS1]BPRPAY + "' AND BPAADD_0 = '" + VALEUR + "' AND BIDNUMFLG_0 = 2"
+  For (Char PAB2,Char PAB3) From "5" Sql QRY As [YSQL]
+    [M:BIS1]YBPAYREF = [F:YSQL]PAB3
+    [M:BIS1]YBILLCOD = [F:YSQL]PAB2
+  Next
+
+  Affzo [M:BIS1]YBPAYREF,YBILLCOD
+
+  #Move focus to GRID
+  zonsui = "[M:BIS3]FCYLIN"
+
+End
+
+
+#------------------------------------------------------------------------------------#
+#After Change - BPRPAY
+#------------------------------------------------------------------------------------#
+Subprog AM_BPRPAY(VALEUR)
+Variable Char    VALEUR()
+  If VALEUR <> ""
+    Call UPDATE_PAYMENT_DETAILS(VALEUR)
+  Endif
+End
+
+
+#------------------------------------------------------------------------------------#
+#After Change - YPAYBANK
+#------------------------------------------------------------------------------------#
+Subprog AM_YPAYBANK(VALEUR)
+Variable Char    VALEUR()
+
+  #Validate Bank DFCX1-47
+  If VALEUR <> ""
+
+    Local Integer I : I = 0
+    Local Char REQUEST(255)
+    REQUEST = "SELECT BAN_0 FROM BANK WHERE CPY_0 = '" + [M:BIS0]CPY + "' AND FCY_0 = '" + [M:BIS0]FCY + "' AND BAN_0 = '" + VALEUR + "' AND YSTA_0 = 2"
+
+    For (Char BANK(50)) From "5" Sql REQUEST As [YBANK]
+      I += 1
+      Break
+    Next
+
+    If I = 0
+      #No record found
+      Call ERRTIT("Record not found or invalid for this Site", "Bank") From GESECRAN
+      Raz [M:BIS1]YPAYBANK
+      Affzo [M:BIS1]YPAYBANK
+      mkstat=2
+    Else
+      #Move focus to GRID
+      zonsui = "[M:BIS3]FCYLIN"
+    Endif
+
+  Endif
+
+End
+
+
+#------------------------------------------------------------------------------------#
+#Control - YPAYBANK
+#------------------------------------------------------------------------------------#
+Subprog C_YPAYBANK(VALEUR)
+Variable Char    VALEUR()
+
+  #Validate Bank DFCX1-47
+
+  #Check if Pay from Bank is still active
+
+  #Open table
+  If !clalev ([F:YBNK]) : Local File BANK [F:YBNK] : Endif
+
+  Read [F:YBNK]BAN0 = VALEUR
+
+  If fstat = 0
+    If [F:YBNK]YSTA = 1
+      [M:BIS1]YPAYBANK = ""
+      Call ERRTIT("Inactive bank selected.", "Bank") From GESECRAN
+      Affzo [M:BIS1]YPAYBANK
+      mkstat=2
+    Endif
+  Endif
+
+  #Close table
+  If clalev([F:YBNK]) : Close Local File [F:YBNK] : Endif
+
+End
+
+
+#------------------------------------------------------------------------------------#
+#DFCX1-49 Supplier Bank Account
+#------------------------------------------------------------------------------------#
+Subprog UPDATE_PAYMENT_DETAILS(BPRPAY)
+Variable Char    BPRPAY()
+
+  Local Char QRY(255)
+  #DFCX1-49 Supplier Bank Account - Start
+
+  #Get count of Default Address Bank Details
+  QRY = "SELECT COUNT(BPAADD_0) FROM BID WHERE BPANUM_0 = '" + BPRPAY + "' AND BIDNUMFLG_0 = 2"
+
+  For (Integer CNTADD) From "5" Sql QRY As [YSQL1]
+
+    If [YSQL1]CNTADD = 1
+      #One default - so we return this
+      QRY = "SELECT BPAADD_0, PAB2_0, PAB3_0 FROM BID WHERE BPANUM_0 = '" + BPRPAY + "' AND BIDNUMFLG_0 = 2"
+
+      For (Char BKADD, Char PAB2, Char PAB3) From "5" Sql QRY As [YSQL2]
+        [M:BIS1]BPAPAY    = [F:YSQL2]BKADD
+        [M:BIS1]YBPAYREF  = [F:YSQL2]PAB3
+        [M:BIS1]YBILLCOD  = [F:YSQL2]PAB2
+        Break
+      Next
+
+    Elsif [YSQL1]CNTADD = 0
+      #No default record - check for more than one non default record
+      QRY = "SELECT COUNT(BPAADD_0) FROM BID WHERE BPANUM_0 = '" + BPRPAY + "'"
+
+      For (Integer CNTADD) From "5" Sql QRY As [YSQL3]
+        If [YSQL3]CNTADD = 1
+          #Only one record - so we return this
+          QRY = "SELECT BPAADD_0, PAB2_0, PAB3_0 FROM BID WHERE BPANUM_0 = '" + BPRPAY + "'"
+
+          For (Char BKADD, Char PAB2, Char PAB3) From "5" Sql QRY As [YSQL4]
+            [M:BIS1]BPAPAY    = [F:YSQL4]BKADD
+            [M:BIS1]YBPAYREF  = [F:YSQL4]PAB3
+            [M:BIS1]YBILLCOD  = [F:YSQL4]PAB2
+            Break
+          Next
+        Else
+          #More than one record or no records - return nothing so user must pick
+          [M:BIS1]BPAPAY = ""
+          [M:BIS1]YBPAYREF = ""
+          [M:BIS1]YBILLCOD = ""
+        Endif
+      Next
+
+    Elsif [YSQL1]CNTADD > 1
+      #More than one default record - return nothing so user must pick
+      [M:BIS1]BPAPAY = ""
+      [M:BIS1]YBPAYREF = ""
+      [M:BIS1]YBILLCOD = ""
+    Endif
+
+  Next
+
+  Affzo [M:BIS1]BPAPAY,YBPAYREF,YBILLCOD
+  #DFCX1-49 Supplier Bank Account - End
+
+End
+
+
+#--------------------------------------------------------------
+# Before Entry - ACC1
+#--------------------------------------------------------------
+Subprog AS_ACC1(VALEUR)
+Variable Char    VALEUR()
+
+  #DFCX1-291 Default the Project GL Account if we have a Project on the header
+  If VALEUR = "" and [M:BIS1]PJTH <> ""
+
+    If !clalev ([F:YOPJM])   : Local File OPPORPJM   [F:YOPJM]  : Endif
+    If !clalev ([F:YOPJL])   : Local File PIMPL      [F:YOPJL]  : Endif
+    If !clalev ([F:YOPJB])   : Local File PJMBUDLIG  [F:YOPJB]  : Endif
+
+    #Read Project Number from Project Link
+    Read [F:YOPJL]PIM0 = [M:BIS1]PJTH
+
+    If fstat = 0
+
+      #Read Project
+      Read [F:YOPJM]OPPPJM0 = [F:YOPJL]OPPNUM
+
+      If fstat = 0
+
+        #Default GL Account if found on Project, otherwise use Supplier Default GL account
+        If [F:YOPJM]YDEFACC <> ""
+          VALEUR = [F:YOPJM]YDEFACC
+        Else
+          VALEUR = [F:BPS]YDEFGL
+        Endif
+
+      Endif
+    Endif
+
+    If clalev([F:YOPJM])     : Close Local File [F:YOPJM]       : Endif
+    If clalev([F:YOPJL])     : Close Local File [F:YOPJL]       : Endif
+    If clalev([F:YOPJB])     : Close Local File [F:YOPJB]       : Endif
+
+  Elsif VALEUR = "" and [M:BIS1]PJTH = ""
+    #Default GL Account when no Project specified on header
+    VALEUR = [F:BPS]YDEFGL
+  Endif
+
+End
+
+
+#------------------------------------------------------------------------------------#
+#Initialization - VAT
+#------------------------------------------------------------------------------------#
+Subprog D_VAT(VALEUR)
+Variable Char    VALEUR()
+
+  #Get default Supplier tax code, otherwise use GL account if not found
+  If [M:BIS3]ACC1(nolign-1) <> ""
+
+
+    Read [F:YCPY]CPY0 = [M:BIS0]CPY
+
+    If fstat = 0
+
+      Read [F:YGACM]GCM0 = [F:YCPY]ACM
+
+      If fstat = 0
+
+        Case [F:YGACM]GENLEDTYP
+          When 1  : Read [F:YGLED]LED0 = [F:YGACM]LED(0)
+          When 2  : Read [F:YGLED]LED0 = [F:YGACM]LED(1)
+          When 3  : Read [F:YGLED]LED0 = [F:YGACM]LED(2)
+          When 4  : Read [F:YGLED]LED0 = [F:YGACM]LED(3)
+          When 5  : Read [F:YGLED]LED0 = [F:YGACM]LED(4)
+          When 6  : Read [F:YGLED]LED0 = [F:YGACM]LED(5)
+          When 7  : Read [F:YGLED]LED0 = [F:YGACM]LED(6)
+          When 8  : Read [F:YGLED]LED0 = [F:YGACM]LED(7)
+          When 9  : Read [F:YGLED]LED0 = [F:YGACM]LED(8)
+          When 10 : Read [F:YGLED]LED0 = [F:YGACM]LED(9)
+        Endcase
+
+        Read [F:YGAC]GAC0 = [F:YGLED]COA;[M:BIS3]ACC1(nolign-1)
+
+        If fstat = 0
+
+          #Assign default tax from Supplier
+          If [F:YGAC]FLGVAT = 2
+
+            Read [F:YBPS]BPS0 = [M:BIS0]BPR
+
+            If fstat = 0
+
+              Read [F:YVAC]TVB0 = [F:YBPS]VACBPR;""
+
+              If fstat = 0
+
+                #If no supplier tax code, then use GL account tax code
+                If [F:YVAC]VAT = ""
+                  #Do nothing. Use standard Sage determined value
+                  #VALEUR = [F:YGAC]VAT
+                Else
+                  VALEUR = [F:YVAC]VAT
+                Endif
+
+              Endif
+
+            Endif
+
+          Endif
+
+        Endif
+
+      Endif
+
+    Endif
+
+  Endif
+
+End
+
+
+#------------------------------------------------------------------------------------#
+#After change - VAT
+#------------------------------------------------------------------------------------#
+Subprog AS_VAT(VALEUR)
+Variable Char    VALEUR()
+End
+
+
+#--------------------------------------------------------------
+# After change - VAT
+#--------------------------------------------------------------
+Subprog AM_VAT(VALEUR)
+Variable Char    VALEUR()
+
+  If VALEUR <> "" and [M:BIS3]ACC1(nolign-1) <> ""
+
+    Read [F:YCPY]CPY0 = [M:BIS0]CPY
+
+    If fstat = 0
+
+      Read [F:YGACM]GCM0 = [F:YCPY]ACM
+
+      If fstat = 0
+
+        Case [F:YGACM]GENLEDTYP
+          When 1  : Read [F:YGLED]LED0 = [F:YGACM]LED(0)
+          When 2  : Read [F:YGLED]LED0 = [F:YGACM]LED(1)
+          When 3  : Read [F:YGLED]LED0 = [F:YGACM]LED(2)
+          When 4  : Read [F:YGLED]LED0 = [F:YGACM]LED(3)
+          When 5  : Read [F:YGLED]LED0 = [F:YGACM]LED(4)
+          When 6  : Read [F:YGLED]LED0 = [F:YGACM]LED(5)
+          When 7  : Read [F:YGLED]LED0 = [F:YGACM]LED(6)
+          When 8  : Read [F:YGLED]LED0 = [F:YGACM]LED(7)
+          When 9  : Read [F:YGLED]LED0 = [F:YGACM]LED(8)
+          When 10 : Read [F:YGLED]LED0 = [F:YGACM]LED(9)
+        Endcase
+
+        Read [F:YGAC]GAC0 = [F:YGLED]COA;[M:BIS3]ACC1(nolign-1)
+
+        If fstat = 0
+
+          #GL Account not subject to Tax. Use Account default
+          If [F:YGAC]FLGVAT = 1
+            #No restrictions
+          Else
+
+            #Get Tax Codes for GL Account
+            Local Char REQUEST(255)(0..12)
+            REQUEST(0)  = "SELECT VATCTL FROM (SELECT"
+
+            REQUEST(1)  -= "VATCTL_0,VATCTL_1,VATCTL_2,VATCTL_3,VATCTL_4,VATCTL_5,VATCTL_6,VATCTL_7,VATCTL_8,VATCTL_9,VATCTL_10,VATCTL_11,VATCTL_12,VATCTL_13,VATCTL_14,VATCTL_15,VATCTL_16,VATCTL_17,V"
+&  + "ATCTL_18,VATCTL_19,VATCTL_20,VATCTL_21,VATCTL_22,VATCTL_23,VATCTL_24,VATCTL_25,"
+            REQUEST(2)  -= "VATCTL_26,VATCTL_27,VATCTL_28,VATCTL_29,VATCTL_30,VATCTL_31,VATCTL_32,VATCTL_33,VATCTL_34,VATCTL_35,VATCTL_36,VATCTL_37,VATCTL_38,VATCTL_39,VATCTL_40,VATCTL_41,VATCTL_42,V"
+&  + "ATCTL_43,VATCTL_44,VATCTL_45,VATCTL_46,VATCTL_47,VATCTL_48,VATCTL_49,VATCTL_50,"
+            REQUEST(3)  -= "VATCTL_51,VATCTL_52,VATCTL_53,VATCTL_54,VATCTL_55,VATCTL_56,VATCTL_57,VATCTL_58,VATCTL_59,VATCTL_60,VATCTL_61,VATCTL_62,VATCTL_63,VATCTL_64,VATCTL_65,VATCTL_66,VATCTL_67,V"
+&  + "ATCTL_68,VATCTL_69,VATCTL_70,VATCTL_71,VATCTL_72,VATCTL_73,VATCTL_74,VATCTL_75,"
+            REQUEST(4)  -= "VATCTL_76,VATCTL_77,VATCTL_78,VATCTL_79,VATCTL_80,VATCTL_81,VATCTL_82,VATCTL_83,VATCTL_84,VATCTL_85,VATCTL_86,VATCTL_87,VATCTL_88,VATCTL_89,VATCTL_90,VATCTL_91,VATCTL_92,V"
+&  + "ATCTL_93,VATCTL_94,VATCTL_95,VATCTL_96,VATCTL_97,VATCTL_98"
+
+            REQUEST(5)  -= "FROM GACCOUNT G LEFT OUTER JOIN GACCOUNTA A ON G.COA_0 = A.COA_0 AND G.ACC_0 = A.ACC_0"
+            REQUEST(6)  -= "WHERE G.ACC_0 = '" + [M:BIS3]ACC1(nolign-1) + "' AND G.COA_0 = '" + [F:YGLED]COA + "') GACCOUNTX"
+            REQUEST(7)  -= "UNPIVOT (VATCTL FOR VATCTL_NUM IN ("
+
+            REQUEST(8)  -= "VATCTL_0,VATCTL_1,VATCTL_2,VATCTL_3,VATCTL_4,VATCTL_5,VATCTL_6,VATCTL_7,VATCTL_8,VATCTL_9,VATCTL_10,VATCTL_11,VATCTL_12,VATCTL_13,VATCTL_14,VATCTL_15,VATCTL_16,VATCTL_17,V"
+&  + "ATCTL_18,VATCTL_19,VATCTL_20,VATCTL_21,VATCTL_22,VATCTL_23,VATCTL_24,VATCTL_25,"
+            REQUEST(9)  -= "VATCTL_26,VATCTL_27,VATCTL_28,VATCTL_29,VATCTL_30,VATCTL_31,VATCTL_32,VATCTL_33,VATCTL_34,VATCTL_35,VATCTL_36,VATCTL_37,VATCTL_38,VATCTL_39,VATCTL_40,VATCTL_41,VATCTL_42,V"
+&  + "ATCTL_43,VATCTL_44,VATCTL_45,VATCTL_46,VATCTL_47,VATCTL_48,VATCTL_49,VATCTL_50,"
+            REQUEST(10) -= "VATCTL_51,VATCTL_52,VATCTL_53,VATCTL_54,VATCTL_55,VATCTL_56,VATCTL_57,VATCTL_58,VATCTL_59,VATCTL_60,VATCTL_61,VATCTL_62,VATCTL_63,VATCTL_64,VATCTL_65,VATCTL_66,VATCTL_67,V"
+&  + "ATCTL_68,VATCTL_69,VATCTL_70,VATCTL_71,VATCTL_72,VATCTL_73,VATCTL_74,VATCTL_75,"
+            REQUEST(11) -= "VATCTL_76,VATCTL_77,VATCTL_78,VATCTL_79,VATCTL_80,VATCTL_81,VATCTL_82,VATCTL_83,VATCTL_84,VATCTL_85,VATCTL_86,VATCTL_87,VATCTL_88,VATCTL_89,VATCTL_90,VATCTL_91,VATCTL_92,V"
+&  + "ATCTL_93,VATCTL_94,VATCTL_95,VATCTL_96,VATCTL_97,VATCTL_98"
+
+            REQUEST(12) -= ")) AS UNPIV WHERE UNPIV.VATCTL = '" + VALEUR + "'"
+
+            Local Integer X : X = 0
+            For (Char YVAT(5)) From "5" Sql REQUEST As [YVAT]
+              X=1
+              Break
+            Next
+
+            #Check if Account VAT code exists in GL VAT code list
+            Case  [F:YGAC]TYPVATCTL
+              When 2 #Authorization - can only be in the list. If X=0 then the tax code is not in the authorized list
+                If X = 0
+                  GMESSAGE = "BP Tax code is not in the Authorized Account Tax Code list, the Default Account Tax code will be used"
+                  GERR = 1
+                  GOK = 0
+                  VALEUR = [F:YGAC]VAT
+                  [M:BIS3]AMTATILIN(nolign-1) = 0
+                  Affzo [M:BIS3]VAT(nolign-1),AMTATILIN(nolign-1)
+                Endif
+              When 3 #Restriction - cannot be in the list. If X<>0 then the tax code is in the restricted list
+                If X > 0
+                  GMESSAGE = "BP Tax code is in the Restricted Account Tax Code list, the Default Account Tax code will be used"
+                  GERR = 1
+                  GOK = 0
+                  VALEUR = [F:YGAC]VAT
+                  [M:BIS3]AMTATILIN(nolign-1) = 0
+                  Affzo [M:BIS3]VAT(nolign-1),AMTATILIN(nolign-1)
+                Endif
+              When Default
+            Endcase
+
+          Endif
+
+        Endif
+
+      Endif
+
+    Endif
+
+  Endif
+
+End
+
+
+#--------------------------------------------------------------
+# Before entry - AMTATILIN
+#--------------------------------------------------------------
+Subprog AS_AMTATILIN(VALEUR)
+Variable Decimal VALEUR
+  #Set Amount + GST on grid line equal to remaining amount (Header amount GST - total lines)
+  If VALEUR = 0
+    If [M:BIS1]AMTATI - sum([M:BIS3]AMTATILIN(0..[M:BIS3]NBLIG-1)) > 0
+      VALEUR = [M:BIS1]AMTATI - sum([M:BIS3]AMTATILIN(0..[M:BIS3]NBLIG-1))
+    Endif
+  Endif
+End
+
+
+#--------------------------------------------------------------
+# After change - AMTATILIN
+#--------------------------------------------------------------
+Subprog AM_AMTATILIN(VALEUR)
+Variable Decimal VALEUR
+
+  If [M:BIS3]ACC1(nolign-1) <> "" and [M:BIS3]PJTLIN(nolign-1) <> ""
+    Call UPDATE_LINE_BUDGET(nolign-1,[M:BIS3]ACC1(nolign-1),[M:BIS3]PJTLIN(nolign-1),[M:BIS3]AMTNOTLIN(nolign-1),2)
+  Endif
+
+End
+
+#--------------------------------------------------------------
+# Control - PJTLIN
+#--------------------------------------------------------------
+Subprog C_PJTLIN(VALEUR)
+Variable Char    VALEUR()
+
+##Check if Project is mandatory and has no value, set focus to the Project field
+If [M:BIS3]ACC1(nolign-1) <> ""
+  Read [F:YGAC]GAC0 = GPLAN(1);[M:BIS3]ACC1(nolign-1)
+ If [F:YGAC]YPJM = 2 and VALEUR = "" Then
+    GMESSAGE = "Account " + [M:BIS3]ACC1(nolign-1) + "  requires a Project"
+    GERR = 1
+    GOK = 0
+    mkstat=2
+  Endif
+
+Endif
+
+End
+
+
+#--------------------------------------------------------------
+# After change - PJTLIN
+#--------------------------------------------------------------
+Subprog AM_PJTLIN(VALEUR)
+Variable Char    VALEUR()
+
+  If [M:BIS3]ACC1(nolign-1) <> "" and VALEUR <> ""
+    Call UPDATE_LINE_BUDGET(nolign-1,[M:BIS3]ACC1(nolign-1),VALEUR,[M:BIS3]AMTNOTLIN(nolign-1),2)
+  Endif
+
+  #Check entered value
+  Local Integer I : I = 0
+  Local Char REQUEST(255)(15)
+
+  REQUEST(0) = "SELECT t1.OPPNUM_0, t0.PBUCOD_0, t2.TEXTE_0, t3.LANMES_0, t0.FCY_0, t0.PIMNUM_0, t4.LANMES_0"
+  REQUEST(1) -= "FROM PIMPL t0"
+  REQUEST(2) -= "JOIN PJMBUD t1 ON t0.OPPNUM_0 = t1.OPPNUM_0 AND t0.PBUCOD_0 = t1.PBUCOD_0"
+  REQUEST(3) -= "JOIN ATEXTRA t2 ON t0.OPPNUM_0 = t2.IDENT1_0 AND t2.ZONE_0 = 'PIMDESAXX' AND t2.LANGUE_0 = 'ENG' AND t2.CODFIC_0 = 'PIMPL'"
+  REQUEST(4) -= "JOIN APLSTD t3 ON t0.PIMTYP_0 = t3.LANNUM_0 AND t3.LAN_0 = 'ENG' AND t3.LANCHP_0 = 2254"
+  REQUEST(5) -= "JOIN APLSTD t4 ON t0.PIMSTA_0 = t4.LANNUM_0 AND t4.LAN_0 = 'ENG' AND t4.LANCHP_0 = 2251"
+  REQUEST(6) -= "WHERE"
+  REQUEST(7) -= "t0.OPPSTATE_0 = 2"
+  #Site
+  REQUEST(8) -= "AND t0.FCY_0 = '" + [M:BIS0]FCY + "'"
+  #Active = Yes
+  REQUEST(9) -= "AND t0.PIMSTA_0 = 2"
+  #Chargeable = Yes
+  REQUEST(10) -= "AND t1.PBUIMP_0 = 2"
+  #Budget Status = Open
+  REQUEST(11) -= "AND t0.PBUSTATE_0 = 2"
+  #Project Link entered
+  REQUEST(12) -= "AND t0.PIMNUM_0 = '" + VALEUR + "'"
+
+  For (Char OPPNUM(20), Char PBUCOD(15), Char TEXTE(30), Char PIMTYP(123), Char FCY(5), Char PIMNUM(40), Char PIMSTA(123)) From "5" Sql REQUEST As [YPRJLNK]
+    I += 1
+    Break
+  Next
+
+  If I =0
+    #No record found
+    Call ERRTIT("Record not found", "Project") From GESECRAN
+    GERR = 1
+    GOK = 0
+    mkstat=2
+    zonsui = "[M:BIS3]PJTLIN(nolign-1)"
+  Endif
+
+End
+
+
+#--------------------------------------------------------------
+# Before field - CCE1
+#--------------------------------------------------------------
+Subprog AS_CCE1(VALEUR)
+Variable Char    VALEUR()
+
+  #DFCX1-50 Default the Project, Business Group, Job, and Cost Center based on selected header Project code
+  If VALEUR = "" and [M:BIS3]PJTLIN(nolign-1) <> ""
+
+    If !clalev ([F:YOPJM])   : Local File OPPORPJM   [F:YOPJM]  : Endif
+    If !clalev ([F:YOPJL])   : Local File PIMPL      [F:YOPJL]  : Endif
+    If !clalev ([F:YOPJB])   : Local File PJMBUDLIG  [F:YOPJB]  : Endif
+
+    #Read Project Number from Project Link
+    Read [F:YOPJL]PIM0 = [M:BIS3]PJTLIN(nolign-1)
+
+    If fstat = 0
+
+      #Read Project
+      Read [F:YOPJM]OPPPJM0 = [F:YOPJL]OPPNUM
+
+      If fstat = 0
+        VALEUR = [F:YOPJM]CCE(0)
+      Endif
+
+    Endif
+
+    If clalev([F:YOPJM])     : Close Local File [F:YOPJM]       : Endif
+    If clalev([F:YOPJL])     : Close Local File [F:YOPJL]       : Endif
+    If clalev([F:YOPJB])     : Close Local File [F:YOPJB]       : Endif
+
+  Endif
+
+End
+
+
+#--------------------------------------------------------------
+# After change - CCE1
+#--------------------------------------------------------------
+Subprog AM_CCE1(VALEUR)
+Variable Char    VALEUR()
+  If VALEUR <> ""
+    Call VALIDATE_CCE(VALEUR,[M]DIE(0),"DIE_0")
+  Endif
+End
+
+
+#--------------------------------------------------------------
+# Before field - CCE2
+#--------------------------------------------------------------
+Subprog AS_CCE2(VALEUR)
+Variable Char    VALEUR()
+End
+
+
+#--------------------------------------------------------------
+# After change - CCE2
+#--------------------------------------------------------------
+Subprog AM_CCE2(VALEUR)
+Variable Char    VALEUR()
+  If VALEUR <> ""
+    Call VALIDATE_CCE(VALEUR,[M]DIE(1),"DIE_1")
+  Endif
+End
+
+
+#--------------------------------------------------------------
+# Before field - CCE3
+#--------------------------------------------------------------
+Subprog AS_CCE3(VALEUR)
+Variable Char    VALEUR()
+
+  #DFCX1-50 Default the Project, Business Group, Job, and Cost Center based on selected header Project code
+  If VALEUR = "" and [M:BIS3]PJTLIN(nolign-1) <> ""
+
+    If !clalev ([F:YOPJM])   : Local File OPPORPJM   [F:YOPJM]  : Endif
+    If !clalev ([F:YOPJL])   : Local File PIMPL      [F:YOPJL]  : Endif
+    If !clalev ([F:YOPJB])   : Local File PJMBUDLIG  [F:YOPJB]  : Endif
+
+    #Read Project Number from Project Link
+    Read [F:YOPJL]PIM0 = [M:BIS3]PJTLIN(nolign-1)
+
+    If fstat = 0
+
+      #Read Project
+      Read [F:YOPJM]OPPPJM0 = [F:YOPJL]OPPNUM
+
+      If fstat = 0
+        VALEUR = [F:YOPJM]CCE(2)
+      Endif
+
+    Endif
+
+    If clalev([F:YOPJM])     : Close Local File [F:YOPJM]       : Endif
+    If clalev([F:YOPJL])     : Close Local File [F:YOPJL]       : Endif
+    If clalev([F:YOPJB])     : Close Local File [F:YOPJB]       : Endif
+
+  Endif
+
+End
+
+
+#--------------------------------------------------------------
+# After change - CCE3
+#--------------------------------------------------------------
+Subprog AM_CCE3(VALEUR)
+Variable Char    VALEUR()
+  If VALEUR <> ""
+    Call VALIDATE_CCE(VALEUR,[M]DIE(2),"DIE_2")
+  Endif
+End
+
+
+#--------------------------------------------------------------
+# Before field - CCE4
+#--------------------------------------------------------------
+Subprog AS_CCE4(VALEUR)
+Variable Char    VALEUR()
+
+  #DFCX1-50 Default the Project, Business Group, Job, and Cost Center based on selected header Project code
+  If VALEUR = "" and [M:BIS3]PJTLIN(nolign-1) <> ""
+
+    If !clalev ([F:YOPJM])   : Local File OPPORPJM   [F:YOPJM]  : Endif
+    If !clalev ([F:YOPJL])   : Local File PIMPL      [F:YOPJL]  : Endif
+    If !clalev ([F:YOPJB])   : Local File PJMBUDLIG  [F:YOPJB]  : Endif
+
+    #Read Project Number from Project Link
+    Read [F:YOPJL]PIM0 = [M:BIS3]PJTLIN(nolign-1)
+
+    If fstat = 0
+
+      #Read Project budget
+      Read [F:YOPJB]PJLB0 = [F:YOPJL]OPPNUM;[F:YOPJL]PBUCOD;10
+
+      If fstat = 0
+        VALEUR = [F:YOPJB]PCCCOD #Cost centre
+      Endif
+
+    Endif
+
+    If clalev([F:YOPJM])     : Close Local File [F:YOPJM]       : Endif
+    If clalev([F:YOPJL])     : Close Local File [F:YOPJL]       : Endif
+    If clalev([F:YOPJB])     : Close Local File [F:YOPJB]       : Endif
+
+  Endif
+
+End
+
+
+#--------------------------------------------------------------
+# After change - CCE4
+#--------------------------------------------------------------
+Subprog AM_CCE4(VALEUR)
+Variable Char    VALEUR()
+  If VALEUR <> ""
+    Call VALIDATE_CCE(VALEUR,[M]DIE(3),"DIE_3")
+  Endif
+End
+
+
+#--------------------------------------------------------------
+# Before field - CCE5
+#--------------------------------------------------------------
+Subprog AS_CCE5(VALEUR)
+Variable Char    VALEUR()
+End
+
+
+#--------------------------------------------------------------
+# After change - CCE5
+#--------------------------------------------------------------
+Subprog AM_CCE5(VALEUR)
+Variable Char    VALEUR()
+  If VALEUR <> ""
+    Call VALIDATE_CCE(VALEUR,[M]DIE(4),"DIE_4")
+  Endif
+End
+
+
+#--------------------------------------------------------------
+# Validate entered grid dimension
+#--------------------------------------------------------------
+Subprog VALIDATE_CCE(CCE,DIE_VAL,DIE_FLD)
+
+Variable Char CCE()
+Value Char DIE_VAL,DIE_FLD
+Local Char REQUEST(255)(10)
+Local Integer I
+
+#New query as per Richard Race-Lyons 2018/12/20
+REQUEST(0) = "SELECT COUNT(*)"
+REQUEST(1) -= "FROM FACILITY t0"
+REQUEST(2) -= "JOIN COMPANY t1 ON t0.LEGCPY_0 = t1.CPY_0"
+REQUEST(3) -= "JOIN GACM t2 ON t1.ACM_0 = t2.GCM_0"
+REQUEST(4) -= "JOIN GLED t3 ON t2.LED_0 = t3.LED_0"
+#REQUEST(5) -= "INNER JOIN CACCE t4 ON t4.DIE_0 = t3.DIE_0"
+REQUEST(5) -= "INNER JOIN CACCE t4 ON t4.DIE_0 = t3." + DIE_FLD
+REQUEST(6) -= "LEFT OUTER JOIN YPCCACC t5 ON t5.YLED_0 = t3.LED_0 AND t5.YDIE_0 = t4.DIE_0 AND t5.YCCE_0 = t4.CCE_0"
+#REQUEST(7) -= "WHERE t0.FCY_0 = '" + [M:BIS3]FCYLIN(nolign-1) + "' AND t4.DIE_0 = '" + [M]DIE(nolign-1) +"' AND ((t5.YACC_0 = '" + [M:BIS3]ACC1(nolign-1) +
+#& "' AND t5.YLED_0 = t3.LED_0) OR (t5.YACC_0 IS NULL AND t5.YLED_0 IS NULL)) AND t4.CCE_0 = '" + CCE + "'"
+REQUEST(7) -= "WHERE t4.DIE_0 = '" + DIE_VAL +"' AND ((t5.YACC_0 = '" + [M:BIS3]ACC1(nolign-1) +
+& "' AND t5.YLED_0 = t3.LED_0) OR (t5.YACC_0 IS NULL AND t5.YLED_0 IS NULL)) AND t4.CCE_0 = '" + CCE + "' AND t4.ENAFLG_0 = 2"
+
+For (Integer COUNT) From "5" Sql REQUEST As [YDIE]
+  I = [YDIE]COUNT
+Next
+
+If I < 1
+  GMESSAGE = mess(6,6201,1)
+  GERR = 1
+  mkstat = 2
+Endif
+
+End
+
+
+#--------------------------------------------------------------
+# Update grid line budget amounts
+#--------------------------------------------------------------
+Subprog UPDATE_LINE_BUDGET(LINE,ACC,PROJ,AMT,SHOW_MSG)
+
+Value Char ACC,PROJ
+Value Decimal AMT
+Value Integer LINE,SHOW_MSG
+
+#DFCX1-389 Check if Budget Checks are enabled for the Company
+Read[F:YCPY]CPY0 = [M:BIS0]CPY
+
+If fstat = 0
+
+  If [F:CPY]YBUDCHK = 2
+
+    Local Decimal YBUDAMT : YBUDAMT = 0
+    Local Decimal YAPPERC : YAPPERC = 0
+    Local Decimal YAPAMT  : YAPAMT = 0
+    Local Decimal YALLAMT : YALLAMT = 0
+    Local Decimal YREMAMT : YREMAMT = 0
+
+    Read [F:YGAC]GAC0 = GPLAN(1);ACC
+
+    If fstat = 0
+
+      If [F:YGAC]YPJM = 2
+
+        Read [F:YPIM]PIM0 = PROJ
+
+        If fstat = 0
+
+          #Get budget amount for the Project if Account is marked as PJM
+          Read [F:YPJB]PJLB0 = [F:YPIM]OPPNUM;[F:YPIM]PBUCOD
+
+          If fstat = 0
+            YBUDAMT = [F:YPJB]PLBAMT
+          Endif
+
+          #Get AP Tolerance percent and amount
+          Read[F:YCPY]CPY0 = [M:BIS0]CPY
+
+          If fstat = 0
+            YAPPERC = [F:YCPY]YAPTPCT
+            YAPAMT  = [F:YCPY]YAPTAMT
+          Endif
+
+          #Get the amount remaining.
+          Local Char ZSQL(255)(2)
+          ZSQL(0) = "SELECT SUM(L.AMTNOTLIN_0 * H.SNS_0) AS [AMOUNT] FROM BPSINVLIG L "
+          ZSQL(1) = "LEFT OUTER JOIN PINVOICE H on H.NUM_0 = L.NUM_0 where PJTLIN_0 = '" + PROJ + "' and H.NUM_0 <> '" + [F:PIH]NUM + "'"
+
+          For (Decimal YAMT) From "5" Sql ZSQL As [YLNK]
+            YALLAMT += [F:YLNK]YAMT
+          Next
+
+          ZSQL(0) = "SELECT SUM(L.AMTNOTLIN_0 * H.SNS_0) * -1 AS [AMOUNT] FROM BPCINVLIG L "
+          ZSQL(1) = "LEFT OUTER JOIN SINVOICE H on H.NUM_0 = L.NUM_0 where PJTLIN_0 = '" + PROJ + "' and H.NUM_0 <> '" + [F:PIH]NUM + "' and H.SIVTYP_0 in ('HREF','HREB')"
+
+          For (Decimal YAMT) From "5" Sql ZSQL As [YLNK]
+            YALLAMT += [F:YLNK]YAMT
+          Next
+
+          If (YBUDAMT * (1+YAPPERC)) > (YBUDAMT +YAPAMT)
+            YBUDAMT = (YBUDAMT +YAPAMT)
+          Else
+            YBUDAMT = (YBUDAMT * (1+YAPPERC))
+          Endif
+
+          YREMAMT = YBUDAMT - YALLAMT - AMT
+
+        Endif
+
+      Endif
+
+    Endif
+
+    #Update grid fields
+    [M:BIS3]YBUDAMT(LINE) = YBUDAMT
+    [M:BIS3]YALLOCAMT(LINE) = YALLAMT
+    [M:BIS3]YRMNAMT(LINE) = YREMAMT
+
+    #Update YOVRBUD if amount is over remaining value
+    If YREMAMT < 0
+      If !GWEBSERV
+
+        If SHOW_MSG = 2
+          Errbox "The invoice amount before tax is more than the remaining budgeted amount on line number: " + num$(LINE+1)
+        Endif
+
+        ##Validate lines
+        #Gosub $VALIDATE_OVERBUDGET
+
+        #If we are not overbudget with existing lines, set as overbudget for this line as it may be a new line
+        If [M:BIS1]YOVRBUD = 1
+          [M:BIS1]YOVRBUD = 2
+          Affzo [M:BIS1]YOVRBUD
+        Endif
+
+      Endif
+    Endif
+
+    #Refreh grid fields
+    Affzo [M:BIS3]YBUDAMT(LINE),YALLOCAMT(LINE),YRMNAMT(LINE)
+
+  Endif
+Endif
+
+End
+
+
+#--------------------------------------------------------------
+# Valdiate existing grid lines and check if any are overbudget
+#--------------------------------------------------------------
+$VALIDATE_OVERBUDGET
+
+[M:BIS1]YOVRBUD = 1
+
+For I = 0 To [M:BIS3]NBLIG-1
+  If [M:BIS3]YRMNAMT(I) < 0
+    [M:BIS1]YOVRBUD = 2
+    Break
+  Endif
+Next
+
+Affzo [M:BIS1]YOVRBUD
+
+Return
+
+######################################################################################
+# DFCX1-437 (DH)
+######################################################################################
+Subprog C_ACC1(VALEUR)
+Variable Char    VALEUR()
+  [M:BIS3]PJTLIN(nolign-1) = ""
+  Read [F:YGAC]GAC0 = GPLAN(1);VALEUR
+  If [F:YGAC]YPJM = 1 Then
+    Diszo [M:BIS3]PJTLIN(nolign-1)
+  Else
+    Actzo [M:BIS3]PJTLIN(nolign-1)
+    If [M:BIS1]PJTH <> "" : [M:BIS3]PJTLIN(nolign-1) = [M:BIS1]PJTH : Endif
+  Endif
+
+Affzo [M:BIS3]PJTLIN(nolign-1)
+
+End
+
+
+######################################################################################
+
+######################################################################################
+## Section automatically added (screen BIS1) 23/04/2019 14:24:35 (DH)
+######################################################################################
+Subprog C_PJTH(VALEUR)
+Variable Char    VALEUR()
+
+ #Display Project Description and Project Budget Description
+  If VALEUR <> ""
+    #VALIDATE PROJECT Link DFCX1-153
+    Local Integer I : I = 0
+    Local Char REQUEST(255)(15)
+
+    REQUEST(0) = "SELECT t1.OPPNUM_0"
+    REQUEST(1) -= "FROM PIMPL t0"
+    REQUEST(2) -= "JOIN PJMBUD t1 ON t0.OPPNUM_0 = t1.OPPNUM_0 AND t0.PBUCOD_0 = t1.PBUCOD_0"
+    REQUEST(3) -= "JOIN ATEXTRA t2 ON t0.OPPNUM_0 = t2.IDENT1_0 AND t2.ZONE_0 = 'PIMDESAXX' AND t2.LANGUE_0 = 'ENG' AND t2.CODFIC_0 = 'PIMPL'"
+    REQUEST(4) -= "JOIN APLSTD t3 ON t0.PIMTYP_0 = t3.LANNUM_0 AND t3.LAN_0 = 'ENG' AND t3.LANCHP_0 = 2254"
+    REQUEST(5) -= "JOIN APLSTD t4 ON t0.PIMSTA_0 = t4.LANNUM_0 AND t4.LAN_0 = 'ENG' AND t4.LANCHP_0 = 2251"
+    REQUEST(6) -= "WHERE"
+
+    #Project Status = Launched and Delivered
+    #REQUEST(7) -= "t0.OPPSTATE_0 IN (2,3)"
+    REQUEST(7) -= "t0.OPPSTATE_0 = 2"
+
+    #Site
+    REQUEST(8) -= "AND t0.FCY_0 = '" + [M:BIS0]FCY + "'"
+
+    #Active = Yes
+    REQUEST(9) -= "AND t0.PIMSTA_0 = 2"
+
+    #Chargeable = Yes
+    REQUEST(10) -= "AND t1.PBUIMP_0 = 2"
+
+    #Budget Status = Open
+    REQUEST(11) -= "AND t0.PBUSTATE_0 = 2"
+
+    #Project Link entered
+    REQUEST(12) -= "AND t0.PIMNUM_0 = '" + VALEUR + "'"
+
+    For (Char OPPNUM(20)) From "5" Sql REQUEST As [YPRJLNK]
+      If [F:YPRJLNK]OPPNUM = "" Then
+        Break
+      Else
+        I = 1
+        Break
+      Endif
+
+    Next
+
+    If I = 0
+      #No record found
+      Call ERRTIT("Record not found", "Project") From GESECRAN
+      GERR = 1
+      GOK = 0
+      mkstat=2
+      zonsui = "[M:BIC1]PJTH"
+      End
+    Endif
+
+    #Open table
+  If !clalev ([F:YPIML]) : Local File PIMPL [F:YPIML] : Endif
+
+    Read [F:YPIML]PIM0 = VALEUR
+    If fstat = 0
+      #Get description
+      Call LECTEXTRA([M:BIS1]YPJTD,"PIMPL","PIMDESAXX",[F:YPIML]OPPNUM,"") From ATEXTRA
+      Call LECTEXTRA([M:BIS1]YPJTB,"PIMPL","PIMDESAXX",VALEUR,"") From ATEXTRA
+
+    Endif
+    #Close table
+    If clalev([F:YPIML]) : Close Local File [F:YPIML] : Endif
+
+  Else
+    [M:BIS1]YPJTD = ""
+    [M:BIS1]YPJTB = ""
+  Endif
+  #Refresh field
+  Affzo [M:BIS1]YPJTD,YPJTB
+
+End
+
+
+######################################################################################
+
+**********
+7,"TRT","SPEBIS","Supplier BP invoice"
+2,"ATB","ACCES","Access by user"
+3,"ATB",ACCES
+4,"ABRFIC",0,"ACC"
+4,"ASDCLE",0,""
+4,"AUDBI",0,1
+4,"AUDCLE",0,""
+4,"AUDCRE",0,1
+4,"AUDDEL",0,1
+4,"AUDSDA",0,1
+4,"AUDUPD",0,1
+4,"AUDWRK",0,1
+4,"CODACT",0,""
+4,"CODFIC",0,"ACCES"
+4,"COLDEC",0,""
+4,"COLFMT",0,""
+4,"COLLNG",0,""
+4,"CRE",0,3
+4,"CREDAT",0,20180417
+4,"CREDATTIM",0,"2018-04-17T00:34:55Z"
+4,"CREUSR",0,"ADMIN"
+4,"FLG130",0,1
+4,"FLGLEG",0,1
+4,"GENTRA",0,1
+4,"INTIT",0,""
+4,"INTITC",0,""
+5,"INTITFIC",0,"Access by user","ENG",14174,""
+5,"INTITFIC",0,"","***"
+4,"MODULE",0,1
+4,"NBENREG",0,5000
+4,"OPT",0,1
+4,"SECURE",0,1
+4,"STA",0,1
+4,"SYMBOL",0,""
+4,"TYPDBA",0,3
+4,"TYPDLV",0,4
+4,"TYPFIC",0,2
+4,"UPDDAT",0,20190501
+4,"UPDDATTIM",0,"2019-05-01T01:27:14Z"
+4,"UPDFLG",0,0
+4,"UPDUSR",0,"DH"
+4,"ZERO",0,1
+6,"ATB"
+3,"ATZ",AUUID
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"ACCES"
+4,"CODTYP",0,"AUUID"
+4,"CODZONE",0,"AUUID"
+4,"CREDATTIM",0,"2019-05-01T01:27:14Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,0
+5,"NOABREG",0,"Single identifier","ENG",42348,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Single identifier","ENG",42348,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Single identifier","ENG",42348,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,11
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-01T01:27:14Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",CODACC
+4,"ANNUL",0,2
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"ACCES"
+4,"CODTYP",0,"ACS"
+4,"CODZONE",0,"CODACC"
+4,"CREDATTIM",0,"2019-05-01T01:27:14Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"ACCCOD"
+4,"LONG",0,0
+5,"NOABREG",0,"Access","ENG",72,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Access code","ENG",71,"Invalid text - Do not use"
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Access code","ENG",71,"Invalid text - Do not use"
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,1
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-01T01:27:14Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",CONSUL
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"ACCES"
+4,"CODTYP",0,"M"
+4,"CODZONE",0,"CONSUL"
+4,"CREDATTIM",0,"2019-05-01T01:27:14Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,4
+5,"NOABREG",0,"Inquiry","ENG",193,"Invalid text - Do not use"
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Inquiry","ENG",31737,"Access right"
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,1
+5,"NOLONG",0,"Inquiry","ENG",31737,"Access right"
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,3
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-01T01:27:14Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",CREDATTIM
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"ACCES"
+4,"CODTYP",0,"ADATIM"
+4,"CODZONE",0,"CREDATTIM"
+4,"CREDATTIM",0,"2019-05-01T01:27:14Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,0
+5,"NOABREG",0,"Date time","ENG",48732,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Date time","ENG",48732,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Date time","ENG",48732,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,9
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-01T01:27:14Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",CREUSR
+4,"ANNUL",0,4
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"ACCES"
+4,"CODTYP",0,"AUS"
+4,"CODZONE",0,"CREUSR"
+4,"CREDATTIM",0,"2019-05-01T01:27:14Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"AUTILIS"
+4,"LONG",0,0
+5,"NOABREG",0,"User","ENG",250,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"User","ENG",250,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"User","ENG",250,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,7
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-01T01:27:14Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,1
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",EXEC
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"ACCES"
+4,"CODTYP",0,"M"
+4,"CODZONE",0,"EXEC"
+4,"CREDATTIM",0,"2019-05-01T01:27:14Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,4
+5,"NOABREG",0,"Exec.","ENG",195,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Execution","ENG",194,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,1
+5,"NOLONG",0,"Execution","ENG",194,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,4
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-01T01:27:14Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",MODIF
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"ACCES"
+4,"CODTYP",0,"M"
+4,"CODZONE",0,"MODIF"
+4,"CREDATTIM",0,"2019-05-01T01:27:14Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,4
+5,"NOABREG",0,"Edit","ENG",197,"Abbreviated in French"
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Modification","ENG",196,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,1
+5,"NOLONG",0,"Modification","ENG",196,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,5
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-01T01:27:14Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",PRFCOD
+4,"ANNUL",0,2
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"ACCES"
+4,"CODTYP",0,"AFT"
+4,"CODZONE",0,"PRFCOD"
+4,"CREDATTIM",0,"2019-05-01T01:27:14Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"AFCTFCT"
+4,"LONG",0,0
+5,"NOABREG",0,"Profile code","ENG",1469,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Profile code","ENG",1469,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Profile code","ENG",1469,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,6
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-01T01:27:14Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",UPDDATTIM
+4,"ANNUL",0,0
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"ACCES"
+4,"CODTYP",0,"ADATIM"
+4,"CODZONE",0,"UPDDATTIM"
+4,"CREDATTIM",0,"2019-05-01T01:27:14Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,""
+4,"LONG",0,0
+5,"NOABREG",0,"Date time","ENG",48732,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"Date time","ENG",48732,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"Date time","ENG",48732,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,10
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-01T01:27:14Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,0
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",UPDUSR
+4,"ANNUL",0,4
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"ACCES"
+4,"CODTYP",0,"AUS"
+4,"CODZONE",0,"UPDUSR"
+4,"CREDATTIM",0,"2019-05-01T01:27:14Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"AUTILIS"
+4,"LONG",0,0
+5,"NOABREG",0,"User","ENG",250,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"User","ENG",250,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"User","ENG",250,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,8
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-01T01:27:14Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,1
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATZ",USR
+4,"ANNUL",0,2
+4,"CHPLEG",0,0
+4,"CODACT",0,""
+4,"CODFIC",0,"ACCES"
+4,"CODTYP",0,"AUS"
+4,"CODZONE",0,"USR"
+4,"CREDATTIM",0,"2019-05-01T01:27:14Z"
+4,"CREUSR",0,"DH"
+4,"DIME",0,1
+4,"EXPLIEN",0,""
+4,"LIEN",0,"AUTILIS"
+4,"LONG",0,0
+5,"NOABREG",0,"User","ENG",250,""
+5,"NOABREG",0,"","***"
+5,"NOCOURT",0,"User code","ENG",190,""
+5,"NOCOURT",0,"","***"
+4,"NOLIB",0,0
+5,"NOLONG",0,"User code","ENG",190,""
+5,"NOLONG",0,"","***"
+4,"NUMLIG",0,2
+4,"OBLIG",0,1
+4,"OPTION",0,""
+4,"UPDDATTIM",0,"2019-05-01T01:27:14Z"
+4,"UPDUSR",0,"DH"
+4,"VERIF",0,2
+4,"ZERO",0,1
+6,"ATZ"
+3,"ATI",CODACC
+4,"CODACT",0,""
+4,"CODFIC",0,"ACCES"
+4,"CODIND",0,"CODACC"
+4,"CREDATTIM",0,"2019-05-01T01:27:14Z"
+4,"CREUSR",0,"DH"
+4,"DESCRIPT",0,"USR+CODACC"
+4,"HOMONYM",0,2
+4,"NIVDEC",0,0
+4,"NUMLIG",0,1
+4,"ORDIND",0,0
+4,"UPDDATTIM",0,"2019-05-01T01:27:14Z"
+4,"UPDUSR",0,"DH"
+6,"ATI"
+3,"ATI",PRFCOD
+4,"CODACT",0,""
+4,"CODFIC",0,"ACCES"
+4,"CODIND",0,"PRFCOD"
+4,"CREDATTIM",0,"2019-05-01T01:27:14Z"
+4,"CREUSR",0,"DH"
+4,"DESCRIPT",0,"PRFCOD+CODACC+USR"
+4,"HOMONYM",0,1
+4,"NIVDEC",0,0
+4,"NUMLIG",0,2
+4,"ORDIND",0,1
+4,"UPDDATTIM",0,"2019-05-01T01:27:14Z"
+4,"UPDUSR",0,"DH"
+6,"ATI"
+3,"ATI",YCOD0
+4,"CODACT",0,""
+4,"CODFIC",0,"ACCES"
+4,"CODIND",0,"YCOD0"
+4,"CREDATTIM",0,"2019-05-01T01:27:14Z"
+4,"CREUSR",0,"DH"
+4,"DESCRIPT",0,"CODACC+USR"
+4,"HOMONYM",0,2
+4,"NIVDEC",0,0
+4,"NUMLIG",0,3
+4,"ORDIND",0,1
+4,"UPDDATTIM",0,"2019-05-01T01:27:14Z"
+4,"UPDUSR",0,"DH"
+6,"ATI"
+7,"ATB","ACCES","Access by user"
+8,"Patch DFC :DFCX1-446 on May       01,19 16: 25"
