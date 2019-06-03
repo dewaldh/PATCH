@@ -1,0 +1,307 @@
+1,"Patch DFC :DFCX1-471 on May       16,19 09: 43","ENG","1","","X3","3",
+2,"TRT","YSELBPCBCG",""
+#<AdxTL>@(#)0.0.0.0 $Revision$
+#######################################################################################################
+# FILE NAME   : YSELBPCBCG                                                                            #
+# DESCRIPTION : Customer selection (Filter on category)                                               #
+#######################################################################################################
+# DATE        : 22-10-2018                                                                            #
+# AUTHOR      : MAJID                                                                                    #
+# COMPANY     : Leverage Technologies                                                                 #
+#-----------------------------------------------------------------------------------------------------#
+# Epics Code  : DFCX1-79                                                                             #
+#-----------------------------------------------------------------------------------------------------#
+#######################################################################################################
+$ACTION
+
+Case ACTION
+  When Default
+Endcase
+
+Case GACTION
+  When "YSELBPCBCG"
+    Gosub S_BPC
+Endcase
+Return
+
+
+######################################################################################
+$S_BPC
+Local Integer I
+Local Char TEXTE(255)(1..20000,1..4)
+Local Char TEX(25)(20000)
+Local Char REQUEST(255)(1..2)
+#Local Char LFCY(5) : LFCY = PARAM(1)
+
+I=0
+TIT(1)="Customer ID"
+TIT(2)="Customer Name"
+TIT(3)="Invoice to"
+TIT(4)="Group customer"
+
+I=0
+
+REQUEST(1) = "Select BPCNUM_0, BPCNAM_0, BPCINV_0, BPCGRU_0 From BPCUSTOMER BPC WHERE BPC.BPCSTA_0=2 "
+
+If PARAM(1) <> ""
+  REQUEST(1) -= "and BCGCOD_0='" + PARAM(1) + "'"
+Endif
+
+
+For (Char BPCNUM, Char BPCNAM(100), Char BPCINV, Char BPCGRU) From "5" Sql REQUEST As [YLNK]
+  I += 1
+  TEX(I)     = [F:YLNK]BPCNUM
+  TEXTE(I,1) = [F:YLNK]BPCNUM
+  TEXTE(I,2) = [F:YLNK]BPCNAM
+  TEXTE(I,3) = [F:YLNK]BPCINV
+  TEXTE(I,4) = [F:YLNK]BPCGRU
+Next
+NBTEX=I
+
+If I = 0 Then
+  GMESSAGE = mess(37,6255,1) - "for Customer category:" - PARAM(1)
+  GERR = 1
+  mkstat = 2
+  #zonsui = ""
+Endif
+
+Return
+
+**********
+7,"TRT","YSELBPCBCG",""
+2,"TRT","YSELLOT",""
+#<AdxTL>@(#)0.0.0.0 $Revision$
+#######################################################################################################
+# FILE NAME   : YSELLOT                                                                               #
+# DESCRIPTION : Lot selection - Land development (Per Estate & Stage)                                 #
+#######################################################################################################
+# DATE        : 20-11-2018                                                                            #
+# AUTHOR      : MAJID                                                                                 #
+# COMPANY     : Leverage Technologies                                                                 #
+#-----------------------------------------------------------------------------------------------------#
+# Epics Code  : DFCX1-187                                                                             #
+#-----------------------------------------------------------------------------------------------------#
+#######################################################################################################
+$ACTION
+
+Case ACTION
+  When Default
+Endcase
+
+Case GACTION
+  When "YSELLOT"
+    Gosub S_LOT
+Endcase
+Return
+
+
+######################################################################################
+$S_LOT
+Local Integer I
+Local Char TEXTE(255)(1..20000,1..3)
+Local Char TEX(25)(20000)
+Local Char REQUEST(255)(1..2)
+#Local Char LFCY(5) : LFCY = PARAM(1)
+
+# PARAM(1) = Estate
+# PARAM(2) = Stage
+# PARAM(3) = Land Purchase ID
+
+I=0
+TIT(1)="Lot ID"
+TIT(2)="Description"
+TIT(3)="Lot number"
+#TIT(4)="Estate"
+#TIT(5)="Stage"
+I=0
+
+REQUEST(1) = "Select YLOTID_0, YLOTDES_0, YLOTNBR_0, YESTID_0, YSTAID_0 From YLOT Where 1=1"
+
+If PARAM(1) <> "0" and PARAM(1) <> ""
+  REQUEST(1) -= "and YESTID_0=" + PARAM(1)
+Endif
+
+If PARAM(2) <> ""
+  REQUEST(1) -= "and YSTAID_0='" + PARAM(2) + "'"
+Endif
+
+If PARAM(3) <> ""
+  REQUEST(1) -= "and YLNDPURID_0='" + PARAM(3) + "'"
+Endif
+
+For (Char YLOTID, Char YLOTDES(100), Integer YLOTNBR, Integer YESTID, Char YSTAID) From "5" Sql REQUEST As [YLNK]
+  I += 1
+  TEX(I)     = [F:YLNK]YLOTID
+  TEXTE(I,1) = [F:YLNK]YLOTID
+  TEXTE(I,2) = [F:YLNK]YLOTDES
+  TEXTE(I,3) = num$([F:YLNK]YLOTNBR)
+  #TEXTE(I,4) = num$([F:YLNK]YESTID)
+  #TEXTE(I,5) = [F:YLNK]YSTAID
+
+Next
+NBTEX=I
+
+If I = 0 Then
+  GMESSAGE = mess(37,6255,1) - "for Estate ID:" - PARAM(1) - "and Stage ID:" - PARAM(2) - "and Land purchase ID:" - PARAM(3)
+  GERR = 1
+  mkstat = 2
+  #zonsui = ""
+Endif
+
+Return
+
+#################################################################################################################
+# Control link between Lot and Estate & Stage
+Subprog C_YLOT (YESTID, YSTAID, YLNDPURID, YLOT)
+Value Integer YESTID
+Value Char YSTAID, YLNDPURID, YLOT
+
+  If !clalev([F:YLOT9])   :   Local File YLOT [YLOT9]   : Endif
+  Read [F:YLOT9]YLOT0 = YLOT
+  If !fstat
+
+    If YESTID <> 0 and [F:YLOT9]YESTID <> YESTID
+      GMESSAGE = "Please Select a Lot under Estate id:" - num$(YESTID)
+      GERR = 1  : mkstat = 2
+    Endif
+
+    If YSTAID <> "" and [F:YLOT9]YSTAID <> YSTAID
+      GMESSAGE = "Please Select a Lot under Stage id:" - YSTAID
+      GERR = 1  : mkstat = 2
+    Endif
+
+    If YLNDPURID <> "" and [F:YLOT9]YLNDPURID <> YLNDPURID
+      GMESSAGE = "Please Select a Lot under Land Purchase id:" - YLNDPURID
+      GERR = 1  : mkstat = 2
+    Endif
+
+  Endif
+
+  If clalev ([F:YLOT9])     :   Close File [YLOT9]    :   Endif
+
+End
+#################################################################################################################
+
+**********
+7,"TRT","YSELLOT",""
+2,"TRT","YSTASEL",""
+#<AdxTL>@(#)0.0.0.0 $Revision$
+#######################################################################################################
+# FILE NAME   : YSTASEL                                                                               #
+# DESCRIPTION : Stage Selection script                                                                  #
+#######################################################################################################
+# DATE        : 22-10-2018                                                                            #
+# AUTHOR      : MZ                                                                                 #
+# COMPANY     : Leverage Technologies                                                                 #
+#-----------------------------------------------------------------------------------------------------#
+# Epics Code  : DFCX1-79                                                                             #
+#-----------------------------------------------------------------------------------------------------#
+#######################################################################################################
+$ACTION
+
+Case ACTION
+  When Default
+Endcase
+
+Case GACTION
+  When "YSTASEL"
+    Gosub S_STAGE
+Endcase
+Return
+
+
+######################################################################################
+$S_STAGE
+Local Integer I
+Local Char TEXTE(255)(1..10000,1..4)
+Local Char TEX(25)(10000)
+Local Char REQUEST(255)(1..2)
+#Local Char LFCY(5) : LFCY = PARAM(1)
+
+I=0
+TIT(1)="Stage ID"
+TIT(2)="Description"
+TIT(3)="Type"
+TIT(4)="Status"
+CRITERE = "1=1"
+
+I=0
+#Infbox "1"
+REQUEST(1) = "Select s.YSTAID_0, s.YSTADES_0, m.LANMES_0, m2.LANMES_0 From YSTAGE s Left join APLSTD m on s.YSTATYP_0=m.LANNUM_0 and m.LANCHP_0=6216 and m.LAN_0='ENG' "
+REQUEST(2) = "Left join APLSTD m2 ON s.YSTASTA_0=m2.LANNUM_0 and m2.LANCHP_0=6217 and m2.LAN_0='ENG' Where 1=1"
+
+If PARAM(1) <> "0"
+  REQUEST(2) -= "and YESTID_0=" + PARAM(1)
+Endif
+
+If PARAM(2) <> ""
+  REQUEST(2) -= "and YPREID_0='" + PARAM(2) + "'"
+Endif
+
+
+For (Char YSTAID, Char YSTADES(200), Char TYP, Char STA) From "5" Sql REQUEST As [YLNK]
+  I += 1
+  TEX(I)     = [F:YLNK]YSTAID
+  TEXTE(I,1) = [F:YLNK]YSTAID
+  TEXTE(I,2) = [F:YLNK]YSTADES
+  TEXTE(I,3) = [F:YLNK]TYP
+  TEXTE(I,4) = [F:YLNK]STA
+Next
+NBTEX=I
+
+If I=1  : NBTEX +=1 : Endif     # Add empty line at the end if list has just one value
+
+If I = 0
+  GMESSAGE = mess(37,6255,1) - "for Estate ID:" - PARAM(1) - "and Precinct ID:" - PARAM(2)
+  GERR = 1
+  mkstat = 2
+Endif
+
+
+Return
+
+#################################################################################################################
+# Control link between Estate and Stage
+Subprog C_YSTAID (YESTID, YSTAID)
+Value Integer YESTID
+Value Char YSTAID
+
+If YESTID <> 0 & YSTAID <> ""
+  If !clalev([F:YSTG9])   :   Local File YSTAGE [YSTG9]   : Endif
+
+  Read [F:YSTG9]YSTG0 = YSTAID
+
+  If !fstat & [F:YSTG9]YESTID <> YESTID
+    Infbox "Please Select a Stage under Estate id:" - num$(YESTID)
+    mkstat = 2
+  Endif
+
+  If clalev ([F:YSTG9])     :   Close File [YSTG9]    :   Endif
+Endif
+End
+#################################################################################################################
+
+#################################################################################################################
+# Control link between Estate & Precinct and Stage
+Subprog C_YSTAID2 (YESTID, YPREID, YSTAID)
+Value Integer YESTID
+Value Char YPREID, YSTAID
+
+If YESTID <> 0 & YSTAID <> ""
+  If !clalev([F:YSTG9])   :   Local File YSTAGE [YSTG9]   : Endif
+
+  Read [F:YSTG9]YSTG0 = YSTAID
+
+  If !fstat & ([F:YSTG9]YESTID <> YESTID or [F:YSTG9]YPREID <> YPREID )
+    Infbox "Please Select a Stage under Estate id:" - num$(YESTID) - "and Precinct id:" - YPREID
+    mkstat = 2
+  Endif
+
+  If clalev ([F:YSTG9])     :   Close File [YSTG9]    :   Endif
+Endif
+End
+#################################################################################################################
+
+**********
+7,"TRT","YSTASEL",""
+8,"Patch DFC :DFCX1-471 on May       16,19 09: 43"

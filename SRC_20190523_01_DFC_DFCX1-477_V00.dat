@@ -1,0 +1,2431 @@
+1,"Patch DFC :DFCX1-477 on May       23,19 22: 24","ENG","1","YLAND","X3","3",
+2,"TRT","SUBYSLCAR",""
+#<AdxTL>@(#)0.0.0.0 $Revision$
+######################################################################################################################
+# Script            : SUBYSLCAR                                                                                      #
+# Creation date     : 02/11/2018                                                                                     #
+# Version           : 1.0.0                                                                                          #
+# Authors (Company) : MZ (Leverage)                                                                                  #
+# Module            : Land Development - Add Receipt to Sales contract                                               #
+# -------------------------------------------------------------------------------------------------------------------#
+# Epic              : https://jira.leveragetech.com.au/browse/DFCX1-79                                               #
+# Description       : DFCX1-79 Land Development -  Stage                                                             #
+#--------------------------------------------------------------------------------------------------------------------#
+# Evolutions        :                                                                                                #
+# DFCX1-169   Majid   Title registration on Stage                                                                    #
+######################################################################################################################
+
+$ACTION
+
+Case ACTION
+ When "DEBUT"         :     Gosub DEBUT
+ When "OK"            :     Gosub OK
+ When "FIN"           :     Gosub FIN
+ When Default
+Endcase
+Return
+
+######################################################################################################################
+$DEBUT
+  Raz [M:YSLCAR]
+Return
+
+######################################################################################################################
+$OK
+
+  Local Integer YLINNBR
+
+  If !clalev ([F:YSREC2])         :   Local File YSCRECEIPT [YSREC2]  : Endif
+  If !clalev([F:YSLC2])           :   Local File YSALCTR  [YSLC2]     : Endif
+  If !clalev([F:YSWF2])           :   Local File YSCWRKFLW  [YSWF2]   : Endif
+  Read [F:YSLC2]YSLC0 = [M:YSLC]YSLCID
+  Read [F:YSWF2]YSWF0 = [M:YSLC]YSLCID
+
+  If [M:YSLCAR]YRCPID = 0
+    Filter [F:YSREC2] Where YSLCID = [M:YSLC]YSLCID Order By YRCPID
+    Read [F:YSREC2]Last       # Find last record and plus 1 to generate sequence
+    YLINNBR = [F:YSREC2]YRCPID  + 1
+    Trbegin [F:YSREC2]
+    [F:YSREC2]YSLCID  = [M:YSLC]YSLCID
+    [F:YSREC2]YRCPID  = YLINNBR
+    If YLINNBR=1
+      [F:YSREC2]YTSKNAM = "Initial Deposit"
+      [F:YSWF2]YINTDEPREC = [M:YSLCAR]YACTDAT
+      [M:YSLC2]YINTDEPREC = [M:YSLCAR]YACTDAT
+      [F:YSWF2]YREPDEPREC = date$
+      [M:YSLC2]YREPDEPREC = date$
+      Rewrite [F:YSWF2]
+    Else
+      [F:YSREC2]YTSKNAM = "Further Deposit"
+    Endif
+    [F:YSREC2]YRCPAMT = [M:YSLCAR]YRCPAMT
+    [F:YSREC2]YACTDAT = [M:YSLCAR]YACTDAT
+    [F:YSREC2]YRPTDAT = [M:YSLCAR]YRPTDAT
+    [F:YSREC2]YRCPNBR = [M:YSLCAR]YRCPNBR
+    [F:YSREC2]YPMTTYP = [M:YSLCAR]YPMTTYP
+    [F:YSREC2]YCMT    = [M:YSLCAR]YCMT
+    Write [F:YSREC2]
+  Else
+    Filter [F:YSREC2] Where YSLCID = [M:YSLC]YSLCID and YRCPID = [M:YSLCAR]YRCPID
+    If !fstat
+      Trbegin [F:YSREC2]
+      [F:YSREC2]YRCPID  = YLINNBR
+      [F:YSREC2]YRCPAMT = [M:YSLCAR]YRCPAMT
+      [F:YSREC2]YRPTDAT = [M:YSLCAR]YRPTDAT
+      [F:YSREC2]YRCPNBR = [M:YSLCAR]YRCPNBR
+      [F:YSREC2]YPMTTYP = [M:YSLCAR]YPMTTYP
+      [F:YSREC2]YCMT    = [M:YSLCAR]YCMT
+      Rewrite [F:YSREC2]
+    Endif
+  Endif
+
+  Local Decimal YTOTRCP
+  YTOTRCP = 0
+  For [F:YSREC2] Where YSLCID = [M:YSLC]YSLCID
+    YTOTRCP += [F:YSREC2]YRCPAMT
+  Next
+  [F:YSLC2]YTOTRCP = YTOTRCP
+  [F:YSLC2]YDEPOWE = YTOTRCP - [F:YSLC2]YDEPDUE
+  [M:YSLC]YTOTRCP = YTOTRCP
+  [M:YSLC]YDEPOWE = YTOTRCP - [F:YSLC2]YDEPDUE
+  Rewrite [F:YSLC2]
+
+  If !fstat
+    Commit
+  Else
+    Rollback
+  Endif
+
+  If clalev ([F:YSREC2])         :   Close File [YSREC2]  : Endif
+  If clalev([F:YSLC2])           :   Close File [YSLC2]   : Endif
+  If clalev([F:YSWF2])           :   Close File [YSWF2]   : Endif
+
+Return
+
+$FIN
+  Read [F:YSLC]YSLC0 = [M:YSLC]YSLCID
+  Gosub VERIF_MOD From SUBYSLC
+  Gosub MODIF From SUBYSLC
+  Gosub LIENS From SUBYSLC
+
+  Affzo [M:YSLC]
+  Affzo [M:YSLC1]
+  Affzo [M:YSLC2]
+  Affzo [M:YSLC3]
+  Affzo [M:YSLC4]
+
+Return
+
+**********
+7,"TRT","SUBYSLCAR",""
+2,"TRT","SUBYSLCCS",""
+#<AdxTL>@(#)0.0.0.0 $Revision$
+######################################################################################################################
+# Script            : SUBYSLCCS                                                                                      #
+# Creation date     : 02/11/2018                                                                                     #
+# Version           : 1.0.0                                                                                          #
+# Authors (Company) : MZ (Leverage)                                                                                  #
+# Module            : Land Development - Contract Signed to Sales contract                                           #
+# -------------------------------------------------------------------------------------------------------------------#
+# Epic              : https://jira.leveragetech.com.au/browse/DFCX1-79                                               #
+# Description       : DFCX1-79 Land Development -  Stage                                                             #
+#--------------------------------------------------------------------------------------------------------------------#
+# Evolutions        :                                                                                                #
+# DFCX1-169   Majid   Title registration on Stage                                                                    #
+######################################################################################################################
+
+$ACTION
+
+Case ACTION
+ When "DEBUT"         :     Gosub DEBUT
+ When "OK"            :     Gosub OK
+ When "FIN"           :     Gosub FIN
+ When Default
+Endcase
+Return
+
+######################################################################################################################
+$DEBUT
+  If !clalev([F:YLOT2])         :   Local File YLOT [YLOT2]       :   Endif
+  Raz [M:YSLCCS]
+
+  [M:YSLCCS]YCTRSIG = date$
+  Read [F:YLOT2]YLOT0 = [M:YSLC]YLOTID
+  If !fstat
+    [M:YSLCCS]YCTRPRC = [F:YLOT2]YLSTPRC                # Contract price from Lot
+    [M:YSLCCS]YDEPDUE = [M:YSLCCS]YCTRPRC * 0.1         # Deposit Due 10% of Contract sign
+  Endif
+  [M:YSLCCS]YSETCTR = date$
+  Affzo [M:YSLCCS]
+Return
+
+######################################################################################################################
+$OK
+
+If !clalev([F:YSLC2])     :   Local File YSALCTR  [YSLC2]     : Endif
+If !clalev([F:YSWF2])     :   Local File YSCWRKFLW  [YSWF2]   : Endif
+If !clalev([F:YSCU2])     :   Local File YSCCUST  [YSCU2]     : Endif
+
+
+Read [F:YSLC2]YSLC0 = [M:YSLC]YSLCID
+Read [F:YSWF2]YSWF0 = [M:YSLC]YSLCID
+Filter [F:YSCU2] Where YSLCID = [M:YSLC]YSLCID
+
+Trbegin [F:YSLC2]
+  [F:YSWF2]YCTRSIG = [M:YSLCCS]YCTRSIG             # Contract signed
+  [M:YSLC2]YCTRSIG = [M:YSLCCS]YCTRSIG
+  [F:YSWF2]YREPSIGDAT = date$                      # Reporting date (Signed)
+  [M:YSLC2]YREPSIGDAT = date$
+  [F:YSLC2]YCTRPRC = [M:YSLCCS]YCTRPRC             # Contract price
+  [M:YSLC]YCTRPRC = [M:YSLCCS]YCTRPRC
+  [F:YSLC2]YDEPDUE = [M:YSLCCS]YDEPDUE             # Deposit Due
+  [M:YSLC]YDEPDUE = [M:YSLCCS]YDEPDUE
+
+  If [M:YSLCCS]YMORBCKDAY > 0
+    [F:YSLC2]YMORBCK = 2                           # Mortage back
+    [M:YSLC]YMORBCK = 2
+    [F:YSLC2]YMORBCKDAY = [M:YSLCCS]YMORBCKDAY     # Mortage back day
+    [M:YSLC]YMORBCKDAY = [M:YSLCCS]YMORBCKDAY
+  Endif
+  If [M:YSLCCS]YFIRBS > 1
+    [F:YSLC2]YFIRBS = 2
+    [M:YSLC]YFIRBS = 2
+    [F:YSWF2]YFIRBDAT = [M:YSLCCS]YCTRSIG + val(func AFNC.PARAM ("YSLCFIRB",""))
+    [M:YSLC2]YFIRBDAT = [M:YSLCCS]YCTRSIG + val(func AFNC.PARAM ("YSLCFIRB",""))
+    For [F:YSCU2] Where YCUSTYP = 1
+      [F:YSCU2]YFIRB = 2
+    Next
+    For I=0 To [M:YSLC1]NBLIC-1
+      If [M:YSLC1]YCUSTYP(I) = 1
+        [M:YSLC1]YFIRB = 1
+      Endif
+    Next
+  Endif
+  [F:YSLC2]YNOM = [M:YSLCCS]YNOM                   # Nomination allowed
+  [M:YSLC]YNOM = [M:YSLCCS]YNOM
+  [F:YSWF2]YSETCTR = [M:YSLCCS]YSETCTR             # Settlement contract date
+  [M:YSLC2]YSETCTR = [M:YSLCCS]YSETCTR
+  [F:YSLC2]YREBAMT = [M:YSLCCS]YREBAMT             # Contract Rebat amount
+  [M:YSLC]YREBAMT = [M:YSLCCS]YREBAMT
+
+  # Calculated settlement forecast date : Greater of Stage title registration date + 14 days and settlement contract date
+  If [M:YSLC2]YSTAGREG + 14 > [M:YSLC2]YSETCTR
+    If [M:YSLC2]YSTAGREG <> [0/0/0]
+      [M:YSLC2]YCALSETFOR = [M:YSLC2]YSTAGREG + 14
+    Endif
+  Else
+    If [M:YSLC2]YSETCTR <> [0/0/0]
+      [M:YSLC2]YCALSETFOR = [M:YSLC2]YSETCTR
+    Endif
+  Endif
+
+
+  Rewrite [F:YSLC2]
+  Rewrite [F:YSWF2]
+  Rewrite [F:YSCU2]
+
+
+# Commission type
+  If !clalev([F:YCMT2])     :   Local File YSCCOMTYP [YCMT2]  : Endif
+  If !clalev([F:YADI2])     :   Local File ATABDIV [YADI2]    : Endif
+  Read [F:YLOT2]YLOT0 = [M:YSLC]YLOTID
+
+  # N1 = Estate, N2 = ROle, A1 = Stage, A2 = Splite type, A3 = Effective date, N3 = Amount, N4 = Percentage
+  Filter [F:YADI2] Where NUMTAB=6007 and N1=[F:YLOT2]YESTID and (A1=[F:YLOT2]YSTAID or A1='') and
+&   A3 <= format$("D:YYYYMMDD",[M:YSLCCS]YCTRSIG) Order By N2; A1 Desc; A3 Desc #Order by Role, Stage desc, Eff. date desc
+#  gdat$(val(right$(A3,7)),val(mid$(A3,5,2)),val(left$(A3,4))) <= [M:YSLCCS]YCTRSIG Order By N2; A1 Desc; A3 Desc
+
+  Delete [F:YCMT2] Where YSLCID = [M:YSLC]YSLCID
+
+  Local Shortint YCOMMID, YSALROLTMP
+  YCOMMID = 1
+
+  For [F:YADI2]
+    If YSALROLTMP <> [F:YADI2]N2    # New sales role (just one sales role should populate on gride)
+      [F:YCMT2]YSLCID = [M:YSLC]YSLCID
+      [F:YCMT2]YCOMMID = YCOMMID
+      [F:YCMT2]YSALROL = [F:YADI2]N2
+      [F:YCMT2]YSPLITTYP = [F:YADI2]A2
+      [F:YCMT2]YCOMPERCENT = [F:YADI2]N4
+      If [F:YADI2]N3 >= ([M:YSLCCS]YCTRPRC * [F:YADI2]N4) / 100
+        [F:YCMT2]YTOTPAY = [F:YADI2]N3
+      Else
+        [F:YCMT2]YTOTPAY = ([M:YSLCCS]YCTRPRC * [F:YADI2]N4) / 100
+      Endif
+
+      YCOMMID += 1
+      YSALROLTMP = [F:YADI2]N2
+      Write [F:YCMT2]
+    Endif
+  Next # [F:YADI2]
+
+# Commission type
+
+  If !fstat
+    Commit
+  Else
+    Rollback
+  Endif
+
+Return
+
+$FIN
+
+  Gosub LIENS From SUBYSLC
+
+  Trbegin [F:YSLC]
+
+  Call VERIF_RULE From SUBYSLC
+
+  [F:YSLC] = [M:YSLC]
+  [F:YSLC] = [M:YSLC1]
+  [F:YSLC] = [M:YSLC2]
+  Rewrite [F:YSLC]
+
+  If !fstat
+    Commit
+  Else
+    Rollback
+  Endif
+
+  Affzo [M:YSLC]
+  Affzo [M:YSLC1]
+  Affzo [M:YSLC2]
+  Affzo [M:YSLC3]
+  Affzo [M:YSLC4]
+
+Return
+
+**********
+7,"TRT","SUBYSLCCS",""
+2,"ACS","CODACC = 'ZREPDATE'",""
+3,"DIV",
+4,"CODACC",0,"ZREPDATE"
+4,"CREDAT",0,20190523
+4,"CREDATTIM",0,"2019-05-23T12:14:26Z"
+4,"CREUSR",0,"MAJID"
+4,"INTACC",0,""
+4,"UPDDAT",0,000000
+4,"UPDDATTIM",0,"2019-05-23T12:14:26Z"
+4,"UPDUSR",0,"MAJID"
+9,"DESACC",0,"Reporting date -Sales contract","ENG","ZREPDATE",""
+9,"DESACC",0,"","***"
+6,"DIV"
+7,"ACS","CODACC = 'ZREPDATE'",""
+2,"ACL","YREPISSDAT","Report Issue backward 7 days"
+3,"ACL",YREPISSDAT
+4,"CREDAT",0,20181108
+4,"CREDATTIM",0,"2018-11-07T23:34:50Z"
+4,"CREUSR",0,"MAJID"
+4,"CTL",0,"YREPISSDAT"
+4,"CTLOBL",0,""
+4,"DEPCTL",0,""
+4,"DEPCTL2",0,""
+4,"DEPCTL3",0,""
+4,"DEPVAL",0,""
+4,"DEPVAL",1,""
+4,"DEPVAL",2,""
+4,"DEPVAL",3,""
+4,"DEPVAL",4,""
+4,"DEPVAL",5,""
+4,"DEPVAL",6,""
+4,"DEPVAL",7,""
+4,"DEPVAL",8,""
+4,"DEPVAL",9,""
+4,"DEPVAL",10,""
+4,"DEPVAL",11,""
+4,"DEPVAL",12,""
+4,"DEPVAL",13,""
+4,"DEPVAL",14,""
+4,"DEPVAL",15,""
+4,"DEPVAL",16,""
+4,"DEPVAL",17,""
+4,"DEPVAL",18,""
+4,"DEPVAL",19,""
+4,"DEPVAL",20,""
+4,"DEPVAL",21,""
+4,"DEPVAL",22,""
+4,"DEPVAL",23,""
+4,"DEPVAL",24,""
+4,"DEPVAL",25,""
+4,"DEPVAL",26,""
+4,"DEPVAL",27,""
+4,"DEPVAL",28,""
+4,"DEPVAL",29,""
+4,"DEPVAL2",0,""
+4,"DEPVAL2",1,""
+4,"DEPVAL2",2,""
+4,"DEPVAL2",3,""
+4,"DEPVAL2",4,""
+4,"DEPVAL2",5,""
+4,"DEPVAL2",6,""
+4,"DEPVAL2",7,""
+4,"DEPVAL2",8,""
+4,"DEPVAL2",9,""
+4,"DEPVAL2",10,""
+4,"DEPVAL2",11,""
+4,"DEPVAL2",12,""
+4,"DEPVAL2",13,""
+4,"DEPVAL2",14,""
+4,"DEPVAL2",15,""
+4,"DEPVAL2",16,""
+4,"DEPVAL2",17,""
+4,"DEPVAL2",18,""
+4,"DEPVAL2",19,""
+4,"DEPVAL2",20,""
+4,"DEPVAL2",21,""
+4,"DEPVAL2",22,""
+4,"DEPVAL2",23,""
+4,"DEPVAL2",24,""
+4,"DEPVAL2",25,""
+4,"DEPVAL2",26,""
+4,"DEPVAL2",27,""
+4,"DEPVAL2",28,""
+4,"DEPVAL2",29,""
+4,"DEPVAL3",0,""
+4,"DEPVAL3",1,""
+4,"DEPVAL3",2,""
+4,"DEPVAL3",3,""
+4,"DEPVAL3",4,""
+4,"DEPVAL3",5,""
+4,"DEPVAL3",6,""
+4,"DEPVAL3",7,""
+4,"DEPVAL3",8,""
+4,"DEPVAL3",9,""
+4,"DEPVAL3",10,""
+4,"DEPVAL3",11,""
+4,"DEPVAL3",12,""
+4,"DEPVAL3",13,""
+4,"DEPVAL3",14,""
+4,"DEPVAL3",15,""
+4,"DEPVAL3",16,""
+4,"DEPVAL3",17,""
+4,"DEPVAL3",18,""
+4,"DEPVAL3",19,""
+4,"DEPVAL3",20,""
+4,"DEPVAL3",21,""
+4,"DEPVAL3",22,""
+4,"DEPVAL3",23,""
+4,"DEPVAL3",24,""
+4,"DEPVAL3",25,""
+4,"DEPVAL3",26,""
+4,"DEPVAL3",27,""
+4,"DEPVAL3",28,""
+4,"DEPVAL3",29,""
+4,"EXEACT",0,1
+4,"FRM",0,"VALEUR > date$-8"
+4,"FRM2",0,""
+4,"FRM3",0,""
+4,"LSTVAL",0,""
+4,"LSTVAL",1,""
+4,"LSTVAL",2,""
+4,"LSTVAL",3,""
+4,"LSTVAL",4,""
+4,"LSTVAL",5,""
+4,"LSTVAL",6,""
+4,"LSTVAL",7,""
+4,"LSTVAL",8,""
+4,"LSTVAL",9,""
+4,"LSTVAL",10,""
+4,"LSTVAL",11,""
+4,"LSTVAL",12,""
+4,"LSTVAL",13,""
+4,"LSTVAL",14,""
+4,"LSTVAL",15,""
+4,"LSTVAL",16,""
+4,"LSTVAL",17,""
+4,"LSTVAL",18,""
+4,"LSTVAL",19,""
+4,"LSTVAL",20,""
+4,"LSTVAL",21,""
+4,"LSTVAL",22,""
+4,"LSTVAL",23,""
+4,"LSTVAL",24,""
+4,"LSTVAL",25,""
+4,"LSTVAL",26,""
+4,"LSTVAL",27,""
+4,"LSTVAL",28,""
+4,"LSTVAL",29,""
+4,"LSTVAL2",0,""
+4,"LSTVAL2",1,""
+4,"LSTVAL2",2,""
+4,"LSTVAL2",3,""
+4,"LSTVAL2",4,""
+4,"LSTVAL2",5,""
+4,"LSTVAL2",6,""
+4,"LSTVAL2",7,""
+4,"LSTVAL2",8,""
+4,"LSTVAL2",9,""
+4,"LSTVAL2",10,""
+4,"LSTVAL2",11,""
+4,"LSTVAL2",12,""
+4,"LSTVAL2",13,""
+4,"LSTVAL2",14,""
+4,"LSTVAL2",15,""
+4,"LSTVAL2",16,""
+4,"LSTVAL2",17,""
+4,"LSTVAL2",18,""
+4,"LSTVAL2",19,""
+4,"LSTVAL2",20,""
+4,"LSTVAL2",21,""
+4,"LSTVAL2",22,""
+4,"LSTVAL2",23,""
+4,"LSTVAL2",24,""
+4,"LSTVAL2",25,""
+4,"LSTVAL2",26,""
+4,"LSTVAL2",27,""
+4,"LSTVAL2",28,""
+4,"LSTVAL2",29,""
+4,"LSTVAL3",0,""
+4,"LSTVAL3",1,""
+4,"LSTVAL3",2,""
+4,"LSTVAL3",3,""
+4,"LSTVAL3",4,""
+4,"LSTVAL3",5,""
+4,"LSTVAL3",6,""
+4,"LSTVAL3",7,""
+4,"LSTVAL3",8,""
+4,"LSTVAL3",9,""
+4,"LSTVAL3",10,""
+4,"LSTVAL3",11,""
+4,"LSTVAL3",12,""
+4,"LSTVAL3",13,""
+4,"LSTVAL3",14,""
+4,"LSTVAL3",15,""
+4,"LSTVAL3",16,""
+4,"LSTVAL3",17,""
+4,"LSTVAL3",18,""
+4,"LSTVAL3",19,""
+4,"LSTVAL3",20,""
+4,"LSTVAL3",21,""
+4,"LSTVAL3",22,""
+4,"LSTVAL3",23,""
+4,"LSTVAL3",24,""
+4,"LSTVAL3",25,""
+4,"LSTVAL3",26,""
+4,"LSTVAL3",27,""
+4,"LSTVAL3",28,""
+4,"LSTVAL3",29,""
+4,"MSG",0,""Only possible to chagen backwards by 7 days""
+4,"MSG2",0,""
+4,"MSG3",0,""
+4,"NBRVAL",0,0
+4,"NBRVAL2",0,0
+4,"NBRVAL3",0,0
+4,"OBL",0,1
+4,"TYPCTL",0,5
+4,"TYPCTL2",0,6
+4,"TYPCTL3",0,6
+4,"UPDDAT",0,20190523
+4,"UPDDATTIM",0,"2019-05-23T12:22:04Z"
+4,"UPDUSR",0,"MAJID"
+9,"DES",0,"Report Issue backward 7 days","ENG","YREPISSDAT",""
+9,"DES",0,"","***"
+6,"ACL"
+7,"ACL","YREPISSDAT","Report Issue backward 7 days"
+2,"AMK","YSLC2","Workflow"
+3,"AMK",YSLC2
+4,"ABRMSK",0,"YSLC2"
+4,"ACTBLOC",0,""
+4,"ACTBLOC",1,""
+4,"ACTBLOC",2,""
+4,"ACTBLOC",3,""
+4,"ACTBLOC",4,""
+4,"ACTBLOC",5,""
+4,"ACTBLOC",6,""
+4,"ACTBLOC",7,""
+4,"ACTBLOC",8,""
+4,"ACTBLOC",9,""
+4,"ACTBLOC",10,""
+4,"ACTBLOC",11,""
+4,"ACTBLOC",12,""
+4,"ACTBLOC",13,""
+4,"ACTBLOC",14,""
+4,"BASPAG",0,""
+4,"BASPAG",1,"NBLIG"
+4,"BASPAG",2,""
+4,"BASPAG",3,""
+4,"BASPAG",4,""
+4,"BASPAG",5,""
+4,"BASPAG",6,""
+4,"BASPAG",7,""
+4,"BASPAG",8,""
+4,"BASPAG",9,""
+4,"BASPAG",10,""
+4,"BASPAG",11,""
+4,"BASPAG",12,""
+4,"BASPAG",13,""
+4,"BASPAG",14,""
+4,"BLOCACT1",0,""
+4,"BLOCACT1",1,""
+4,"BLOCACT1",2,""
+4,"BLOCACT1",3,""
+4,"BLOCACT1",4,""
+4,"BLOCACT1",5,""
+4,"BLOCACT1",6,""
+4,"BLOCACT1",7,""
+4,"BLOCACT1",8,""
+4,"BLOCACT1",9,""
+4,"BLOCACT1",10,""
+4,"BLOCACT1",11,""
+4,"BLOCACT1",12,""
+4,"BLOCACT1",13,""
+4,"BLOCACT1",14,""
+4,"BLOCAFFD",0,1
+4,"BLOCAFFD",1,1
+4,"BLOCAFFD",2,0
+4,"BLOCAFFD",3,0
+4,"BLOCAFFD",4,0
+4,"BLOCAFFD",5,0
+4,"BLOCAFFD",6,0
+4,"BLOCAFFD",7,0
+4,"BLOCAFFD",8,0
+4,"BLOCAFFD",9,0
+4,"BLOCAFFD",10,0
+4,"BLOCAFFD",11,0
+4,"BLOCAFFD",12,0
+4,"BLOCAFFD",13,0
+4,"BLOCAFFD",14,0
+4,"BLOCGDEF",0,1
+4,"BLOCGDEF",1,1
+4,"BLOCGDEF",2,0
+4,"BLOCGDEF",3,0
+4,"BLOCGDEF",4,0
+4,"BLOCGDEF",5,0
+4,"BLOCGDEF",6,0
+4,"BLOCGDEF",7,0
+4,"BLOCGDEF",8,0
+4,"BLOCGDEF",9,0
+4,"BLOCGDEF",10,0
+4,"BLOCGDEF",11,0
+4,"BLOCGDEF",12,0
+4,"BLOCGDEF",13,0
+4,"BLOCGDEF",14,0
+4,"BLOCLIEN1",0,""
+4,"BLOCLIEN1",1,""
+4,"BLOCLIEN1",2,""
+4,"BLOCLIEN1",3,""
+4,"BLOCLIEN1",4,""
+4,"BLOCLIEN1",5,""
+4,"BLOCLIEN1",6,""
+4,"BLOCLIEN1",7,""
+4,"BLOCLIEN1",8,""
+4,"BLOCLIEN1",9,""
+4,"BLOCLIEN1",10,""
+4,"BLOCLIEN1",11,""
+4,"BLOCLIEN1",12,""
+4,"BLOCLIEN1",13,""
+4,"BLOCLIEN1",14,""
+4,"BLOCLIEN2",0,""
+4,"BLOCLIEN2",1,""
+4,"BLOCLIEN2",2,""
+4,"BLOCLIEN2",3,""
+4,"BLOCLIEN2",4,""
+4,"BLOCLIEN2",5,""
+4,"BLOCLIEN2",6,""
+4,"BLOCLIEN2",7,""
+4,"BLOCLIEN2",8,""
+4,"BLOCLIEN2",9,""
+4,"BLOCLIEN2",10,""
+4,"BLOCLIEN2",11,""
+4,"BLOCLIEN2",12,""
+4,"BLOCLIEN2",13,""
+4,"BLOCLIEN2",14,""
+4,"BLOCLIEN3",0,""
+4,"BLOCLIEN3",1,""
+4,"BLOCLIEN3",2,""
+4,"BLOCLIEN3",3,""
+4,"BLOCLIEN3",4,""
+4,"BLOCLIEN3",5,""
+4,"BLOCLIEN3",6,""
+4,"BLOCLIEN3",7,""
+4,"BLOCLIEN3",8,""
+4,"BLOCLIEN3",9,""
+4,"BLOCLIEN3",10,""
+4,"BLOCLIEN3",11,""
+4,"BLOCLIEN3",12,""
+4,"BLOCLIEN3",13,""
+4,"BLOCLIEN3",14,""
+4,"BLOCPAR1",0,""
+4,"BLOCPAR1",1,""
+4,"BLOCPAR1",2,""
+4,"BLOCPAR1",3,""
+4,"BLOCPAR1",4,""
+4,"BLOCPAR1",5,""
+4,"BLOCPAR1",6,""
+4,"BLOCPAR1",7,""
+4,"BLOCPAR1",8,""
+4,"BLOCPAR1",9,""
+4,"BLOCPAR1",10,""
+4,"BLOCPAR1",11,""
+4,"BLOCPAR1",12,""
+4,"BLOCPAR1",13,""
+4,"BLOCPAR1",14,""
+4,"BLOCPAR2",0,""
+4,"BLOCPAR2",1,""
+4,"BLOCPAR2",2,""
+4,"BLOCPAR2",3,""
+4,"BLOCPAR2",4,""
+4,"BLOCPAR2",5,""
+4,"BLOCPAR2",6,""
+4,"BLOCPAR2",7,""
+4,"BLOCPAR2",8,""
+4,"BLOCPAR2",9,""
+4,"BLOCPAR2",10,""
+4,"BLOCPAR2",11,""
+4,"BLOCPAR2",12,""
+4,"BLOCPAR2",13,""
+4,"BLOCPAR2",14,""
+4,"BLOCPOSG",0,1
+4,"BLOCPOSG",1,1
+4,"BLOCPOSG",2,0
+4,"BLOCPOSG",3,0
+4,"BLOCPOSG",4,0
+4,"BLOCPOSG",5,0
+4,"BLOCPOSG",6,0
+4,"BLOCPOSG",7,0
+4,"BLOCPOSG",8,0
+4,"BLOCPOSG",9,0
+4,"BLOCPOSG",10,0
+4,"BLOCPOSG",11,0
+4,"BLOCPOSG",12,0
+4,"BLOCPOSG",13,0
+4,"BLOCPOSG",14,0
+4,"BLOCREPD",0,1
+4,"BLOCREPD",1,1
+4,"BLOCREPD",2,0
+4,"BLOCREPD",3,0
+4,"BLOCREPD",4,0
+4,"BLOCREPD",5,0
+4,"BLOCREPD",6,0
+4,"BLOCREPD",7,0
+4,"BLOCREPD",8,0
+4,"BLOCREPD",9,0
+4,"BLOCREPD",10,0
+4,"BLOCREPD",11,0
+4,"BLOCREPD",12,0
+4,"BLOCREPD",13,0
+4,"BLOCREPD",14,0
+4,"BLOCTYPG",0,1
+4,"BLOCTYPG",1,1
+4,"BLOCTYPG",2,0
+4,"BLOCTYPG",3,0
+4,"BLOCTYPG",4,0
+4,"BLOCTYPG",5,0
+4,"BLOCTYPG",6,0
+4,"BLOCTYPG",7,0
+4,"BLOCTYPG",8,0
+4,"BLOCTYPG",9,0
+4,"BLOCTYPG",10,0
+4,"BLOCTYPG",11,0
+4,"BLOCTYPG",12,0
+4,"BLOCTYPG",13,0
+4,"BLOCTYPG",14,0
+4,"BLOCTYPT",0,0
+4,"BLOCTYPT",1,1
+4,"BLOCTYPT",2,0
+4,"BLOCTYPT",3,0
+4,"BLOCTYPT",4,0
+4,"BLOCTYPT",5,0
+4,"BLOCTYPT",6,0
+4,"BLOCTYPT",7,0
+4,"BLOCTYPT",8,0
+4,"BLOCTYPT",9,0
+4,"BLOCTYPT",10,0
+4,"BLOCTYPT",11,0
+4,"BLOCTYPT",12,0
+4,"BLOCTYPT",13,0
+4,"BLOCTYPT",14,0
+4,"BLOCVIEW",0,""
+4,"BLOCVIEW",1,""
+4,"BLOCVIEW",2,""
+4,"BLOCVIEW",3,""
+4,"BLOCVIEW",4,""
+4,"BLOCVIEW",5,""
+4,"BLOCVIEW",6,""
+4,"BLOCVIEW",7,""
+4,"BLOCVIEW",8,""
+4,"BLOCVIEW",9,""
+4,"BLOCVIEW",10,""
+4,"BLOCVIEW",11,""
+4,"BLOCVIEW",12,""
+4,"BLOCVIEW",13,""
+4,"BLOCVIEW",14,""
+4,"CODACT",0,"YLAND"
+4,"CODMSK",0,"YSLC2"
+4,"COLBLOC",0,1
+4,"COLBLOC",1,1
+4,"COLBLOC",2,0
+4,"COLBLOC",3,0
+4,"COLBLOC",4,0
+4,"COLBLOC",5,0
+4,"COLBLOC",6,0
+4,"COLBLOC",7,0
+4,"COLBLOC",8,0
+4,"COLBLOC",9,0
+4,"COLBLOC",10,0
+4,"COLBLOC",11,0
+4,"COLBLOC",12,0
+4,"COLBLOC",13,0
+4,"COLBLOC",14,0
+4,"CREDAT",0,20181024
+4,"CREDATTIM",0,"2018-10-24T03:59:18Z"
+4,"CREUSR",0,"MAJID"
+4,"DETBLC",0,0
+4,"DETBLC",1,0
+4,"DETBLC",2,0
+4,"DETBLC",3,0
+4,"DETBLC",4,0
+4,"DETBLC",5,0
+4,"DETBLC",6,0
+4,"DETBLC",7,0
+4,"DETBLC",8,0
+4,"DETBLC",9,0
+4,"DETBLC",10,0
+4,"DETBLC",11,0
+4,"DETBLC",12,0
+4,"DETBLC",13,0
+4,"DETBLC",14,0
+4,"FICREF",0,"YSCWRKFLW"
+4,"FICREF",1,"YSCWCMT"
+4,"FICREF",2,""
+4,"FICREF",3,""
+4,"FICREF",4,""
+4,"HTBLOC",0,0
+4,"HTBLOC",1,0
+4,"HTBLOC",2,0
+4,"HTBLOC",3,0
+4,"HTBLOC",4,0
+4,"HTBLOC",5,0
+4,"HTBLOC",6,0
+4,"HTBLOC",7,0
+4,"HTBLOC",8,0
+4,"HTBLOC",9,0
+4,"HTBLOC",10,0
+4,"HTBLOC",11,0
+4,"HTBLOC",12,0
+4,"HTBLOC",13,0
+4,"HTBLOC",14,0
+4,"INTBLOC",0,""
+4,"INTBLOC",1,""
+4,"INTBLOC",2,""
+4,"INTBLOC",3,""
+4,"INTBLOC",4,""
+4,"INTBLOC",5,""
+4,"INTBLOC",6,""
+4,"INTBLOC",7,""
+4,"INTBLOC",8,""
+4,"INTBLOC",9,""
+4,"INTBLOC",10,""
+4,"INTBLOC",11,""
+4,"INTBLOC",12,""
+4,"INTBLOC",13,""
+4,"INTBLOC",14,""
+5,"INTMSK",0,"Workflow","ENG",11485,""
+5,"INTMSK",0,"","***"
+4,"LGBLOC",0,0
+4,"LGBLOC",1,0
+4,"LGBLOC",2,0
+4,"LGBLOC",3,0
+4,"LGBLOC",4,0
+4,"LGBLOC",5,0
+4,"LGBLOC",6,0
+4,"LGBLOC",7,0
+4,"LGBLOC",8,0
+4,"LGBLOC",9,0
+4,"LGBLOC",10,0
+4,"LGBLOC",11,0
+4,"LGBLOC",12,0
+4,"LGBLOC",13,0
+4,"LGBLOC",14,0
+4,"LINBLOC",0,1
+4,"LINBLOC",1,1
+4,"LINBLOC",2,0
+4,"LINBLOC",3,0
+4,"LINBLOC",4,0
+4,"LINBLOC",5,0
+4,"LINBLOC",6,0
+4,"LINBLOC",7,0
+4,"LINBLOC",8,0
+4,"LINBLOC",9,0
+4,"LINBLOC",10,0
+4,"LINBLOC",11,0
+4,"LINBLOC",12,0
+4,"LINBLOC",13,0
+4,"LINBLOC",14,0
+4,"LNGLIB",0,20
+4,"LNGLIB",1,0
+4,"LNGLIB",2,0
+4,"LNGLIB",3,0
+4,"LNGLIB",4,0
+4,"LNGLIB",5,0
+4,"LNGLIB",6,0
+4,"LNGLIB",7,0
+4,"LNGLIB",8,0
+4,"LNGLIB",9,0
+4,"LNGLIB",10,0
+4,"LNGLIB",11,0
+4,"LNGLIB",12,0
+4,"LNGLIB",13,0
+4,"LNGLIB",14,0
+4,"MDL",0,1
+4,"MODULE",0,1
+4,"NBBLOC",0,2
+4,"NBFIC",0,2
+4,"NBLIGT",0,0
+4,"NBLIGT",1,100
+4,"NBLIGT",2,0
+4,"NBLIGT",3,0
+4,"NBLIGT",4,0
+4,"NBLIGT",5,0
+4,"NBLIGT",6,0
+4,"NBLIGT",7,0
+4,"NBLIGT",8,0
+4,"NBLIGT",9,0
+4,"NBLIGT",10,0
+4,"NBLIGT",11,0
+4,"NBLIGT",12,0
+4,"NBLIGT",13,0
+4,"NBLIGT",14,0
+4,"NBRCOL",0,74
+4,"NBRLIG",0,25
+4,"OPTION",0,""
+4,"OPTION",1,"KARID"
+4,"OPTION",2,""
+4,"OPTION",3,""
+4,"OPTION",4,""
+4,"OPTION",5,""
+4,"OPTION",6,""
+4,"OPTION",7,""
+4,"OPTION",8,""
+4,"OPTION",9,""
+4,"OPTION",10,""
+4,"OPTION",11,""
+4,"OPTION",12,""
+4,"OPTION",13,""
+4,"OPTION",14,""
+4,"POSBLOC",0,1.1
+4,"POSBLOC",1,2.1
+4,"POSBLOC",2,0
+4,"POSBLOC",3,0
+4,"POSBLOC",4,0
+4,"POSBLOC",5,0
+4,"POSBLOC",6,0
+4,"POSBLOC",7,0
+4,"POSBLOC",8,0
+4,"POSBLOC",9,0
+4,"POSBLOC",10,0
+4,"POSBLOC",11,0
+4,"POSBLOC",12,0
+4,"POSBLOC",13,0
+4,"POSBLOC",14,0
+4,"RANG",0,5
+4,"RANG",1,10
+4,"RANG",2,0
+4,"RANG",3,0
+4,"RANG",4,0
+4,"RANG",5,0
+4,"RANG",6,0
+4,"RANG",7,0
+4,"RANG",8,0
+4,"RANG",9,0
+4,"RANG",10,0
+4,"RANG",11,0
+4,"RANG",12,0
+4,"RANG",13,0
+4,"RANG",14,0
+4,"STYBLOC",0,""
+4,"STYBLOC",1,""
+4,"STYBLOC",2,""
+4,"STYBLOC",3,""
+4,"STYBLOC",4,""
+4,"STYBLOC",5,""
+4,"STYBLOC",6,""
+4,"STYBLOC",7,""
+4,"STYBLOC",8,""
+4,"STYBLOC",9,""
+4,"STYBLOC",10,""
+4,"STYBLOC",11,""
+4,"STYBLOC",12,""
+4,"STYBLOC",13,""
+4,"STYBLOC",14,""
+5,"TITBLOC",0,"Tasks","ENG",14664,""
+5,"TITBLOC",0,"","***"
+5,"TITBLOC",1,"Comments","ENG",1677,""
+5,"TITBLOC",1,"","***"
+5,"TITBLOC",2,"","ENG",0,""
+5,"TITBLOC",2,"","***"
+5,"TITBLOC",3,"","ENG",0,""
+5,"TITBLOC",3,"","***"
+5,"TITBLOC",4,"","ENG",0,""
+5,"TITBLOC",4,"","***"
+5,"TITBLOC",5,"","ENG",0,""
+5,"TITBLOC",5,"","***"
+5,"TITBLOC",6,"","ENG",0,""
+5,"TITBLOC",6,"","***"
+5,"TITBLOC",7,"","ENG",0,""
+5,"TITBLOC",7,"","***"
+5,"TITBLOC",8,"","ENG",0,""
+5,"TITBLOC",8,"","***"
+5,"TITBLOC",9,"","ENG",0,""
+5,"TITBLOC",9,"","***"
+5,"TITBLOC",10,"","ENG",0,""
+5,"TITBLOC",10,"","***"
+5,"TITBLOC",11,"","ENG",0,""
+5,"TITBLOC",11,"","***"
+5,"TITBLOC",12,"","ENG",0,""
+5,"TITBLOC",12,"","***"
+5,"TITBLOC",13,"","ENG",0,""
+5,"TITBLOC",13,"","***"
+5,"TITBLOC",14,"","ENG",0,""
+5,"TITBLOC",14,"","***"
+4,"TRTSPE",0,"SPEYSLC"
+4,"TRTSPV",0,""
+4,"TRTSTD",0,"SUBYSLC"
+4,"TYPBLOC",0,2
+4,"TYPBLOC",1,1
+4,"TYPBLOC",2,0
+4,"TYPBLOC",3,0
+4,"TYPBLOC",4,0
+4,"TYPBLOC",5,0
+4,"TYPBLOC",6,0
+4,"TYPBLOC",7,0
+4,"TYPBLOC",8,0
+4,"TYPBLOC",9,0
+4,"TYPBLOC",10,0
+4,"TYPBLOC",11,0
+4,"TYPBLOC",12,0
+4,"TYPBLOC",13,0
+4,"TYPBLOC",14,0
+4,"TYPMSK",0,1
+4,"UPDDAT",0,20190523
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDFLG",0,0
+4,"UPDUSR",0,"MAJID"
+6,"AMK"
+3,"AMZ","YINTDEPREC"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"D"
+4,"CODZON",0,"YINTDEPREC"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Initial Deposit Receive Date","ENG",100923,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,1
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,1
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YREPDEPREC"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,"ZREPDATE"
+4,"CODACT",0,""
+4,"CODCTL",0,"YREPDEPREC"
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"D"
+4,"CODZON",0,"YREPDEPREC"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Reporting Date (Deposit)","ENG",100533,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,1.2
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,2
+4,"OBLIG",0,1
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YCTRISS"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"D"
+4,"CODZON",0,"YCTRISS"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Contract Issued Date","ENG",100503,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,2
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,3
+4,"OBLIG",0,1
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMA","YCTRISS"
+4,"ACTION",0,"SPE"
+4,"CODAFF",0,"YSLC2"
+4,"CODZON",0,"YCTRISS"
+4,"CREDATTIM",0,"2019-05-23T12:11:27Z"
+4,"CREUSR",0,"MAJID"
+4,"DISACT",0,1
+4,"EXEACT",0,3
+5,"INTITACT",0,"","ENG",0,""
+5,"INTITACT",0,"","***"
+4,"NOACT",0,1
+4,"TYPACT",0,7
+4,"TYPAFF",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:11:27Z"
+4,"UPDUSR",0,"MAJID"
+6,"AMA"
+3,"AMZ","YREPISSDAT"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,"ZREPDATE"
+4,"CODACT",0,""
+4,"CODCTL",0,"YREPISSDAT"
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"D"
+4,"CODZON",0,"YREPISSDAT"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Reporting date (Issue)","ENG",101009,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,2.2
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,4
+4,"OBLIG",0,1
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YCTRSIG"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"D"
+4,"CODZON",0,"YCTRSIG"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Contract Signed Date","ENG",100505,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,4
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,5
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YREPSIGDAT"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,"ZREPDATE"
+4,"CODACT",0,""
+4,"CODCTL",0,"YREPSIGDAT"
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"D"
+4,"CODZON",0,"YREPSIGDAT"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Reporting date (Signed)","ENG",101010,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,4.2
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,6
+4,"OBLIG",0,1
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YFINAPP"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"D"
+4,"CODZON",0,"YFINAPP"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Finance Approval Date","ENG",100924,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,5
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,7
+4,"OBLIG",0,1
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YDATSTA"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"M"
+4,"CODZON",0,"YDATSTA"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Date Status","ENG",100509,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,15
+4,"MODE",0,0
+4,"NOLIB",0,6225
+4,"NOZONE",0,5.2
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,8
+4,"OBLIG",0,1
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YSTAGREG"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"D"
+4,"CODZON",0,"YSTAGREG"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Stage Title Registration Date","ENG",100928,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,6
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,9
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YSTAGSTA"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"M"
+4,"CODZON",0,"YSTAGSTA"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Stage Title Registration Status","ENG",100929,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,10
+4,"MODE",0,0
+4,"NOLIB",0,6225
+4,"NOZONE",0,6.2
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,10
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YFIRBDAT"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"D"
+4,"CODZON",0,"YFIRBDAT"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"FIRB Due Date","ENG",100919,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,7
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,11
+4,"OBLIG",0,1
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YFIRBADAT"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"D"
+4,"CODZON",0,"YFIRBADAT"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"FIRB Approval Date","ENG",100921,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,8
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,12
+4,"OBLIG",0,1
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YUNCFIN"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"D"
+4,"CODZON",0,"YUNCFIN"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Unconditional Finance Date","ENG",100930,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,9
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,13
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YUNCTIT"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"D"
+4,"CODZON",0,"YUNCTIT"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Unconditional Titled Date","ENG",100931,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,10
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,14
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YSETCTR"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"D"
+4,"CODZON",0,"YSETCTR"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Settlement Contract Date","ENG",100932,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,12
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,15
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YCALSETFOR"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"D"
+4,"CODZON",0,"YCALSETFOR"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Calculated Settlement Forecast Date","ENG",100933,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,13
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,16
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YOVRSETFOR"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"D"
+4,"CODZON",0,"YOVRSETFOR"
+4,"CONSAI",0,"[M:YSLC2]YSTAGSTA = 2"
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Override Settlement Forecast Date","ENG",100934,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,14
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,17
+4,"OBLIG",0,1
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YSETBKD"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"M"
+4,"CODZON",0,"YSETBKD"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Settlement Booked","ENG",100519,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,4
+4,"MODE",0,0
+4,"NOLIB",0,1
+4,"NOZONE",0,14.2
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,18
+4,"OBLIG",0,1
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,2
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YSETDAT"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"D"
+4,"CODZON",0,"YSETDAT"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Settled Date","ENG",100181,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,15
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,19
+4,"OBLIG",0,1
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YCANREQ"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"M"
+4,"CODZON",0,"YCANREQ"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Cancellation Request Status","ENG",100935,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,15
+4,"MODE",0,0
+4,"NOLIB",0,6226
+4,"NOZONE",0,16
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,20
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YCANREQDAT"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"D"
+4,"CODZON",0,"YCANREQDAT"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Cancel Request Date","ENG",101102,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,16.2
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,21
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YCTRCAN"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"D"
+4,"CODZON",0,"YCTRCAN"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Contract Cancelled Date","ENG",100938,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,17
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,22
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YCANRES"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"A"
+4,"CODZON",0,"YCANRES"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Cancellation Reason","ENG",100937,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,30
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,17.2
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,23
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YCALCSHSETFO"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"D"
+4,"CODZON",0,"YCALCSHSETFO"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Calculated Cash Settlement Forecast Date","ENG",100939,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,21
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,24
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YOVRCSHSET"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"D"
+4,"CODZON",0,"YOVRCSHSET"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Override Cash Settlement Forecast Date","ENG",100940,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,22
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,25
+4,"OBLIG",0,1
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YCSHREV"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"D"
+4,"CODZON",0,"YCSHREV"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,1
+4,"INTEVAL",0,""
+5,"INTIT",0,"Cash Received Date","ENG",100525,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,23
+4,"NUMBLOC",0,1
+4,"NUMLIG",0,26
+4,"OBLIG",0,1
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","NBLIG"
+4,"CHGRAPH",0,0
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"ABS"
+4,"CODZON",0,"NBLIG"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,0
+4,"INTEVAL",0,""
+5,"INTIT",0,"","ENG",0,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,1
+4,"NUMBLOC",0,2
+4,"NUMLIG",0,27
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,0
+4,"SAIAFF",0,1
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YWRKCMTID"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"C"
+4,"CODZON",0,"YWRKCMTID"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,100
+4,"INTEVAL",0,""
+5,"INTIT",0,"Comment ID","ENG",100499,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,4
+4,"MODE",0,0
+4,"NOLIB",0,0
+4,"NOZONE",0,2
+4,"NUMBLOC",0,2
+4,"NUMLIG",0,28
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,3
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,1
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YDAT"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"D"
+4,"CODZON",0,"YDAT"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,100
+4,"INTEVAL",0,""
+5,"INTIT",0,"Date","ENG",212,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,0
+4,"MODE",0,1
+4,"NOLIB",0,0
+4,"NOZONE",0,3
+4,"NUMBLOC",0,2
+4,"NUMLIG",0,29
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YUSER"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"AUS"
+4,"CODZON",0,"YUSER"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,100
+4,"INTEVAL",0,""
+5,"INTIT",0,"Staff Membe","ENG",101017,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,1
+4,"LONG",0,0
+4,"MODE",0,1
+4,"NOLIB",0,0
+4,"NOZONE",0,4
+4,"NUMBLOC",0,2
+4,"NUMLIG",0,30
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YCOMENTTYP"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"M"
+4,"CODZON",0,"YCOMENTTYP"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,100
+4,"INTEVAL",0,""
+5,"INTIT",0,"Type","ENG",680,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,15
+4,"MODE",0,1
+4,"NOLIB",0,6229
+4,"NOZONE",0,5
+4,"NUMBLOC",0,2
+4,"NUMLIG",0,31
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+3,"AMZ","YWRKCMT"
+4,"CHGRAPH",0,1
+4,"CHPARG",0,""
+4,"CHREPR",0,0
+4,"CODACC",0,""
+4,"CODACT",0,""
+4,"CODCTL",0,""
+4,"CODMSK",0,"YSLC2"
+4,"CODTYP",0,"A"
+4,"CODZON",0,"YWRKCMT"
+4,"CONSAI",0,""
+4,"CREDATTIM",0,"2019-05-23T12:15:09Z"
+4,"CREUSR",0,"MAJID"
+4,"DIME",0,100
+4,"INTEVAL",0,""
+5,"INTIT",0,"Comment","ENG",821,""
+5,"INTIT",0,"","***"
+4,"INTSTYL",0,""
+4,"LIEN",0,0
+4,"LONG",0,150
+4,"MODE",0,1
+4,"NOLIB",0,0
+4,"NOZONE",0,6
+4,"NUMBLOC",0,2
+4,"NUMLIG",0,32
+4,"OBLIG",0,0
+4,"OPTFOR",0,""
+4,"OPTLNG",0,0
+4,"OPTOBJ",0,""
+4,"OPTSAI",0,""
+4,"PDSZON",0,1
+4,"SAIAFF",0,2
+4,"STYCND",0,""
+4,"STYZON",0,""
+4,"TRANSM",0,0
+4,"TUNNEL",0,0
+4,"TYPGRAPH",0,1
+4,"UPDDATTIM",0,"2019-05-23T12:15:09Z"
+4,"UPDUSR",0,"MAJID"
+4,"VAL1",0,0
+4,"VAL2",0,0
+4,"VAL3",0,0
+4,"VALDEF",0,""
+6,"AMZ"
+7,"AMK","YSLC2","Workflow"
+8,"Patch DFC :DFCX1-477 on May       23,19 22: 24"
