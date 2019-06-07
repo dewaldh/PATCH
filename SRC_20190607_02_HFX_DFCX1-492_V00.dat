@@ -1,0 +1,313 @@
+1,"Patch HFX :DFCX1-492 on June      07,19 14: 53","ENG","1","YICBS","X3","3",
+2,"TRT","YBBDIESEL",""
+#<AdxTL>@(#)0.0.0.0 $Revision$
+#######################################################################################################
+# FILE NAME   : YBBDIESEL
+# DESCRIPTION : Dimension selection on Business Batch
+#######################################################################################################
+# DATE        : 19-08-2018
+# AUTHOR      : DH
+# COMPANY     : Leverage Technologies
+# VERSION     : 3.5
+#-----------------------------------------------------------------------------------------------------
+# Epics Code  : DFCX1-27
+#-----------------------------------------------------------------------------------------------------
+#######################################################################################################
+
+#------------------------------------------------------------------------------------#
+#Action
+#------------------------------------------------------------------------------------#
+$ACTION
+Case ACTION
+  When Default
+Endcase
+
+Case GACTION
+  When "YBBDIESEL"    : Gosub SEL_LISTE
+Endcase
+
+Return
+
+$SEL_LISTE
+
+Local Integer I
+Local Char TEXTE(250)(1..10000,1..4)
+
+Local Char REQUEST(250)(0..)
+
+I=0
+TIT(1)="Dimension Value"
+TIT(2)="Description"
+TIT(3)="Dimension Code"
+TIT(4)="Ledger"
+CRITERE = "1=1"
+
+#Link [GLED] With [CACCE]DIE ~= [GLED]DIE As [F:LNK]
+
+REQUEST(0) = "SELECT DISTINCT T3.LED_0, T6.DIE_0, T6.CCE_0, T6.DES_0, T6.FCY_0, F.FCY_0"
+REQUEST(1) -= "From GLED T3"
+REQUEST(2) -= "INNER JOIN CACCE T6 ON T6.DIE_0 = T3."+PARAM(2)
+REQUEST(3) -= "LEFT OUTER JOIN YPCCACC T5 ON T5.YLED_0 = T3.LED_0 and T5.YDIE_0 = T6.DIE_0 and T5.YCCE_0 = T6.CCE_0"
+REQUEST(4) -= "LEFT OUTER JOIN FACGROUP F ON T6.FCY_0 = F.CPY_0"
+REQUEST(5) -= "Where T6.DIE_0 = '"+PARAM(1)+"' and ((T5.YACC_0 = '"+[M:YBB1]YACC(nolign-1)+"' and T5.YLED_0 = '"+[M:YBB1]YLED1(nolign-1)+"')"
+REQUEST(6) -= "or (T5.YACC_0 IS null and T5.YLED_0 IS null)) and T6.ENAFLG_0 = 2"
+REQUEST(7) -= "Order By T6.CCE_0 Asc"
+  For (Char YLED(50), Char YDIMTYP(50), Char YDIM(50), Char YDES(255), Char FCYA(5), Char FCYB(5)) From "5" Sql REQUEST As [YLNK]
+    If [F:YLNK]FCYA = "" or [F:YLNK]FCYB = [M:YBB1]YFCY(nolign-1) or [F:YLNK]FCYA = [M:YBB1]YFCY(nolign-1)
+      I += 1
+      TEX(I)     = [F:YLNK]YDIM
+      TEXTE(I,1) = [F:YLNK]YDIM
+      TEXTE(I,2) = [F:YLNK]YDES
+      TEXTE(I,3) = [F:YLNK]YDIMTYP
+      TEXTE(I,4) = [F:YLNK]YLED
+      If I = 1000 : Break : Endif
+    Endif
+  Next
+  NBTEX=I
+  If I = 1 : NBTEX += 1 : Endif
+
+  If I = 0
+    GMESSAGE = mess(34,6254,1)
+    GERR = 1
+    mkstat = 2
+  Endif
+
+Return
+
+**********
+7,"TRT","YBBDIESEL",""
+2,"TRT","YDIESEL",""
+#<AdxTL>@(#)0.0.0.0 $Revision$
+		#<AdxTL>@(#)0.0.0.0 $Revision$
+######################################################################################################
+# FILE NAME   : YDIESEL
+# DESCRIPTION : Dimension selections and validations
+######################################################################################################
+# DATE        : 11-29-2018
+# AUTHOR      : DH
+# COMPANY     : Leverage Technologies
+# VERSION     : 1.2
+#-----------------------------------------------------------------------------------------------------
+# Epics Code  : DFCX1-27 - Original Requirement
+#             : DFCX1-234 - Updated Query - request from Richard Race-Lyons - Jose
+#             : Commented out VAL_CCE - see description - Dewald
+#             : Add the top 500 in select to avoid index out of range - Dewald
+#             : Increased TOP 500,TEXTE, and TEX to 10000 in select to include missing records - Jose
+#-----------------------------------------------------------------------------------------------------
+######################################################################################################
+
+#------------------------------------------------------------------------------------#
+#Action
+#------------------------------------------------------------------------------------#
+$ACTION
+Case ACTION
+  When Default
+Endcase
+
+Case GACTION
+  When "YDIESEL"    : Gosub SEL_LISTE
+Endcase
+
+Return
+
+#------------------------------------------------------------------------------------#
+# Selection Lists
+#------------------------------------------------------------------------------------#
+$SEL_LISTE
+
+Local Integer I
+Local Char TEXTE(255)(1..1000,1..4)
+Local Char TEX(255)(1000)
+Local Char REQUEST(255)(10)
+Local Char REQUEST2(255)(10)
+
+I=0
+TIT(1)="Dimension Value"
+TIT(2)="Description"
+TIT(3)="Dimension Code"
+TIT(4)="Ledger"
+CRITERE = "1=1"
+
+##Validate Dimension - DFCX1-234 - Jose Fix
+#New query as per Richard Race-Lyons 2018/12/20
+
+REQUEST(0) = "SELECT DISTINCT t3.LED_0, t4.DIE_0, t4.CCE_0, t4.DES_0"
+REQUEST(1) -= "FROM FACILITY t0"
+REQUEST(2) -= "JOIN COMPANY t1 ON t0.LEGCPY_0 = t1.CPY_0"
+REQUEST(3) -= "JOIN GACM t2 ON t1.ACM_0 = t2.GCM_0"
+REQUEST(4) -= "JOIN GLED t3 ON t2.LED_0 = t3.LED_0"
+REQUEST(5) -= "INNER JOIN CACCE t4 ON t4.DIE_0 = t3."+PARAM(4)
+REQUEST(6) -= "LEFT OUTER JOIN YPCCACC t5 ON t5.YLED_0 = t3.LED_0 AND t5.YDIE_0 = t4.DIE_0"
+REQUEST(7) -= "AND t5.YCCE_0 = t4.CCE_0"
+REQUEST(8) -= "WHERE t4.DIE_0 = '" + PARAM(1) +"' AND ((t5.YACC_0 = '" + PARAM(3)+"' AND t5.YLED_0 = t3.LED_0) OR (t5.YACC_0 IS NULL AND t5.YLED_0 IS NULL)) AND t4.ENAFLG_0 = 2"
+REQUEST(9) -= "ORDER BY t4.CCE_0 ASC"
+
+For (Char YLED(50), Char YDIMTYP, Char YDIM, Char YDES(255)) From "5" Sql REQUEST As [YLNK]
+  I += 1
+  TEX(I)     = [F:YLNK]YDIM
+  TEXTE(I,1) = [F:YLNK]YDIM
+  TEXTE(I,2) = [F:YLNK]YDES
+  TEXTE(I,3) = [F:YLNK]YDIMTYP
+  TEXTE(I,4) = [F:YLNK]YLED
+  If I = 999 : Break : Endif
+Next
+NBTEX=I
+If I = 0
+  Infbox "No list"
+Endif
+
+
+Return
+
+#------------------------------------------------------------------------------------#
+# Validate upon manual selection
+#=============================================================
+##Causing Error on Journal entry screens : PARAM non existent
+#=============================================================
+#------------------------------------------------------------------------------------#
+#Comment out DEWALD - Causing Error on Journal Entry screens
+#Subprog VAL_CCE(VALEUR)
+#Variable Char    VALEUR()
+#Local Integer I
+#Local Char REQUEST(255)(10)
+#REQUEST(0) = "SELECT DISTINCT t4.CCE_0"
+#REQUEST(1) -= "FROM FACILITY t0"
+#REQUEST(2) -= "JOIN COMPANY t1 ON t0.LEGCPY_0 = t1.CPY_0"
+#REQUEST(3) -= "JOIN GACM t2 ON t1.ACM_0 = t2.GCM_0"
+#REQUEST(4) -= "JOIN GLED t3 ON t2.LED_0 = t3.LED_0"
+#REQUEST(5) -= "INNER JOIN CACCE t4 ON t4.DIE_0 = t3."+PARAM(5)
+#REQUEST(6) -= "LEFT OUTER JOIN YPCCACC t5 ON t5.YLED_0 = t3.LED_0 AND t5.YDIE_0 = t4.DIE_0 AND t5.YCCE_0 = t4.CCE_0"
+#REQUEST(7) -= "WHERE t4.DIE_0 = '" + PARAM(2) +"' AND ((t5.YACC_0 = '" + PARAM(4)+"' AND t5.YLED_0 = t3.LED_0) OR (t5.YACC_0 IS NULL AND t5.YLED_0 IS NULL)) AND t4.ENAFLG_0 = 2"
+#REQUEST(8) -= "AND t4.CCE_0 = '"+VALEUR+"'"
+#REQUEST(9) -= "ORDER BY t4.CCE_0 ASC"
+#
+#For (Char CCE(50)) From "5" Sql REQUEST As [YLNK]
+#  If [F:YLNK]CCE <> ""
+#    I += 1
+#  Endif
+#Next
+#
+#If I = 0
+#  GMESSAGE = mess(6,6201,1)
+#  GERR = 1
+#  mkstat = 2
+#Endif
+#
+#End
+
+**********
+7,"TRT","YDIESEL",""
+2,"ACT","YBBDIESEL","Dimension selection"
+3,"ACT",YBBDIESEL
+4,"ABTFLG",0,1
+4,"ACTION",0,"YBBDIESEL"
+4,"ACTSUI",0,""
+4,"AMSFLG",0,1
+4,"CODACT",0,"YICBS"
+4,"CODTRT",0,""
+4,"CREDAT",0,20180920
+4,"CREDATTIM",0,"2018-09-19T23:10:17Z"
+4,"CREUSR",0,"DH"
+4,"INSTRU",0,""
+5,"INTITA",0,"Dimension selection","ENG",14475,""
+5,"INTITA",0,"","***"
+5,"INTITC",0,"","ENG",0,""
+5,"INTITC",0,"","***"
+5,"INTITL",0,"","ENG",0,""
+5,"INTITL",0,"","***"
+4,"MODULE",0,1
+4,"NBPAR",0,3
+4,"NOWEB",0,1
+4,"PARAM1",0,""
+4,"PARAM2",0,""
+4,"PARAM3",0,1
+4,"PARAM4",0,""
+4,"PARAM5",0,""
+4,"PARAM6",0,2
+4,"PUBFLG",0,2
+4,"SPETRT",0,"YBBDIESEL"
+4,"SUBPRG",0,""
+4,"TYP",0,5
+4,"TYPACT",0,2
+4,"TYPUTI",0,4
+4,"UPDDAT",0,20190606
+4,"UPDDATTIM",0,"2019-06-06T08:02:04Z"
+4,"UPDUSR",0,"DH"
+6,"ACT"
+3,"ATR",CODFNC
+4,"ACTION",0,"YBBDIESEL"
+4,"ADRVAL",0,2
+4,"CODPAR",0,"CODFNC"
+4,"CREDATTIM",0,"2019-06-06T08:02:04Z"
+4,"CREUSR",0,"DH"
+5,"INTITPAR",0,"","ENG",0,""
+5,"INTITPAR",0,"","***"
+4,"NOPAR",0,1
+4,"TYPPAR",0,1
+4,"UPDDATTIM",0,"2019-06-06T08:02:04Z"
+4,"UPDUSR",0,"DH"
+6,"ATR"
+3,"AAR",CODFNC
+4,"CODPAR",0,"CODFNC"
+4,"CREDAT",0,000000
+4,"CREDATTIM",0,"2019-03-20T01:58:34Z"
+4,"CREUSR",0,"LSEY"
+5,"INTITPAR",0,"Function code","ENG",20073,""
+5,"INTITPAR",0,"","***"
+4,"TYPPAR",0,1
+4,"UPDDAT",0,000000
+4,"UPDDATTIM",0,"2019-03-20T01:58:34Z"
+4,"UPDUSR",0,"JR"
+6,"AAR"
+3,"ATR",DIE
+4,"ACTION",0,"YBBDIESEL"
+4,"ADRVAL",0,2
+4,"CODPAR",0,"DIE"
+4,"CREDATTIM",0,"2019-06-06T08:02:04Z"
+4,"CREUSR",0,"DH"
+5,"INTITPAR",0,"","ENG",0,""
+5,"INTITPAR",0,"","***"
+4,"NOPAR",0,2
+4,"TYPPAR",0,1
+4,"UPDDATTIM",0,"2019-06-06T08:02:04Z"
+4,"UPDUSR",0,"DH"
+6,"ATR"
+3,"AAR",DIE
+4,"CODPAR",0,"DIE"
+4,"CREDAT",0,20051019
+4,"CREDATTIM",0,"2019-03-20T01:58:34Z"
+4,"CREUSR",0,"CP"
+5,"INTITPAR",0,"Analytical dimension type","ENG",434,""
+5,"INTITPAR",0,"","***"
+4,"TYPPAR",0,1
+4,"UPDDAT",0,000000
+4,"UPDDATTIM",0,"2019-03-20T01:58:34Z"
+4,"UPDUSR",0,"JR"
+6,"AAR"
+3,"ATR",FLDNAM
+4,"ACTION",0,"YBBDIESEL"
+4,"ADRVAL",0,2
+4,"CODPAR",0,"FLDNAM"
+4,"CREDATTIM",0,"2019-06-06T08:02:04Z"
+4,"CREUSR",0,"DH"
+5,"INTITPAR",0,"","ENG",0,""
+5,"INTITPAR",0,"","***"
+4,"NOPAR",0,3
+4,"TYPPAR",0,1
+4,"UPDDATTIM",0,"2019-06-06T08:02:04Z"
+4,"UPDUSR",0,"DH"
+6,"ATR"
+3,"AAR",FLDNAM
+4,"CODPAR",0,"FLDNAM"
+4,"CREDAT",0,000000
+4,"CREDATTIM",0,"2019-03-20T01:58:34Z"
+4,"CREUSR",0,"LSEY"
+5,"INTITPAR",0,"Current field name","ENG",13860,""
+5,"INTITPAR",0,"","***"
+4,"TYPPAR",0,1
+4,"UPDDAT",0,000000
+4,"UPDDATTIM",0,"2019-03-20T01:58:34Z"
+4,"UPDUSR",0,"JR"
+6,"AAR"
+7,"ACT","YBBDIESEL","Dimension selection"
+8,"Patch HFX :DFCX1-492 on June      07,19 14: 53"
