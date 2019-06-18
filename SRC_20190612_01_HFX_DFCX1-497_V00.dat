@@ -1,0 +1,1576 @@
+1,"Patch HFX :DFCX1-497 on June      12,19 14: 53","ENG","1","YLAND","X3","3",
+2,"TRT","SPEYCS",""
+#<AdxTL>@(#)0.0.0.0 $Revision$
+# Mask management YCSWEB (Specific)
+
+######################################################################################
+## Section automatically added (screen YCSWEB) 14/02/2019 00:28:43 (ADMIN)
+######################################################################################
+$ACTION
+#Infbox ACTION
+Case ACTION
+  When "OUVRE" : Gosub OUVRE
+  When "LIENS" : Gosub LIENS
+ When Default
+Endcase
+Return
+
+Subprog CL_YCREFLD(VALEUR)
+Variable Char VALEUR()
+
+Local Char YCSBASE(250),YCSNODE(250),YCSAUTH(250),YCSUSR(50),YCSPWD(50)
+Local Integer YCSID
+
+#validate that all the needed paramters are configured for CS
+  If func AFNC.PARAM("YCSBASE", "") <> ""
+    YCSBASE = func AFNC.PARAM("YCSBASE", "")
+  Else
+    GMESSAGE = "Content server base url not defined in the paramaters: YCSBASE"
+    GERR = 1
+    End
+  Endif
+
+  If func AFNC.PARAM("YCSNODEAPI", "") <> ""
+    YCSNODE = func AFNC.PARAM("YCSNODEAPI", "")
+  Else
+    GMESSAGE = "Content server api node url not defined in the paramaters: YCSNODE"
+    GERR = 1
+    End
+  Endif
+
+  If func AFNC.PARAM("YCSAUTHAPI", "") <> ""
+    YCSAUTH = func AFNC.PARAM("YCSAUTHAPI", "")
+  Else
+    GMESSAGE = "Content server api node url not defined in the paramaters: YCSNODE"
+    GERR = 1
+    End
+  Endif
+
+ If func AFNC.PARAM("YCSUSR", "") <> ""
+    YCSUSR = func AFNC.PARAM("YCSUSR", "")
+  Else
+    GMESSAGE = "Content server api username not defined in the paramaters: YCSUSR"
+    GERR = 1
+    End
+  Endif
+
+ If func AFNC.PARAM("YCSPWD", "") <> ""
+    YCSPWD = func AFNC.PARAM("YCSPWD", "")
+  Else
+    GMESSAGE = "Content server api password not defined in the paramaters: YCSPWD"
+    GERR = 1
+    End
+  Endif
+
+Read [F:YCSFL]YCSFL0 = GABREV
+If fstat = 0
+  #check that the parent id exists in CS
+  Local Char YRESULT(250),YTYPE(250),YTYPEID(250)
+  Local Char YOCTS(250)
+  Local Integer YPID,YCSSUBID
+  Local Char YNAME(100)
+
+  #"http://dennisdocs/otcsapp/llisapi.dll/api/v1/auth"
+  #get the content server authentication token
+  YOCTS = func YCSHELPER.CSAUTH(YCSUSR,YCSPWD,YCSBASE+YCSAUTH)
+
+  #see if there is a parent object linked.
+  If [F:YCSFL]YPOBJ <> ""
+    If [F:YCSFL]YAUCRE = 2
+      #get the parent object node id.
+      Case GABREV
+        When "YPRE" : YPID = func YPRE("") : YNAME = func YCSHELPER.YPRENAME(evalue([F:YCSFL]YOBJIDFLD))
+        When "YSTA" : YPID = func YSTA("") : YNAME = func YCSHELPER.YSTANAME(evalue([F:YCSFL]YOBJIDFLD))
+        When "YPLA" : YPID = func YPLA("") : YNAME = func YCSHELPER.YPLANAME(evalue([F:YCSFL]YOBJIDFLD))
+        When "YLDP" : YPID = func YLDP("") : YNAME = func YCSHELPER.YLDPNAME(evalue([F:YCSFL]YOBJIDFLD))
+        When "YSLC" : YPID = func YSLC("") : YNAME = func YCSHELPER.YSLCNAME(evalue([F:YCSFL]YOBJIDFLD))
+        When "YLOT" : YPID = func YLOT("") : YNAME = func YCSHELPER.YLOTNAME(evalue([F:YCSFL]YOBJIDFLD))
+        When "YGSC" : YPID = func YGSC("") : YNAME = func YCSHELPER.YGSCNAME(evalue([F:YCSFL]YOBJIDFLD))
+        When Default
+      Endcase
+    Else
+      GMESSAGE = "Folder auto create is not allowed for this object."
+      GERR = 1
+      Call YCSLOG(GABREV,num$(evalue([F:YCSFL]YOBJIDFLD)),0,GMESSAGE,"Create node") From YCSHELPER
+      End
+    Endif
+  Endif
+
+
+  If YNAME = ""
+    GMESSAGE = "Could not determine the folder name."
+    GERR = 1
+    Call YCSLOG(GABREV,num$(evalue([F:YCSFL]YOBJIDFLD)),0,GMESSAGE,"Create node") From YCSHELPER
+    End
+  Endif
+
+  #create new folder
+  #Infbox func YCSHELPER.YPRENAME(val(evalue([F:YCSFL]YOBJIDFLD)))
+  #"http://dennisdocs/otcsapp/llisapi.dll/api/v1/nodes/
+
+  If YPID > 0
+    #validate that the parent id is a folder and not a file
+    #build content server url
+    YRESULT = func YCSHELPER.CSNODEINFO(YOCTS,YCSBASE+YCSNODE+num$(YPID)+"?fields=data")
+
+    YTYPE = seg$(YRESULT,1,instr(1,YRESULT,'~')-1)
+
+    YTYPEID  = num$(seg$(YRESULT,instr(1,YRESULT,'~')+1,len(YRESULT)))
+
+    If YTYPE = "Folder"
+        #check if we need to create a subfolder in the parent folder
+        If [F:YCSFL]YPSUBFLD <> ""
+          #check that the folder does not already exist. if the result returns "Folder" it already exists.
+          YRESULT = func YCSHELPER.CSNODEINFO(YOCTS,YCSBASE+YCSNODE+num$(YPID)+"/nodes?where_name="+[F:YCSFL]YPSUBFLD+"&fields=data")
+          #get the content server type and id
+          YTYPE = seg$(YRESULT,1,instr(1,YRESULT,'~')-1)
+          YTYPEID  = num$(seg$(YRESULT,instr(1,YRESULT,'~')+1,len(YRESULT)))
+
+          #create the subfolder if it does not exist.
+          If YTYPE = ""
+            #create the parent sub folder
+            YCSSUBID = func YCSHELPER.CSNEWFOLDER(YOCTS,YCSBASE+YCSNODE,num$(YPID),[F:YCSFL]YPSUBFLD,0,"Created by the sage user: " + GUSER,"")
+            If YCSSUBID = 0
+              GMESSAGE = "Could not create parent sub folder."
+              GERR = 1
+              Call YCSLOG(GABREV,num$(evalue([F:YCSFL]YOBJIDFLD)),0,GMESSAGE,"Create node") From YCSHELPER
+            Else
+              Infbox "New Parent Sub-folder created: " + [F:YCSFL]YPSUBFLD + ". Content server id: " + num$(YCSSUBID)
+            Endif
+            #create new folder
+             YCSID = func YCSHELPER.CSNEWFOLDER(YOCTS,YCSBASE+YCSNODE,num$(YCSSUBID),YNAME,0,"Created by the sage user: " + GUSER,"")
+          Else
+            #create new folder
+            YCSID = func YCSHELPER.CSNEWFOLDER(YOCTS,YCSBASE+YCSNODE,num$(YTYPEID),YNAME,0,"Created by the sage user: " + GUSER,"")
+          Endif
+        Else
+           # no subfolder to create. only create new folder
+          YCSID = func YCSHELPER.CSNEWFOLDER(YOCTS,YCSBASE+YCSNODE,num$(YPID),YNAME,0,"Created by the sage user: " + GUSER,"")
+        Endif
+    Else
+        GMESSAGE = "Parent node must be a folder. Can not create the new folder."
+        GERR = 1
+        Call YCSLOG(GABREV,num$(evalue([F:YCSFL]YOBJIDFLD)),0,GMESSAGE,"Create node") From YCSHELPER
+    Endif
+  Else
+    GMESSAGE = "Could not determine the parent id. Can not create the new folder. Please ensure that the estate is linked in content server."
+    GERR = 1
+    Call YCSLOG(GABREV,num$(evalue([F:YCSFL]YOBJIDFLD)),0,GMESSAGE,"Create node") From YCSHELPER
+    End
+  Endif
+
+  #save the info in the links table.
+  #Read[F:YCSFL]YCSFL0  = GABREV
+  If YCSID <> 0
+    Infbox "New folder created: " + YNAME + " .Content server id: " + num$(YCSID)
+
+    [F:YCSL]YCSNID  = YCSID
+    [F:YCSL]YOBJIDENT = evalue([F:YCSFL]YOBJIDFLD)
+    [F:YCSL]YOBJTYP = [F:YCSFL]YOBJTYP
+    Write [F:YCSL]
+
+    If fstat <> 0
+      GMESSAGE = "Unable to save to linked folder. Please link the folder manually: Content server id: " + num$(YCSID)
+      GERR =1
+      Call YCSLOG(GABREV,num$(evalue([F:YCSFL]YOBJIDFLD)),YCSID,GMESSAGE,"Create node") From YCSHELPER
+      End
+    Endif
+  Else
+    GMESSAGE = "Unable to create the content server folder."
+    GERR =1
+    Call YCSLOG(GABREV,num$(evalue([F:YCSFL]YOBJIDFLD)),YCSID,GMESSAGE,"Create node") From YCSHELPER
+    End
+  Endif
+
+  #see if any child folders needs to be created:
+  If [F:YCSFL]YCLDFLDC = 2
+    If [F:YCSFL]YCLDFDR <> ""
+      YCSID = func YCSHELPER.CSNEWFOLDER(YOCTS,YCSBASE+YCSNODE,num$(YCSID),[F:YCSFL]YCLDFDR ,0,"Created by the sage user: " + GUSER,"")
+      If YCSID <> 0
+        Infbox "New Sub-folder created: " + [F:YCSFL]YCLDFDR + " .Content server id: " + num$(YCSID)
+      Endif
+    Else
+      GMESSAGE = "Child folder name is not defined in the content server filing rules. Can not create the new folder."
+      GERR = 1
+      Call YCSLOG(GABREV,num$(evalue([F:YCSFL]YOBJIDFLD)),0,GMESSAGE,"Create node") From YCSHELPER
+      End
+    Endif
+  Endif
+
+
+
+Else
+  GMESSAGE = "No filing rules found for this object: " + GABREV
+  GERR = 1
+  Call YCSLOG(GABREV,"",0,GMESSAGE,"Create node") From YCSHELPER
+Endif
+#  Infbox 'Create new button clicked', "Object: " + GABREV,[M:YCS0]YOBJID
+
+End
+
+
+#------------------------------------------------------------------------------------#
+#Open needed tables
+#------------------------------------------------------------------------------------#
+$OUVRE
+
+If clalev([F:YCSFL]) = 0 : Local File YCSVRFR[YCSFL] : Endif
+If clalev([F:YCSL]) = 0 : Local File YCSLNK[YCSL] : Endif
+
+Return
+
+#------------------------------------------------------------------------------------#
+#Load content server rules based on the object.
+#------------------------------------------------------------------------------------#
+$LIENS
+Local Char YWEBURL(250)
+Local Char YCSBASE(250),YCSNODE(250),YCSNODEAPI(250),YCSUSR(50),YCSPWD(50),YOCTS(250),YCSAUTH(250),YRESULT(250),YTYPE(250)
+
+#if no parent defined, disable create button.
+Read [F:YCSFL]YCSFL0 = GABREV
+If fstat = 0
+  If [F:YCSFL]YPOBJ = ""
+    Diszo [M]YCREFLD
+    Affzo [M]
+  Endif
+Endif
+
+#get all the url paramaters for the CS connection
+#Content server base URL
+If func AFNC.PARAM("YCSBASE", "") <> ""
+  YCSBASE = func AFNC.PARAM("YCSBASE", "")
+Else
+  GMESSAGE = "Content server base url not defined in the paramaters: YCSBASE"
+  GERR = 1
+  Return
+Endif
+
+If func AFNC.PARAM("YCSNODE", "") <> ""
+  YCSNODE = func AFNC.PARAM("YCSNODE", "")
+Else
+  GMESSAGE = "Content server node url not defined in the paramaters: YCSNODE"
+  GERR = 1
+  Return
+Endif
+
+If func AFNC.PARAM("YCSWEBURL", "") <> ""
+  YWEBURL = func AFNC.PARAM("YCSWEBURL", "")
+Else
+  GMESSAGE = "Content server component url not defined in the paramaters: YCSWEBURL"
+    GERR = 1
+    Return
+  Endif
+
+ If func AFNC.PARAM("YCSNODEAPI", "") <> ""
+  YCSNODEAPI = func AFNC.PARAM("YCSNODEAPI", "")
+Else
+  GMESSAGE = "Content server api node url not defined in the paramaters: YCSNODE"
+  GERR = 1
+  Return
+Endif
+
+If func AFNC.PARAM("YCSAUTHAPI", "") <> ""
+  YCSAUTH = func AFNC.PARAM("YCSAUTHAPI", "")
+Else
+  GMESSAGE = "Content server api node url not defined in the paramaters: YCSNODE"
+  GERR = 1
+  Return
+Endif
+
+If func AFNC.PARAM("YCSUSR", "") <> ""
+    YCSUSR = func AFNC.PARAM("YCSUSR", "")
+  Else
+    GMESSAGE = "Content server api username not defined in the paramaters: YCSUSR"
+    GERR = 1
+    Return
+  Endif
+
+ If func AFNC.PARAM("YCSPWD", "") <> ""
+    YCSPWD = func AFNC.PARAM("YCSPWD", "")
+  Else
+    GMESSAGE = "Content server api password not defined in the paramaters: YCSPWD"
+    GERR = 1
+    Return
+  Endif
+
+Read [F:YCSFL]YCSFL0 = GABREV
+#read succesfull
+If fstat = 0
+  Read [F:YCSL]YCSL0 = GABREV;num$(evalue([F:YCSFL]YOBJIDFLD))
+  If fstat = 0
+    YOCTS = func YCSHELPER.CSAUTH(YCSUSR,YCSPWD,YCSBASE+YCSAUTH)
+    #check if the node exists in cs
+    #validate that the parent id is a folder and not a file
+    YRESULT = func YCSHELPER.CSNODEINFO(YOCTS,YCSBASE+YCSNODEAPI+num$([F:YCSL]YCSNID)+"?fields=data")
+    If YRESULT = ""
+      GMESSAGE = "Unable to find the node in content server. Node ID: " + num$([F:YCSL]YCSNID) + " The link will be removed from the links table."
+      GERR = 1
+      Call YCSLOG(GABREV,num$(evalue([F:YCSFL]YOBJIDFLD)),[F:YCSL]YCSNID,GMESSAGE,"Read node") From YCSHELPER
+      #delete the content server to x3 object link.
+      Delete [F:YCSL]
+      #assign default base url
+      If func AFNC.PARAM("YCSDEF", "") <> ""
+        YWEBURL = left$(YWEBURL,instr(1,YWEBURL,"~")-1) + func AFNC.PARAM("YCSDEF", "") + right$(YWEBURL,instr(1,YWEBURL,"~")+1)
+        If dim([M:YCS0]YOBJID) > 0
+          [M:YCS0]YOBJID = YWEBURL
+        Endif
+      Endif
+      Return
+    Endif
+
+    YWEBURL = left$(YWEBURL,instr(1,YWEBURL,"~")-1) + YCSBASE + YCSNODE + num$([F:YCSL]YCSNID) + right$(YWEBURL,instr(1,YWEBURL,"~")+1)
+    #set the URL to open CS at the saved node id.
+    If dim([M:YCS0]YOBJID) > 0
+    [M:YCS0]YOBJID = YWEBURL
+    Endif
+    #TODO: Review Code and Test
+    #disable buttons
+    Diszo [M]YCREFLD
+    Diszo [M]YLINK
+    Affzo [M]
+
+  Else
+    #Content server base URL
+    YWEBURL = left$(YWEBURL,instr(1,YWEBURL,"~")-1) + func AFNC.PARAM("YCSBASE", "") + right$(YWEBURL,instr(1,YWEBURL,"~")+1)
+    If dim([M:YCS0]YOBJID) > 0
+      [M:YCS0]YOBJID = YWEBURL
+    Endif
+  Endif
+
+Else
+  #no object was found. display message and disable buttons.
+  GMESSAGE = "No Content server filing rules found for object type " + GABREV
+  GERR = 1
+  Call YCSLOG(GABREV,"",0,"No Content server filing rules found for object type","Read node") From YCSHELPER
+  #Content server default URL
+  If func AFNC.PARAM("YCSDEF", "") <> ""
+    YWEBURL = left$(YWEBURL,instr(1,YWEBURL,"~")-1) + func AFNC.PARAM("YCSDEF", "") + right$(YWEBURL,instr(1,YWEBURL,"~")+1)
+    If dim([M:YCS0]YOBJID) > 0
+      [M:YCS0]YOBJID = YWEBURL
+    Endif
+  Endif
+Endif
+
+Return
+
+######################################################################################
+## Section automatically added (screen YCSWEB) 14/02/2019 05:26:19 (ADMIN)
+######################################################################################
+Subprog IB_YOBJID
+End
+
+
+#------------------------------------------------------------------------------------#
+#Content server get the parent object id - Precinct
+#------------------------------------------------------------------------------------#
+Funprog YPRE(YPOBJ1)
+Value Char YPOBJ1
+Local Integer YPID
+Local Char YNODEID(250)
+
+If clalev([F:YPRE]) = 0 : Local File YPRECINT[YPRE] : Endif
+
+#Infbox evalue([F:YCSFL]YOBJIDFLD)
+If YPOBJ1 = ""
+  Read[F:YPRE]YPRC0 = evalue([F:YCSFL]YOBJIDFLD)
+Else
+  Read[F:YPRE]YPRC0 = YPOBJ1
+Endif
+
+If fstat = 0
+  YNODEID = num$(evalue([F:YCSFL]YPFLD))#[F:YPRE]YESTID
+Endif
+#Infbox num$(YNODEID)
+#get the linked parent id in the link table.
+Read [F:YCSL]YCSL0 = [F:YCSFL]YPOBJ;YNODEID
+  If fstat = 0
+    YPID = [F:YCSL]YCSNID
+  Endif
+End YPID
+
+#------------------------------------------------------------------------------------#
+#Content server get the parent object id - Stage
+#------------------------------------------------------------------------------------#
+Funprog YSTA(YPOBJ1)
+Value Char YPOBJ1
+Local Integer YPID
+Local Char YNODEID(250)
+
+If clalev([F:YSTA]) = 0 : Local File YSTAGE[YSTA] : Endif
+
+#Infbox evalue([F:YCSFL]YOBJIDFLD)
+If YPOBJ1 = ""
+  Read[F:YSTA]YSTG0 = evalue([F:YCSFL]YOBJIDFLD)
+Else
+  Read[F:YSTA]YSTG0 = YPOBJ1
+Endif
+
+If fstat = 0
+  YNODEID = num$(evalue([F:YCSFL]YPFLD))#[F:YSTA]YESTID
+Endif
+
+#get the linked parent id in the link table.
+Read [F:YCSL]YCSL0 = [F:YCSFL]YPOBJ;YNODEID
+  If fstat = 0
+    YPID = [F:YCSL]YCSNID
+  Endif
+End YPID
+
+#------------------------------------------------------------------------------------#
+#Content server get the parent object id - Planning
+#------------------------------------------------------------------------------------#
+Funprog YPLA(YPOBJ1)
+Value Char YPOBJ1
+Local Integer YPID
+Local Char YNODEID(250)
+
+If clalev([F:YPLA]) = 0 : Local File YPLAGEN [YPLA] : Endif
+
+#Infbox evalue([F:YCSFL]YOBJIDFLD)
+If YPOBJ1 = ""
+  Read[F:YPLA]YPLN0 = evalue([F:YCSFL]YOBJIDFLD)
+Else
+  Read[F:YPLA]YPLN0 = YPOBJ1
+Endif
+
+If fstat = 0
+  YNODEID = num$(evalue([F:YCSFL]YPFLD))#[F:YPLA]YEST
+Endif
+
+#get the linked parent id in the link table.
+Read [F:YCSL]YCSL0 = [F:YCSFL]YPOBJ;YNODEID
+  If fstat = 0
+    YPID = [F:YCSL]YCSNID
+  Endif
+End YPID
+
+#------------------------------------------------------------------------------------#
+#Content server get the parent object id - Sales contract
+#------------------------------------------------------------------------------------#
+Funprog YSLC(YPOBJ1)
+Value Char YPOBJ1
+Local Integer YPID
+Local Char YNODEID(250)
+
+If clalev([F:YSLC]) = 0 : Local File YSALCTR[YSLC] : Endif
+
+#Infbox evalue([F:YCSFL]YOBJIDFLD)
+If YPOBJ1 = ""
+  Read[F:YSLC]YSLC0 = evalue([F:YCSFL]YOBJIDFLD)
+Else
+  Read[F:YSLC]YSLC0 = YPOBJ1
+Endif
+
+If fstat = 0
+  YNODEID = num$(evalue([F:YCSFL]YPFLD))#[F:YSLC]YEST
+Endif
+
+#get the linked parent id in the link table.
+Read [F:YCSL]YCSL0 = [F:YCSFL]YPOBJ;YNODEID
+#Infbox[F:YCSFL]YPOBJ,YNODEID,num$(fstat)
+  If fstat = 0
+    YPID = [F:YCSL]YCSNID
+  Endif
+End YPID
+
+#------------------------------------------------------------------------------------#
+#Content server get the parent object id - Land Purchase
+#------------------------------------------------------------------------------------#
+Funprog YLDP(YPOBJ1)
+Value Char YPOBJ1
+Local Integer YPID
+Local Char YNODEID(250)
+
+If clalev([F:YLDP]) = 0 : Local File YLNDPUR[YLDP] : Endif
+If YPOBJ1 = ""
+  Read[F:YLDP]YLDP0 = evalue([F:YCSFL]YOBJIDFLD)
+Else
+  Read[F:YLDP]YLDP0  = YPOBJ1
+Endif
+
+
+If fstat = 0
+  YNODEID = num$(evalue([F:YCSFL]YPFLD))#[F:YLDP]YESTID
+Endif
+
+#get the linked parent id in the link table.
+Read [F:YCSL]YCSL0 = [F:YCSFL]YPOBJ;YNODEID
+  If fstat = 0
+    YPID = [F:YCSL]YCSNID
+  Endif
+End YPID
+
+#------------------------------------------------------------------------------------#
+#Content server get the parent object id - Lot
+#------------------------------------------------------------------------------------#
+Funprog YLOT(YPOBJ1)
+Value Char YPOBJ1
+Local Integer YPID
+Local Char YNODEID(250)
+
+If clalev([F:YLOT]) = 0 : Local File YLOT[YLOT] : Endif
+
+If YPOBJ1 = ""
+  Read[F:YLOT]YLOT0 = evalue([F:YCSFL]YOBJIDFLD)
+Else
+  Read[F:YLOT]YLOT0  = YPOBJ1
+Endif
+
+If fstat = 0
+  YNODEID = num$(evalue([F:YCSFL]YPFLD))#[F:YLOT]YESTID
+Endif
+
+#get the linked parent id in the link table.
+Read [F:YCSL]YCSL0 = [F:YCSFL]YPOBJ;num$(YNODEID)
+  If fstat = 0
+    YPID = [F:YCSL]YCSNID
+  Endif
+End YPID
+
+
+#------------------------------------------------------------------------------------#
+#Content server get the parent object id - General Scheme
+#------------------------------------------------------------------------------------#
+Funprog YGSC(YPOBJ1)
+Value Char YPOBJ1
+Local Integer YPID
+Local Char YNODEID(250)
+
+If clalev([F:YGGN]) = 0 : Local File YGSCGEN[YGGN] : Endif
+
+If YPOBJ1 = ""
+  Read[F:YGGN]YGGN0 = evalue([F:YCSFL]YOBJIDFLD)
+Else
+  Read[F:YGGN]YGGN0  = YPOBJ1
+Endif
+
+If fstat = 0
+  YNODEID = num$(evalue([F:YCSFL]YPFLD))#[F:YGGN]YESTID
+Endif
+
+#get the linked parent id in the link table.
+Read [F:YCSL]YCSL0 = [F:YCSFL]YPOBJ;YNODEID
+  If fstat = 0
+    YPID = [F:YCSL]YCSNID
+  Endif
+End YPID
+
+**********
+7,"TRT","SPEYCS",""
+2,"TRT","SPEYSTA","Land Developments - Stage"
+#<AdxTL>@(#)0.0.0.0 $Revision$
+######################################################################################################################
+# Script            : SPEYSTA                                                                                        #
+# Creation date     : 05/10/2018                                                                                     #
+# Version           : 1.0.0                                                                                          #
+# Authors (Company) : MZ (Leverage)                                                                                  #
+# Module            : Land Development                                                                               #
+# -------------------------------------------------------------------------------------------------------------------#
+# Epic              : https://jira.leveragetech.com.au/browse/DFCX1-79                                               #
+# Description       : DFCX1-79 Land Development -  Stage                                                             #
+#--------------------------------------------------------------------------------------------------------------------#
+# Evolutions        :                                                                                                #
+# DFCX1-169   Majid   Creation object rules                                                                          #
+######################################################################################################################
+
+$ACTION
+
+Case ACTION
+  When "EXEBOUT" : Gosub BOUTON
+  When Default
+Endcase
+
+  If func AFNC.ACTIV("YCS")
+    Gosub ACTION From SPEYCS
+  Endif
+
+Return
+
+######################################################################################
+## Section automatically added (screen YSTA) 05/10/2018 12:58:58 (MAJID)
+######################################################################################
+Subprog AM_YJOBACTFLG(VALEUR)
+Variable Integer VALEUR
+
+# DFCX1-169
+If func AFNC.ACTIV("YLAND")
+
+  # If the Activation flag is deactive then Dimension needs to deactivted before save otherwise system populates error
+  If VALEUR = 2 # and [M:YSTA]YJOBACTFLG = 2
+    Local Char YDIE(50)
+    YDIE = func AFNC.PARAM ("YDEVDTY","")   # Read dimension type from general parameter
+    If !clalev([F:YCCE2])      :   Local File CACCE [YCCE2]     :   Endif
+    Read [F:YCCE2]CCE0 = YDIE;[M:YSTA]YJOBCOD
+
+    If !fstat
+      # Check activate is same
+      If [F:YCCE2]ENAFLG <> VALEUR
+        Trbegin [F:YCCE2]
+        [F:YCCE2]ENAFLG = VALEUR
+        Rewrite [F:YCCE2]
+        If !fstat
+          Commit
+        Else
+          Rollback
+        Endif
+      Endif
+    Endif
+  Endif     # VALEUR = 2
+Endif
+
+End
+
+
+######################################################################################
+
+######################################################################################
+## Section automatically added (screen YSTA4) 21/11/2018 15:22:12 (MAJID)
+######################################################################################
+Subprog C_YVALTO(VALEUR)
+Variable Date    VALEUR
+
+#  Valid to cannot be before valid from date
+If VALEUR < [M:YSTA4]YVALFRM(nolign-1) and VALEUR <> [0/0/0]
+  GMESSAGE = mess(30,6255,1)    #  Valid to cannot be before valid from date
+  GERR = 1
+  mkstat = 1
+Endif
+
+End
+
+
+######################################################################################
+
+######################################################################################
+## Section automatically added (screen YSTA1) 23/11/2018 10:54:08 (MAJID)
+######################################################################################
+Subprog C_YPREID(VALEUR)
+Variable Char    VALEUR()
+
+# Control link between Estate and Precinct
+Call C_YPREID ([M:YSTA1]YESTID, VALEUR) From YPRESEL
+
+End
+
+
+######################################################################################
+
+######################################################################################
+## Section automatically added (screen YSTA4) 29/11/2018 13:01:21 (MAJID)
+######################################################################################
+Subprog AM_YBP(VALEUR)
+Variable Char    VALEUR()
+
+  #Default Classification from BP
+  If VALEUR <> ""
+    #Open table
+    If !clalev ([F:YBP]) : Local File BPARTNER [F:YBP] : Endif
+    Read [F:YBP]BPR0 = VALEUR
+
+    If fstat = 0
+      [M:YSTA4]YBPCLS(nolign-1) = [F:YBP]YBPCLS
+    Endif
+
+    #Close table
+    If clalev([F:YBP]) : Close Local File [F:YBP] : Endif
+  Endif
+  Affzo [M:YSTA4]YBPCLS
+
+End
+
+
+######################################################################################
+
+$BOUTON
+Local Char FICSRV(250),FICCLI(250), MYPATH(250)
+Local Integer STAT
+Local Integer ASTAT
+
+  If BOUT = "7" #Lot Imorts
+
+    #DH - DFCX1-497 - 11/06/2019
+    Local Char TRACE(255)
+    Local Char XMSG(250)(99)
+    #Start Trace - DH
+    Call OUVRE_TRACE("Business Batch Post") From LECFIC
+    Call ECR_TRACE("Start Date: " + num$(datetime$),0) From GESECRAN
+
+    FICCLI = ""
+    FICSRV = filpath("tmp","","")
+    MYPATH = filpath("ATT","","")
+    Call COPSRV(FICCLI,FICSRV,ASTAT)From ORDSYS
+
+    FICSRV = FICSRV + "\" + FICCLI
+
+  If ASTAT = 0
+    Gosub OUVRE From GIMPOBJ
+    #Open tables
+    If clalev([F:YCCE]) = 0 : Local File CACCE [YCCE] : Endif
+    #Insert Job Dimension code first
+    Local Char JOBTYP(250), JOBCODE(30)
+    Openi filpath('tmp',seg$(FICCLI,1,len(FICCLI)-4),'csv') Using [FIC1]
+      adxifs = ";"
+      Repeat
+        Rdseq JOBTYP,JOBCODE Using [FIC1]
+        #Read Sequence of Job Codes and checks to see if they exist, otherwise create them
+        If JOBTYP = "LOT" Then
+          Read [F:YCCE]CCE0 = "DJB";JOBCODE
+          If fstat <> 0 Then #Record not found, create dimension
+            [F:YCCE]CCE = JOBCODE
+            [F:YCCE]DIE = "DJB"
+            [F:YCCE]DES = JOBCODE
+            [F:YCCE]FCY = "D"+left$(JOBCODE,3)
+            Write [F:YCCE]
+          Endif
+        Endif
+      Until fstat <> 0
+    Openi Using [FIC1]
+    #Close tables
+    If clalev([F:YCCE]) = 0 :Close Local File [YCCE] : Endif
+    Call IMPORTSIL("YSTGLOT", filpath('tmp',seg$(FICCLI,1,len(FICCLI)-4),'csv')) From GIMPOBJ
+    #DH - DFCX1-497 - 11/06/2019
+    Call ECR_TRACE("End Date: " + num$(datetime$),0) From GESECRAN
+    TRACE = GTRACE
+    Raz XMSG
+    #Call trace
+    Call FERME_TRACE() From LECFIC
+    Call LEC_TRACE From LECFIC
+    Local Char XMOT(250)
+    If filinfo(filpath("TRA",TRACE,"tra",0),7) > 0
+      Openi filpath("TRA",TRACE,"tra",0) Using [XLL]
+      Repeat
+        Rdseq XMOT Using [XLL]
+      Until fstat <> 0
+      Openi Using [XLL]
+    Endif
+  Endif
+
+  Endif
+
+Return
+
+#------------------------------------------------------------------------------------#
+#After Change - YESTID
+#------------------------------------------------------------------------------------#
+Subprog AM_YESTID(VALEUR)
+Variable Decimal VALEUR
+
+  #DFCX1-381 Security Model - Default Estate Access Code - BEGIN
+
+  Raz [M:YSTA]YACCESS
+
+  If func AFNC.ACTIV("YSEC") = 1 and num$(VALEUR) <> ""
+
+    If clalev([F:YESTATE])  = 0 : Local File YESTA    [F:YESTATE]  : Endif
+
+    Read [F:YESTATE]YEST0 = VALEUR
+
+    If fstat = 0
+      [M:YSTA]YACCESS = [F:YESTATE]YACCESS
+    Endif
+
+    If [F:YESTATE]YACCESS = ""
+      Infbox(mess(49,6255,1))
+    Endif
+
+    If clalev([F:YESTATE]) : Close Local File [F:YESTATE] : Endif
+
+  Endif
+
+  Affzo [M:YSTA]YACCESS
+
+  #DFCX1-381 Security Model - Default Estate Access Code - END
+
+End
+
+######################################################################################
+## Section automatically added (screen YSTA) 27/02/2019 23:53:14 (MAJID)
+######################################################################################
+Subprog C_YSTANBR(VALEUR)
+Variable Shortint    VALEUR()
+
+# If four characters long and is numeric, first character cannot be 7, 8 or 9
+#If len(VALEUR) = 4 and val(VALEUR) > 6999 and val(VALEUR) < 10000 and find(left$(VALEUR,1),'7','8','9') > 0
+#  GMESSAGE = mess(50,6255,1)    #  Stage numbe cannot start with 7, 8 or 9 on 4 digit number
+#  GERR = 1
+#  mkstat = 1
+#Endif
+
+End
+
+
+######################################################################################
+
+**********
+7,"TRT","SPEYSTA","Land Developments - Stage"
+2,"AOE","YSTGLOT",""
+3,"AOE",YSTGLOT
+4,"ACS",0,""
+4,"AOWSTA",0,1
+4,"CHRNUM",0,0
+4,"CODACT",0,"YLAND"
+4,"CODDBA",0,1
+4,"CREDAT",0,20181206
+4,"CREDATTIM",0,"2018-12-05T17:54:16Z"
+4,"CREUSR",0,"MB"
+4,"ENAFLG",0,2
+4,"ENAWRK",0,1
+4,"EXPORT",0,2
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FIL",1,""
+4,"FIL",2,""
+4,"FIL",3,""
+4,"FIL",4,""
+4,"FIL",5,""
+4,"FIL",6,""
+4,"FIL",7,""
+4,"FIL",8,""
+4,"FIL",9,""
+4,"FIL",10,""
+4,"FIL",11,""
+4,"FIL",12,""
+4,"FIL",13,""
+4,"FIL",14,""
+4,"FIL",15,""
+4,"FIL",16,""
+4,"FIL",17,""
+4,"FIL",18,""
+4,"FIL",19,""
+4,"FILEXT",0,""
+4,"FLDLIM",0,""
+4,"FLGEXP",0,""
+4,"FLGEXP",1,""
+4,"FLGEXP",2,""
+4,"FLGEXP",3,""
+4,"FLGEXP",4,""
+4,"FLGEXP",5,""
+4,"FLGEXP",6,""
+4,"FLGEXP",7,""
+4,"FLGEXP",8,""
+4,"FLGEXP",9,""
+4,"FLGEXP",10,""
+4,"FLGEXP",11,""
+4,"FLGEXP",12,""
+4,"FLGEXP",13,""
+4,"FLGEXP",14,""
+4,"FLGEXP",15,""
+4,"FLGEXP",16,""
+4,"FLGEXP",17,""
+4,"FLGEXP",18,""
+4,"FLGEXP",19,""
+4,"FLGFIL",0,"YLOT"
+4,"FLGFIL",1,""
+4,"FLGFIL",2,""
+4,"FLGFIL",3,""
+4,"FLGFIL",4,""
+4,"FLGFIL",5,""
+4,"FLGFIL",6,""
+4,"FLGFIL",7,""
+4,"FLGKEY",0,"YLOT0"
+4,"FLGKEY",1,""
+4,"FLGKEY",2,""
+4,"FLGKEY",3,""
+4,"FLGKEY",4,""
+4,"FLGKEY",5,""
+4,"FLGKEY",6,""
+4,"FLGKEY",7,""
+4,"FLGLEV",0,1
+4,"FLGLEV",1,0
+4,"FLGLEV",2,0
+4,"FLGLEV",3,0
+4,"FLGLEV",4,0
+4,"FLGLEV",5,0
+4,"FLGLEV",6,0
+4,"FLGLEV",7,0
+4,"FLGLNK",0,""
+4,"FLGLNK",1,""
+4,"FLGLNK",2,""
+4,"FLGLNK",3,""
+4,"FLGLNK",4,""
+4,"FLGLNK",5,""
+4,"FLGLNK",6,""
+4,"FLGLNK",7,""
+4,"FLGREC",0,"LOT"
+4,"FLGREC",1,""
+4,"FLGREC",2,""
+4,"FLGREC",3,""
+4,"FLGREC",4,""
+4,"FLGREC",5,""
+4,"FLGREC",6,""
+4,"FLGREC",7,""
+4,"FONCTION",0,"GESYLOT"
+4,"IMPORT",0,2
+4,"MODULE",0,1
+4,"NBRFLG",0,1
+4,"NBRLIG",0,29
+4,"OBJ",0,""
+4,"OPTCHA",0,1
+4,"OPTDAT",0,2
+4,"OPTMNL",0,0
+4,"OPTSPE",0,1
+4,"OPTUPD",0,2
+4,"RECLEN",0,0
+4,"RECLEN",1,0
+4,"RECLEN",2,0
+4,"RECLEN",3,0
+4,"RECLEN",4,0
+4,"RECLEN",5,0
+4,"RECLEN",6,0
+4,"RECLEN",7,0
+4,"REPFIN",0,""
+4,"SEPDEC",0,"."
+4,"SEPFLD",0,";"
+4,"SEPREC",0,"\013\010"
+4,"SPEIMP",0,"SPEYSTGLOT"
+4,"TRTIMP",0,""
+4,"TYPEXP",0,1
+4,"TYPFIL",0,2
+4,"UPDDAT",0,20190612
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+9,"INTIT",0,"Lot","ENG","YSTGLOT",""
+9,"INTIT",0,"","***"
+6,"AOE"
+3,"AOD",1
+4,"BAL",0,""
+4,"COM",0,""
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"/"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,1
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+9,"INTFLD",0,"","ENG","YSTGLOT","YLOT/"
+9,"INTFLD",0,"","***"
+6,"AOD"
+3,"AOD",2
+4,"BAL",0,""
+4,"COM",0,"Lot ID"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YLOTID"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,2
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",3
+4,"BAL",0,""
+4,"COM",0,"Lot Number"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YLOTNBR"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,3
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",4
+4,"BAL",0,""
+4,"COM",0,"Description"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YLOTDES"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,4
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",5
+4,"BAL",0,""
+4,"COM",0,"Land Type"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YLNDTYP"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,5
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",6
+4,"BAL",0,""
+4,"COM",0,"Intended Use"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YINTUSE"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,6
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",7
+4,"BAL",0,""
+4,"COM",0,"Lot Status"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YLOTSTA"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,7
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",8
+4,"BAL",0,""
+4,"COM",0,"List Price"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YLSTPRC"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,8
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",9
+4,"BAL",0,""
+4,"COM",0,"Job Active Flag"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YJOBACTFLG"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,9
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",10
+4,"BAL",0,""
+4,"COM",0,"Job code"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YJOBCOD"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,10
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",11
+4,"BAL",0,""
+4,"COM",0,"Estate"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YESTID"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,11
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",12
+4,"BAL",0,""
+4,"COM",0,"Stage"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YSTAID"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,12
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",13
+4,"BAL",0,""
+4,"COM",0,"Land purchase ID"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YLNDPURID"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,13
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",14
+4,"BAL",0,""
+4,"COM",0,"Street Number"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YLOTSTRNBR"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,14
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",15
+4,"BAL",0,""
+4,"COM",0,"Street Description"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YLOTSTRDES"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,15
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",16
+4,"BAL",0,""
+4,"COM",0,"Sale Type"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YSALTYP"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,16
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",17
+4,"BAL",0,""
+4,"COM",0,"Area (sqm)"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YARE"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,17
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",18
+4,"BAL",0,""
+4,"COM",0,"Frontage (metres)"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YFRT"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,18
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",19
+4,"BAL",0,""
+4,"COM",0,"Depth (metres)"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YDEP"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,19
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",20
+4,"BAL",0,""
+4,"COM",0,"Shape"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YSHP"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,20
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",21
+4,"BAL",0,""
+4,"COM",0,"Volume"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YVOL"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,21
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",22
+4,"BAL",0,""
+4,"COM",0,"Folio"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YFOL"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,22
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",23
+4,"BAL",0,""
+4,"COM",0,"SLHC"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YSLHC"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,23
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",24
+4,"BAL",0,""
+4,"COM",0,"Withheld"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YHLD"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,24
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",25
+4,"BAL",0,""
+4,"COM",0,"Review Date"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YREWDTE"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,25
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",26
+4,"BAL",0,""
+4,"COM",0,"Withheld Comments"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YHLDCMT"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,26
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",27
+4,"BAL",0,""
+4,"COM",0,"Land Price"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YLNDPRC"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,27
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",28
+4,"BAL",0,""
+4,"COM",0,"House Price"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YHOUPRC"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,28
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+3,"AOD",29
+4,"BAL",0,""
+4,"COM",0,"Access code"
+4,"CREDATTIM",0,"2019-06-12T01:38:03Z"
+4,"CREUSR",0,"DH"
+4,"ENDVAL",0,""
+4,"EXT",0,"YSTGLOT"
+4,"FIL",0,"YLOT"
+4,"FLD",0,"YACCESS"
+4,"FMT",0,""
+4,"LNG",0,0
+4,"LOC",0,0
+4,"NUMLIG",0,29
+4,"NUMTAB",0,0
+4,"OBL",0,0
+4,"PATTERN",0,""
+4,"SEL",0,1
+4,"STRVAL",0,""
+4,"TYP",0,"LOT"
+4,"UPDDATTIM",0,"2019-06-12T01:38:03Z"
+4,"UPDUSR",0,"DH"
+6,"AOD"
+7,"AOE","YSTGLOT",""
+8,"Patch HFX :DFCX1-497 on June      12,19 14: 53"
