@@ -1,0 +1,453 @@
+1,"Patch DFC :DFCX1-519 on July      02,19 16: 24","ENG","1","","X3","3",
+2,"TRT","SPEGA0",""
+#<AdxTL>@(#)0.0.0.0 $Revision$
+#------------------------------------------------------------------------------------#
+#Action
+#------------------------------------------------------------------------------------#
+$ACTION
+Case ACTION
+  When "OUVRE"      : Gosub OUVRE
+  When "INICRE"     : Gosub INICRE
+  When "VERIF_MOD"  : Gosub VERIF_MOD
+  When "SETBOUT"    : Gosub SETBOUT
+  When "STYLE"      : Gosub STYLE
+  When Default
+Endcase
+Return
+
+Subprog AM_PJT(VALEUR)
+Variable Char    VALEUR()
+End
+
+#------------------------------------------------------------------------------------#
+#Before creation validation
+#------------------------------------------------------------------------------------#
+$INICRE
+  Gosub VALIDATEPJM
+Return
+
+#------------------------------------------------------------------------------------#
+#Before modification validations
+#------------------------------------------------------------------------------------#
+$VERIF_MOD
+  Gosub VALIDATEPJM
+Return
+
+
+#------------------------------------------------------------------------------------#
+#Open needed tables
+#------------------------------------------------------------------------------------#
+$OUVRE
+
+If clalev([F:YGAC]) = 0 : Local File GACCOUNT[YGAC] : Endif
+
+Return
+
+$SETBOUT
+
+  CHMEN += "Z7"
+  Gosub SET_BOUT_SPE From GSAISIE
+
+Return
+
+#---------------------------------
+# Style
+#---------------------------------
+$STYLE
+
+If clalev([F:YGAC]) = 0 : Local File GACCOUNT[YGAC] : Endif
+
+  Local Integer I : I = 0
+  For I = 0 To [M:HAE2]NBLIG - 1
+    Read [F:YGAC]GAC0 = [M:HAE2]COA;[M:HAE2]ACC1(I)
+    If [F:YGAC]YPJM = 1 Then
+      Diszo [M:HAE2]PJTLIN(I)
+    Else
+      Actzo [M:HAE2]PJTLIN(I)
+    Endif
+  Next
+
+Return
+
+#TODO ----------Review these fields
+
+Subprog AM_DIE(VALEUR)
+Variable Char    VALEUR()
+End
+
+Subprog AM_ACC1(VALEUR)
+Variable Char    VALEUR()
+
+End
+#TODO ----------Review these fields
+
+#------------------------------------------------------------------------------------#
+#After line, validate the PJM accounts
+#------------------------------------------------------------------------------------#
+Subprog AP_PJTLIN(VALEUR)
+Variable Char    VALEUR()
+
+Local Integer YVAL
+
+If VALEUR = ''
+  YVAL = func YDFCGENERAL.VAL_PJM([M:HAE2]ACC1(nolign-1))
+  If YVAL = 2
+#    Infbox mess(1,6201,1)
+    Call ERRTIT( mess(1,6201,1),"Mandatory field") From GESECRAN
+    mkstat = 2
+  Endif
+Endif
+End
+
+
+#------------------------------------------------------------------------------------#
+#After line, validate the PJM accounts
+#------------------------------------------------------------------------------------#
+Subprog APRES_NBLIG
+
+Local Integer YVAL
+
+    YVAL = func YDFCGENERAL.VAL_PJM([M:HAE2]ACC1(nolign-1))
+    If YVAL = 2 and [M:HAE2]PJTLIN(nolign-1) = ""
+      Call ERRTIT( mess(1,6201,1),"Mandatory field") From GESECRAN
+      zonsui = "[M:BIS3]PJTLIN(" + num$(nolign-1) + ")"
+    Endif
+
+End
+
+
+#------------------------------------------------------------------------------------#
+#Do PJM account link validations
+#------------------------------------------------------------------------------------#
+$VALIDATEPJM
+
+If clalev([F:YGAC]) = 0 : Local File GACCOUNT [YGAC] : Endif
+
+Local Char YMSG(250)
+  For I = 0 To [M:HAE2]NBLIG-1
+
+  Filter [F:YGAC] Where ACC = [M:HAE2]ACC1(I)
+  For [F:YGAC]
+
+  If [F:YGAC]YPJM = 2 and [M:HAE2]PJTLIN(I) = ""
+    YMSG += num$(I + 1) + ", "
+  Endif
+
+  Next
+  Filter [F:YGAC]
+
+  Next
+
+  If len(YMSG) > 0
+    GMESSAGE = mess(2,6201,1) + left$(YMSG,len(YMSG)-2) # "Please enter a project code on the following lines: " + ZMSG
+    GERR = 1
+    GOK = 0
+  Endif
+
+Return
+
+######################################################################################
+## Section automatically added (screen GACCENT2) 09/08/2018 15:40:13 (ADMIN)
+######################################################################################
+
+Subprog AM_CCE1(VALEUR)
+Variable Char    VALEUR()
+
+End
+
+Subprog AM_CCE2(VALEUR)
+Variable Char    VALEUR()
+
+End
+
+Subprog AM_CCE3(VALEUR)
+Variable Char    VALEUR()
+
+End
+
+Subprog AM_CCE4(VALEUR)
+Variable Char    VALEUR()
+
+End
+
+Subprog AM_CCE5(VALEUR)
+Variable Char    VALEUR()
+
+End
+
+
+######################################################################################
+
+#------------------------------------------------------------------------------------#
+#DEWAL - Check enter values for valid dimensions
+#------------------------------------------------------------------------------------#
+Subprog C_CCE1(VALEUR)
+Variable Char    VALEUR()
+  If VALEUR <> "" Then
+    Local Char FLDNAM(5), DIEVAL(25)
+    Local Integer RETVAL
+    [L]FLDNAM = "DIE_0"
+    [L]DIEVAL = [M:HAE2]DIE(0)
+    RETVAL = func VALIDATE_CCE(VALEUR, FLDNAM, DIEVAL)
+    If RETVAL = 0 Then
+      zonsui = "[M]CCE1(nolign-1)"
+    Endif
+  Endif
+End
+
+Subprog C_CCE2(VALEUR)
+Variable Char    VALEUR()
+  If VALEUR <> "" Then
+    Local Char FLDNAM(5), DIEVAL(25)
+    Local Integer RETVAL
+    [L]FLDNAM = "DIE_1"
+    [L]DIEVAL = [M:HAE2]DIE(1)
+    RETVAL = func VALIDATE_CCE(VALEUR, FLDNAM, DIEVAL)
+    If RETVAL = 0 Then
+      zonsui = "[M]CCE2(nolign-1)"
+    Endif
+  Endif
+End
+
+Subprog C_CCE3(VALEUR)
+Variable Char    VALEUR()
+  If VALEUR <> "" Then
+    Local Char FLDNAM(5), DIEVAL(25)
+    Local Integer RETVAL
+    [L]FLDNAM = "DIE_2"
+    [L]DIEVAL = [M:HAE2]DIE(2)
+    RETVAL = func VALIDATE_CCE(VALEUR, FLDNAM, DIEVAL)
+    If RETVAL = 0 Then
+      zonsui = "[M]CCE3(nolign-1)"
+    Endif
+  Endif
+End
+
+Subprog C_CCE4(VALEUR)
+Variable Char    VALEUR()
+  If VALEUR <> "" Then
+    Local Char FLDNAM(5), DIEVAL(25)
+    Local Integer RETVAL
+    [L]FLDNAM = "DIE_3"
+    [L]DIEVAL = [M:HAE2]DIE(3)
+    RETVAL = func VALIDATE_CCE(VALEUR, FLDNAM, DIEVAL)
+    If RETVAL = 0 Then
+      zonsui = "[M]CCE4(nolign-1)"
+    Endif
+  Endif
+End
+
+Subprog C_CCE5(VALEUR)
+Variable Char    VALEUR()
+  If VALEUR <> "" Then
+    Local Char FLDNAM(5), DIEVAL(25)
+    Local Integer RETVAL
+    [L]FLDNAM = "DIE_4"
+    [L]DIEVAL = [M:HAE2]DIE(4)
+    RETVAL = func VALIDATE_CCE(VALEUR, FLDNAM, DIEVAL)
+    If RETVAL = 0 Then
+      zonsui = "[M]CCE5(nolign-1)"
+    Endif
+  Endif
+End
+
+Funprog VALIDATE_CCE(VALEUR,DIEFLDNAM,DIMENSION)
+Variable Char VALEUR()
+Variable Char DIEFLDNAM()
+Variable Char DIMENSION()
+
+Local Integer I
+Local Char REQUEST(255)(10)
+REQUEST(0) = "SELECT DISTINCT t4.CCE_0"
+REQUEST(1) -= "FROM FACILITY t0"
+REQUEST(2) -= "JOIN COMPANY t1 ON t0.LEGCPY_0 = t1.CPY_0"
+REQUEST(3) -= "JOIN GACM t2 ON t1.ACM_0 = t2.GCM_0"
+REQUEST(4) -= "JOIN GLED t3 ON t2.LED_0 = t3.LED_0"
+REQUEST(5) -= "INNER JOIN CACCE t4 ON t4.DIE_0 = t3."+DIEFLDNAM
+REQUEST(6) -= "LEFT OUTER JOIN YPCCACC t5 ON t5.YLED_0 = t3.LED_0 AND t5.YDIE_0 = t4.DIE_0 AND t5.YCCE_0 = t4.CCE_0"
+REQUEST(7) -= "WHERE t4.DIE_0 = '" + DIMENSION +"' AND ((t5.YACC_0 = '" + [M:HAE2]ACC1(nolign-1) +"' AND t5.YLED_0 = t3.LED_0) OR (t5.YACC_0 IS NULL AND t5.YLED_0 IS NULL)) AND t4.ENAFLG_0 = 2"
+REQUEST(8) -= "AND t4.CCE_0 = '"+VALEUR+"'"
+REQUEST(9) -= "ORDER BY t4.CCE_0 ASC"
+
+For (Char CCE(50)) From "5" Sql REQUEST As [YLNK]
+  If [F:YLNK]CCE <> ""
+    I += 1
+  Endif
+Next
+
+If I = 0
+  GMESSAGE = mess(6,6201,1)
+  GERR = 1
+  mkstat = 2
+Endif
+
+End I
+
+#------------------------------------------------------------------------------------#
+#Control - Type
+#------------------------------------------------------------------------------------#
+Subprog C_TYP(VALEUR)
+Variable Char    VALEUR()
+
+  #Only validate manual input transactions
+  If (GWEBSERV = 0 or GIMPORT = 0) and GFONC1 = ""
+
+    #DFC1-154 Journal Document Type Restriction & Delete Condition
+
+    #Open table
+    If !clalev ([F:YGTE]) : Local File GTYPACCENT [F:YGTE] : Endif
+
+    #Read Document Type
+    Read [F:YGTE]GTE0 = VALEUR
+
+    #Check if General Journals are permitted
+    If fstat = 0
+      If [F:YGTE]AUZJOU(8) = 1
+        Call ERREURT("This Entry Type is not setup for General Journals!", 1) From GESECRAN
+        [M:HAE0]TYP = ""
+        Affzo [M:HAE0]TYP
+        mkstat = 2
+      Endif
+    Endif
+
+    #Close table
+    If clalev([F:YGTE]) : Close Local File [F:YGTE] : Endif
+
+  Endif
+
+End
+
+#------------------------------------------------------------------------------------#
+# DFCX1-428 - Dimensions Default from Project - 08/04/2019 - DH
+#------------------------------------------------------------------------------------#
+Subprog C_PJTLIN(VALEUR)
+Variable Char    VALEUR()
+
+If clalev([F:PIM]) = 0   : Local File PIMPL [PIM]        : Endif
+If clalev([F:YOPJM]) = 0 : Local File OPPORPJM   [YOPJM] : Endif
+If clalev([F:YOPJB]) = 0 : Local File PJMBUDLIG  [YOPJB] : Endif
+
+  If VALEUR <> "" Then
+
+    Local Integer I : I = 0
+    Local Char REQUEST(255)(15)
+
+    REQUEST(0) = "SELECT t1.OPPNUM_0"
+    REQUEST(1) -= "FROM PIMPL t0"
+    REQUEST(2) -= "JOIN PJMBUD t1 ON t0.OPPNUM_0 = t1.OPPNUM_0 AND t0.PBUCOD_0 = t1.PBUCOD_0"
+    REQUEST(3) -= "JOIN ATEXTRA t2 ON t0.OPPNUM_0 = t2.IDENT1_0 AND t2.ZONE_0 = 'PIMDESAXX' AND t2.LANGUE_0 = 'ENG' AND t2.CODFIC_0 = 'PIMPL'"
+    REQUEST(4) -= "JOIN APLSTD t3 ON t0.PIMTYP_0 = t3.LANNUM_0 AND t3.LAN_0 = 'ENG' AND t3.LANCHP_0 = 2254"
+    REQUEST(5) -= "JOIN APLSTD t4 ON t0.PIMSTA_0 = t4.LANNUM_0 AND t4.LAN_0 = 'ENG' AND t4.LANCHP_0 = 2251"
+    REQUEST(6) -= "WHERE"
+
+    #Project Status = Launched
+    REQUEST(7) -= "t0.OPPSTATE_0 = 2"
+
+    #Site
+    REQUEST(8) -= "AND t0.FCY_0 = '" + [M:HAE2]FCYLIN(nolign-1) + "'"
+
+    #Active = Yes
+    REQUEST(9) -= "AND t0.PIMSTA_0 = 2"
+
+    #Chargeable = Yes
+    REQUEST(10) -= "AND t1.PBUIMP_0 = 2"
+
+    #Budget Status = Open
+    REQUEST(11) -= "AND t0.PBUSTATE_0 = 2"
+
+    #Project Link entered
+    REQUEST(12) -= "AND t0.PIMNUM_0 = '" + VALEUR + "'"
+
+    For (Char OPPNUM(20)) From "5" Sql REQUEST As [YPRJLNK]
+      If [F:YPRJLNK]OPPNUM <> ""
+        I = 1
+        Break
+      Else
+        I = 0
+        Break
+      Endif
+
+    Next
+
+    If I =0
+      #No record found
+      Call ERRTIT("Record not found", "Project") From GESECRAN
+      GERR = 1
+      GOK = 0
+      mkstat=2
+      zonsui = "[M:HAE1]PJT"
+      End
+    Endif
+
+
+    Gosub VALIDATEPJM
+    Read [F:PIM]PIM0 = VALEUR
+    Read [F:YOPJM]OPPPJM0 = [F:PIM]OPPNUM
+    [M:HAE2]CCE1(nolign-1) = [F:YOPJM]CCE(0)
+    [M:HAE2]CCE2(nolign-1) = [F:YOPJM]CCE(1)
+    [M:HAE2]CCE3(nolign-1) = [F:YOPJM]CCE(2)
+    [M:HAE2]CCE5(nolign-1) = [F:YOPJM]CCE(4)
+    Read [F:YOPJB]PJLB0 = [F:PIM]OPPNUM
+    [M:HAE2]CCE4(nolign-1) = [F:YOPJB]PCCCOD
+
+  Endif
+
+Affzo [M:HAE2]
+
+If clalev([F:PIM]) = 0   : Close Local File [F:PIM]   : Endif
+If clalev([F:YOPJM]) = 0 : Close Local File [F:YOPJM] : Endif
+If clalev([F:YOPJB]) = 0 : Close Local File [F:YOPJB] : Endif
+
+End
+
+######################################################################################
+## Section automatically added (screen GACCENT2) 17/04/2019 11:45:59 (DH)
+######################################################################################
+Subprog C_ACC1(VALEUR)
+Variable Char VALEUR()
+
+  #Get COA on Create
+  Local Char REQUEST(255)(0..5)
+  Local Char YCOA(10)
+  If [M:HAE2]COA(nolign-1) = "" Then
+    REQUEST(0) = "SELECT LED.COA_0"
+    REQUEST(1) -= "From FACILITY FCY"
+    REQUEST(2) -= "INNER JOIN COMPANY CPY ON CPY.MAIFCY_0 = FCY.FCY_0 and FCY.LEGCPY_0 = CPY.CPY_0"
+    REQUEST(3) -= "INNER JOIN GACM GCM ON GCM.GCM_0 = CPY.ACM_0"
+    REQUEST(4) -= "INNER JOIN GLED LED ON LED.LED_0 = GCM.LED_0"
+    REQUEST(5) -= "Where FCY.FCY_0 = '"+[M:HAE2]FCYLIN(nolign-1)+"'"
+
+    For (Char COA) From "5" Sql REQUEST As [YLNK]
+      YCOA = [F:YLNK]COA
+    Next
+  Else
+    YCOA = [M:HAE2]COA(nolign-1)
+  Endif
+
+If clalev([F:YGAC]) = 0 : Local File GACCOUNT[YGAC] : Endif
+
+  Filter [F:YGAC] Where ACC = VALEUR and COA = YCOA
+  For [F:YGAC]
+    If [F:YGAC]YPJM = 1 Then
+      [M:HAE2]PJTLIN(nolign-1) = ""
+      Diszo [M:HAE2]PJTLIN(nolign-1)
+    Else
+      Actzo [M:HAE2]PJTLIN(nolign-1)
+      If [M:HAE1]PJT <> "" : [M:HAE2]PJTLIN(nolign-1) = [M:HAE1]PJT : Endif
+    Endif
+
+  Next
+  Filter [F:YGAC]
+
+Affzo [M:HAE2]PJTLIN(nolign-1)
+
+If clalev([F:YGAC]) = 0 : Close Local File [F:YGAC] : Endif
+
+End
+
+
+######################################################################################
+
+**********
+7,"TRT","SPEGA0",""
+8,"Patch DFC :DFCX1-519 on July      02,19 16: 24"
